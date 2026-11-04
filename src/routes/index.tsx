@@ -1,4 +1,4 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, isRedirect, redirect } from "@tanstack/react-router";
 import { getToken } from "@/lib/api";
 import { meQuery, homeFor } from "@/lib/auth";
 
@@ -18,8 +18,7 @@ export const Route = createFileRoute("/")({
       const u = await context.queryClient.ensureQueryData(meQuery);
       throw redirect({ to: homeFor(u.role) });
     } catch (e) {
-      if (e && typeof e === "object" && "isRedirect" in e) throw e;
-      if (e instanceof Response) throw e;
+      if (isRedirect(e)) throw e;
       throw redirect({ to: "/login" });
     }
   },
