@@ -3,14 +3,14 @@ import {
   LayoutDashboard, FileText, Building2, Users, Wrench, ClipboardCheck, QrCode,
   CalendarCheck, Search, ScanLine, ListChecks, type LucideIcon,
 } from "lucide-react";
-import { api } from "./api";
+import { getMe } from "./endpoints";
+import type { Role } from "./types";
 
-export type Role = "admin" | "gestor" | "fiscal" | "limpeza" | "manutencao";
-export type User = { id: number; name: string; email: string; role: Role; company_id: number | null };
+export type { Role, User } from "./types";
 
 export const meQuery = queryOptions({
   queryKey: ["me"],
-  queryFn: () => api.get<User>("/me"),
+  queryFn: getMe,
   staleTime: Infinity,
   retry: false,
 });
