@@ -22,6 +22,7 @@ import { Route as AppLerQrRouteImport } from './routes/_app.ler-qr'
 import { Route as AppMinhasLimpezasRouteImport } from './routes/_app.minhas-limpezas'
 import { Route as AppPainelRouteImport } from './routes/_app.painel'
 import { Route as AppPessoasRouteImport } from './routes/_app.pessoas'
+import { Route as AppContratosIndexRouteImport } from './routes/_app.contratos.index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -87,6 +88,11 @@ const AppPessoasRoute = AppPessoasRouteImport.update({
   path: '/pessoas',
   getParentRoute: () => AppRoute,
 } as any)
+const AppContratosIndexRoute = AppContratosIndexRouteImport.update({
+  id: '/contratos/',
+  path: '/contratos/',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -101,6 +107,7 @@ export interface FileRoutesByFullPath {
   '/minhas-limpezas': typeof AppMinhasLimpezasRoute
   '/painel': typeof AppPainelRoute
   '/pessoas': typeof AppPessoasRoute
+  '/contratos/': typeof AppContratosIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -115,6 +122,7 @@ export interface FileRoutesByTo {
   '/minhas-limpezas': typeof AppMinhasLimpezasRoute
   '/painel': typeof AppPainelRoute
   '/pessoas': typeof AppPessoasRoute
+  '/contratos': typeof AppContratosIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -131,6 +139,7 @@ export interface FileRoutesById {
   '/_app/minhas-limpezas': typeof AppMinhasLimpezasRoute
   '/_app/painel': typeof AppPainelRoute
   '/_app/pessoas': typeof AppPessoasRoute
+  '/_app/contratos/': typeof AppContratosIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -147,6 +156,7 @@ export interface FileRouteTypes {
     | '/minhas-limpezas'
     | '/painel'
     | '/pessoas'
+    | '/contratos/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -161,6 +171,7 @@ export interface FileRouteTypes {
     | '/minhas-limpezas'
     | '/painel'
     | '/pessoas'
+    | '/contratos'
   id:
     | '__root__'
     | '/'
@@ -176,6 +187,7 @@ export interface FileRouteTypes {
     | '/_app/minhas-limpezas'
     | '/_app/painel'
     | '/_app/pessoas'
+    | '/_app/contratos/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -277,6 +289,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPessoasRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/contratos/': {
+      id: '/_app/contratos/'
+      path: '/contratos'
+      fullPath: '/contratos/'
+      preLoaderRoute: typeof AppContratosIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -291,6 +310,7 @@ interface AppRouteChildren {
   AppMinhasLimpezasRoute: typeof AppMinhasLimpezasRoute
   AppPainelRoute: typeof AppPainelRoute
   AppPessoasRoute: typeof AppPessoasRoute
+  AppContratosIndexRoute: typeof AppContratosIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -304,6 +324,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppMinhasLimpezasRoute: AppMinhasLimpezasRoute,
   AppPainelRoute: AppPainelRoute,
   AppPessoasRoute: AppPessoasRoute,
+  AppContratosIndexRoute: AppContratosIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
