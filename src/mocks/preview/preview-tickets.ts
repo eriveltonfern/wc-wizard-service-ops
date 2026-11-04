@@ -239,6 +239,7 @@ export function handleTicketsAndReview(method: string, path: string, query: URLS
     const c = p.cleanings.find((x) => x.id === Number(rv[1]));
     if (!c || !scope(d, me).has(c.contract_id)) return err(404, "not_found", "Cadastro não encontrado.");
     if (c.status !== "valid") return err(409, "conflict", "Esta limpeza já foi cancelada.");
+    if (rv[2] === "cancel" && isClosed(p, c.contract_id, opDate(new Date(c.client_finished_at)))) return err(409, "conflict", "O mês desta limpeza já foi fechado. Não dá para cancelar.");
     if (rv[2] === "review") {
       if (c.reviewed_by) return err(409, "conflict", "Esta limpeza já foi conferida.");
       c.reviewed_by = me.id; c.reviewed_at = new Date().toISOString(); c.review_outcome = "ok";

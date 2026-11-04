@@ -1,6 +1,7 @@
 // Rotas propostas (docs/api-contrato-proposta.md) simuladas com dados de exemplo. Só chamado por src/mocks/index.ts.
 import type { DbUser, MockDb } from "../data";
 import { handleTicketsAndReview, suggestCategory } from "./preview-tickets";
+import { handleReports, isClosed } from "./preview-reports";
 import {
   type Answer, type PvCleaning, type RawTask, SHIFT_END_LABEL, SHIFT_ORDER, clearPreview, cleanersOf, dayClose, interdicted,
   iso, loadPreview, loadedPreview, opDate, photoSvg, savePreview, shiftAt, shiftWindow, tasksFor,
@@ -180,6 +181,7 @@ export function handlePreview(method: string, path: string, query: URLSearchPara
     const client = clientRaw && !Number.isNaN(clientRaw.getTime()) && clientRaw <= now && now.getTime() - clientRaw.getTime() < 24 * 3600000 ? clientRaw : now;
     const offline = body["queued"] === "1" || body["queued"] === true || now.getTime() - client.getTime() > 5 * 60000;
     const date = opDate(client);
+    if (isClosed(p, c.id, date)) return err(409, "conflict", "O mês desta limpeza já foi fechado. Não dá para lançar limpezas nele.");
     const shiftNow = shiftAt(client);
     const pending = tasksFor(d, date, new Set([c.id])).filter((t) => t.bathroom.id === b.id)
       .map((t) => taskView(d, t, p.cleanings, p.cancelled_tasks, client))
@@ -222,7 +224,7 @@ export function handlePreview(method: string, path: string, query: URLSearchPara
     if (!c || !visible) return err(404, "not_found", "Cadastro não encontrado.");
     return ok(cleaningView(d, c));
   }
-  return handleTicketsAndReview(method, path, query, body, me, d);
+  return handleTicketsAndReview(method, path, query, body, me, d) ?? handleReports(method, path, query, body, me, d);
 }
 
 /** Outra limpeza com a mesma foto (para "Foto repetida"). */

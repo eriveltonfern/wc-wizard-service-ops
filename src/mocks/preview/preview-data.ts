@@ -23,10 +23,14 @@ export type PvTicket = {
   photo_open: string | null; photo_done: string | null; idempotency_key: string | null;
   events: { id: number; kind: TicketEventKind; actor_id: number; at: string; text: string | null }[];
 };
-export type PreviewDb = { version: number; generated_on: string; cleanings: PvCleaning[]; cancelled_tasks: string[]; tickets: PvTicket[] };
+export type PvClosing = {
+  id: number; contract_id: number; month: string; status: "closed" | "open"; totals: import("./preview-reports").Totals;
+  closed_at: string; closed_by: number; reopenings: { at: string; by: number; reason: string }[];
+};
+export type PreviewDb = { version: number; generated_on: string; cleanings: PvCleaning[]; cancelled_tasks: string[]; tickets: PvTicket[]; closings: PvClosing[] };
 
 const KEY = "wccheck.previewdb";
-const VERSION = 2;
+const VERSION = 3;
 let pdb: PreviewDb | null = null;
 
 // ---------- datas e turnos (hora oficial = relógio deste "servidor") ----------
@@ -163,7 +167,7 @@ export function generate(d: MockDb, now = new Date()): PreviewDb {
   }
   cleanings.sort((a, b) => a.registered_at.localeCompare(b.registered_at)).forEach((c, i) => (c.id = i + 1));
   markReviews(d, cleanings);
-  return { version: VERSION, generated_on: today, cleanings, cancelled_tasks: cancelled, tickets: genTickets(d, now, r) };
+  return { version: VERSION, generated_on: today, cleanings, cancelled_tasks: cancelled, tickets: genTickets(d, now, r), closings: [] };
 }
 
 /** Deixa ~8 limpezas com marca para conferir (espalhadas por contrato e marca); as demais já foram conferidas pelo gestor. */
@@ -267,7 +271,7 @@ export function loadPreview(d: MockDb): PreviewDb {
   try {
     const raw = typeof localStorage !== "undefined" ? localStorage.getItem(KEY) : null;
     const parsed = raw ? (JSON.parse(raw) as PreviewDb) : null;
-    pdb = parsed && parsed.version === VERSION && parsed.generated_on === today ? parsed : generate(d);
+    pdb = parsed && parsed.version === VERSION && parsed.generated_on === today ? parsed : { ...generate(d), closings: parsed?.version === VERSION ? parsed.closings : [] };
   } catch {
     pdb = generate(d);
   }

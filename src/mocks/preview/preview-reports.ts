@@ -34,11 +34,9 @@ export function computeStats(d: MockDb, p: PreviewDb, f: StatsFilter, now = new 
   const total = zero();
   const byContract = new Map<number, Totals>(), byBath = new Map<number, Totals>(), byDay = new Map<string, Totals>();
   const add = (m: Map<number | string, Totals>, k: number | string, fn: (t: Totals) => void) => { if (!m.has(k)) m.set(k, zero()); fn(m.get(k)!); };
-  const all = [total];
   const bump = (cid: number, bid: number, date: string, fn: (t: Totals) => void) => {
     fn(total); add(byContract as never, cid, fn); add(byBath as never, bid, fn); add(byDay as never, date, fn);
   };
-  void all;
   for (let date = from; date <= to; date = addDays(date, 1)) {
     for (const t of tasksFor(d, date, f.contractIds)) {
       if (f.bathroomId && t.bathroom.id !== f.bathroomId) continue;
@@ -127,7 +125,7 @@ function closingView(d: MockDb, me: DbUser, p: PreviewDb, contractId: number, mo
   const canManage = me.role === "admin" || (me.role === "gestor" && c.manager_id === me.id);
   const name = (id: number) => d.users.find((u) => u.id === id)?.name ?? "—";
   return {
-    contract_id: contractId, month, status: closed ? "closed" : "open", ended,
+    id: row?.id ?? null, contract_id: contractId, month, status: closed ? "closed" : "open", ended,
     totals: closed ? row!.totals : computeStats(d, p, { from, to, contractIds: new Set([contractId]) }, now).totals,
     closed_at: closed ? row!.closed_at : undefined, closed_by: closed ? { id: row!.closed_by, name: name(row!.closed_by) } : undefined,
     reopenings: (row?.reopenings ?? []).map((r) => ({ at: r.at, by: { id: r.by, name: name(r.by) }, reason: r.reason })),
@@ -248,11 +246,12 @@ export function handleReports(method: string, path: string, q: URLSearchParams, 
     }
   }
 
-  const ro = path.match(/^\/closings\/(\d+)-(\d{4}-\d{2})\/reopen$/);
+  const ro = path.match(/^\/closings\/(\d+)\/reopen$/);
   if (method === "POST" && ro) {
     if (me.role !== "admin") return err(403, "forbidden", "Só a diretoria pode reabrir um mês.");
     const p = loadPreview(d);
-    const row = p.closings.find((x) => x.contract_id === Number(ro[1]) && x.month === ro[2] && x.status === "closed");
+    if (!p.closings.some((x) => x.id === Number(ro[1]) && scope(d, me).has(x.contract_id))) return err(404, "not_found", "Cadastro não encontrado.");
+    const row = p.closings.find((x) => x.id === Number(ro[1]) && x.status === "closed");
     if (!row) return err(404, "not_found", "Cadastro não encontrado.");
     const reason = typeof body["reason"] === "string" ? body["reason"].trim() : "";
     if (!reason) return err(422, "validation_failed", "Confira os campos destacados.", { reason: "Informe o motivo." });
