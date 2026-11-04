@@ -8,7 +8,7 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 // Prévia e Publicar do Lovable: configuração padrão (com nitro).
 // Hostinger (Apache, sem Node): BUILD_TARGET=hostinger npx vite build → SPA estático em dist/client/.
-const hostinger = process.env.BUILD_TARGET === "hostinger";
+const hostinger = process.env["BUILD_TARGET"] === "hostinger";
 
 export default defineConfig(
   hostinger
