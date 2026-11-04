@@ -7,7 +7,7 @@ export type PhotoRule = "required" | "optional" | "off";
 export type Shift = "manha" | "tarde" | "noite";
 export type TeamKind = "limpeza" | "manutencao";
 export type BathroomKind = "masculino" | "feminino" | "unissex" | "pcd";
-export type ActivationMissing = "manager" | "bathroom" | "cleaning_team" | "company";
+export type ActivationMissing = "manager" | "bathroom" | "cleaning_team" | "fiscal" | "company";
 
 export type ApiErrorBody = {
   error: { code: string; message: string; fields: Record<string, string>; missing?: ActivationMissing[] | undefined; counts?: Record<string, number> | undefined };
@@ -66,6 +66,7 @@ export type Location = { id: number; contract_id: number; name: string; status: 
 export type Bathroom = {
   id: number; contract_id: number;
   contract: { id: number; code: string; name: string };
+  company: { id: number; name: string };
   location?: { id: number; name: string } | undefined;
   name: string; qr_token: string; kind: BathroomKind; floor?: string | undefined; notes?: string | undefined;
   cleanings_per_day?: number | undefined; weekdays?: number[] | undefined;
