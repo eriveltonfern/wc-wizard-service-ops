@@ -8,7 +8,9 @@ type ErrorPayload = {
   fields?: Record<string, string>;
   missing?: string[];
   counts?: Record<string, number>;
+  contracts?: ErrorContract[];
 };
+export type ErrorContract = { id: number; code: string; name: string; status: string };
 
 export class ApiError extends Error {
   code: string;
@@ -16,13 +18,15 @@ export class ApiError extends Error {
   status: number;
   missing: string[] | undefined;
   counts: Record<string, number> | undefined;
-  constructor(code: string, message: string, status: number, fields?: Record<string, string>, extra?: { missing?: string[] | undefined; counts?: Record<string, number> | undefined }) {
+  contracts: ErrorContract[] | undefined;
+  constructor(code: string, message: string, status: number, fields?: Record<string, string>, extra?: { missing?: string[] | undefined; counts?: Record<string, number> | undefined; contracts?: ErrorContract[] | undefined }) {
     super(message);
     this.code = code;
     this.status = status;
     this.fields = fields;
     this.missing = extra?.missing;
     this.counts = extra?.counts;
+    this.contracts = extra?.contracts;
   }
 }
 
@@ -79,7 +83,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   }
   if (status >= 400 || json?.error) {
     const e = json?.error ?? { code: "unknown", message: "Erro inesperado." };
-    throw new ApiError(e.code, e.message, status, e.fields, { missing: e.missing, counts: e.counts });
+    throw new ApiError(e.code, e.message, status, e.fields, { missing: e.missing, counts: e.counts, contracts: e.contracts });
   }
   return (json?.data ?? undefined) as T;
 }

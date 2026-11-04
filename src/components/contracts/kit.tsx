@@ -1,6 +1,7 @@
 // Peças reutilizadas pelas telas de contrato: campos, selos, diálogos e ações com aviso.
 import { useState, type ReactNode, type SelectHTMLAttributes } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { AlertTriangle, Loader2, RefreshCw } from "lucide-react";
 import { ApiError } from "@/lib/api";
@@ -64,6 +65,11 @@ export function FormError({ error }: { error: ApiError | null }) {
       <p>{error.message}</p>
       {error.missing && error.missing.length > 0 && (
         <ul className="mt-1 list-disc pl-5 font-normal">{error.missing.map((m) => <li key={m}>{missingLabel[m] ?? m}</li>)}</ul>
+      )}
+      {error.contracts && error.contracts.length > 0 && (
+        <ul className="mt-1 list-disc pl-5 font-normal">{error.contracts.map((c) => (
+          <li key={c.id}><Link to="/contratos/$id" params={{ id: String(c.id) }} className="underline">{c.code} · {c.name}</Link> ({statusLabel(c.status)})</li>
+        ))}</ul>
       )}
     </div>
   );

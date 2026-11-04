@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { MapPin, MoreVertical, Plus, Search, Trash2 } from "lucide-react";
 import {
   createBathroom, createLocation, createStatusPeriod, deleteBathroom, deleteLocation, deleteStatusPeriod, getBathroom,
@@ -44,6 +45,7 @@ export function BathroomsTab({ contract: c, ctx }: { contract: ContractDetail; c
         </NativeSelect>
         {ctx.canManage && (
           <>
+            <Button asChild variant="outline" className="min-h-11"><Link to="/etiquetas" search={{ contrato: c.id }}>Imprimir etiquetas</Link></Button>
             <Button variant="outline" className="min-h-11" onClick={() => setDlg({ kind: "locations" })}><MapPin className="h-4 w-4" />Gerenciar locais</Button>
             <Button className="min-h-11" onClick={() => setDlg({ kind: "form" })}><Plus className="h-4 w-4" />Novo banheiro</Button>
           </>
@@ -80,6 +82,7 @@ export function BathroomsTab({ contract: c, ctx }: { contract: ContractDetail; c
                             <DropdownMenuItem className="min-h-11" onSelect={() => setDlg({ kind: "form", b })}>Editar</DropdownMenuItem>
                             <DropdownMenuItem className="min-h-11" onSelect={() => void toggle.run(b)}>{b.status === "active" ? "Inativar" : "Reativar"}</DropdownMenuItem>
                             <DropdownMenuItem className="min-h-11" onSelect={() => setDlg({ kind: "qr", b })}>Gerar novo QR</DropdownMenuItem>
+                            {b.status === "active" && <DropdownMenuItem asChild className="min-h-11"><Link to="/etiquetas" search={{ contrato: c.id, banheiro: b.id }}>Imprimir etiqueta</Link></DropdownMenuItem>}
                             <DropdownMenuItem className="min-h-11" onSelect={() => setDlg({ kind: "periods", b })}>Interdições</DropdownMenuItem>
                             <DropdownMenuItem className="min-h-11 text-destructive" onSelect={() => setDlg({ kind: "delete", b })}>Excluir</DropdownMenuItem>
                           </DropdownMenuContent>
