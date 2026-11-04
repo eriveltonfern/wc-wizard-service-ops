@@ -10,33 +10,190 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppRouteImport } from './routes/_app'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as AppBuscarRouteImport } from './routes/_app.buscar'
+import { Route as AppChamadosRouteImport } from './routes/_app.chamados'
+import { Route as AppConferenciaRouteImport } from './routes/_app.conferencia'
+import { Route as AppContratosRouteImport } from './routes/_app.contratos'
+import { Route as AppEmpresasRouteImport } from './routes/_app.empresas'
+import { Route as AppEtiquetasRouteImport } from './routes/_app.etiquetas'
+import { Route as AppHojeRouteImport } from './routes/_app.hoje'
+import { Route as AppLerQrRouteImport } from './routes/_app.ler-qr'
+import { Route as AppMinhasLimpezasRouteImport } from './routes/_app.minhas-limpezas'
+import { Route as AppPainelRouteImport } from './routes/_app.painel'
+import { Route as AppPessoasRouteImport } from './routes/_app.pessoas'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppBuscarRoute = AppBuscarRouteImport.update({
+  id: '/buscar',
+  path: '/buscar',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppChamadosRoute = AppChamadosRouteImport.update({
+  id: '/chamados',
+  path: '/chamados',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppConferenciaRoute = AppConferenciaRouteImport.update({
+  id: '/conferencia',
+  path: '/conferencia',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppContratosRoute = AppContratosRouteImport.update({
+  id: '/contratos',
+  path: '/contratos',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppEmpresasRoute = AppEmpresasRouteImport.update({
+  id: '/empresas',
+  path: '/empresas',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppEtiquetasRoute = AppEtiquetasRouteImport.update({
+  id: '/etiquetas',
+  path: '/etiquetas',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHojeRoute = AppHojeRouteImport.update({
+  id: '/hoje',
+  path: '/hoje',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppLerQrRoute = AppLerQrRouteImport.update({
+  id: '/ler-qr',
+  path: '/ler-qr',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMinhasLimpezasRoute = AppMinhasLimpezasRouteImport.update({
+  id: '/minhas-limpezas',
+  path: '/minhas-limpezas',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPainelRoute = AppPainelRouteImport.update({
+  id: '/painel',
+  path: '/painel',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPessoasRoute = AppPessoasRouteImport.update({
+  id: '/pessoas',
+  path: '/pessoas',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/buscar': typeof AppBuscarRoute
+  '/chamados': typeof AppChamadosRoute
+  '/conferencia': typeof AppConferenciaRoute
+  '/contratos': typeof AppContratosRoute
+  '/empresas': typeof AppEmpresasRoute
+  '/etiquetas': typeof AppEtiquetasRoute
+  '/hoje': typeof AppHojeRoute
+  '/ler-qr': typeof AppLerQrRoute
+  '/minhas-limpezas': typeof AppMinhasLimpezasRoute
+  '/painel': typeof AppPainelRoute
+  '/pessoas': typeof AppPessoasRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/buscar': typeof AppBuscarRoute
+  '/chamados': typeof AppChamadosRoute
+  '/conferencia': typeof AppConferenciaRoute
+  '/contratos': typeof AppContratosRoute
+  '/empresas': typeof AppEmpresasRoute
+  '/etiquetas': typeof AppEtiquetasRoute
+  '/hoje': typeof AppHojeRoute
+  '/ler-qr': typeof AppLerQrRoute
+  '/minhas-limpezas': typeof AppMinhasLimpezasRoute
+  '/painel': typeof AppPainelRoute
+  '/pessoas': typeof AppPessoasRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_app': typeof AppRouteWithChildren
+  '/login': typeof LoginRoute
+  '/_app/buscar': typeof AppBuscarRoute
+  '/_app/chamados': typeof AppChamadosRoute
+  '/_app/conferencia': typeof AppConferenciaRoute
+  '/_app/contratos': typeof AppContratosRoute
+  '/_app/empresas': typeof AppEmpresasRoute
+  '/_app/etiquetas': typeof AppEtiquetasRoute
+  '/_app/hoje': typeof AppHojeRoute
+  '/_app/ler-qr': typeof AppLerQrRoute
+  '/_app/minhas-limpezas': typeof AppMinhasLimpezasRoute
+  '/_app/painel': typeof AppPainelRoute
+  '/_app/pessoas': typeof AppPessoasRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/buscar'
+    | '/chamados'
+    | '/conferencia'
+    | '/contratos'
+    | '/empresas'
+    | '/etiquetas'
+    | '/hoje'
+    | '/ler-qr'
+    | '/minhas-limpezas'
+    | '/painel'
+    | '/pessoas'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/login'
+    | '/buscar'
+    | '/chamados'
+    | '/conferencia'
+    | '/contratos'
+    | '/empresas'
+    | '/etiquetas'
+    | '/hoje'
+    | '/ler-qr'
+    | '/minhas-limpezas'
+    | '/painel'
+    | '/pessoas'
+  id:
+    | '__root__'
+    | '/'
+    | '/_app'
+    | '/login'
+    | '/_app/buscar'
+    | '/_app/chamados'
+    | '/_app/conferencia'
+    | '/_app/contratos'
+    | '/_app/empresas'
+    | '/_app/etiquetas'
+    | '/_app/hoje'
+    | '/_app/ler-qr'
+    | '/_app/minhas-limpezas'
+    | '/_app/painel'
+    | '/_app/pessoas'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
+  LoginRoute: typeof LoginRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +205,134 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app/buscar': {
+      id: '/_app/buscar'
+      path: '/buscar'
+      fullPath: '/buscar'
+      preLoaderRoute: typeof AppBuscarRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/chamados': {
+      id: '/_app/chamados'
+      path: '/chamados'
+      fullPath: '/chamados'
+      preLoaderRoute: typeof AppChamadosRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/conferencia': {
+      id: '/_app/conferencia'
+      path: '/conferencia'
+      fullPath: '/conferencia'
+      preLoaderRoute: typeof AppConferenciaRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/contratos': {
+      id: '/_app/contratos'
+      path: '/contratos'
+      fullPath: '/contratos'
+      preLoaderRoute: typeof AppContratosRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/empresas': {
+      id: '/_app/empresas'
+      path: '/empresas'
+      fullPath: '/empresas'
+      preLoaderRoute: typeof AppEmpresasRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/etiquetas': {
+      id: '/_app/etiquetas'
+      path: '/etiquetas'
+      fullPath: '/etiquetas'
+      preLoaderRoute: typeof AppEtiquetasRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/hoje': {
+      id: '/_app/hoje'
+      path: '/hoje'
+      fullPath: '/hoje'
+      preLoaderRoute: typeof AppHojeRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/ler-qr': {
+      id: '/_app/ler-qr'
+      path: '/ler-qr'
+      fullPath: '/ler-qr'
+      preLoaderRoute: typeof AppLerQrRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/minhas-limpezas': {
+      id: '/_app/minhas-limpezas'
+      path: '/minhas-limpezas'
+      fullPath: '/minhas-limpezas'
+      preLoaderRoute: typeof AppMinhasLimpezasRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/painel': {
+      id: '/_app/painel'
+      path: '/painel'
+      fullPath: '/painel'
+      preLoaderRoute: typeof AppPainelRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/pessoas': {
+      id: '/_app/pessoas'
+      path: '/pessoas'
+      fullPath: '/pessoas'
+      preLoaderRoute: typeof AppPessoasRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
+interface AppRouteChildren {
+  AppBuscarRoute: typeof AppBuscarRoute
+  AppChamadosRoute: typeof AppChamadosRoute
+  AppConferenciaRoute: typeof AppConferenciaRoute
+  AppContratosRoute: typeof AppContratosRoute
+  AppEmpresasRoute: typeof AppEmpresasRoute
+  AppEtiquetasRoute: typeof AppEtiquetasRoute
+  AppHojeRoute: typeof AppHojeRoute
+  AppLerQrRoute: typeof AppLerQrRoute
+  AppMinhasLimpezasRoute: typeof AppMinhasLimpezasRoute
+  AppPainelRoute: typeof AppPainelRoute
+  AppPessoasRoute: typeof AppPessoasRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppBuscarRoute: AppBuscarRoute,
+  AppChamadosRoute: AppChamadosRoute,
+  AppConferenciaRoute: AppConferenciaRoute,
+  AppContratosRoute: AppContratosRoute,
+  AppEmpresasRoute: AppEmpresasRoute,
+  AppEtiquetasRoute: AppEtiquetasRoute,
+  AppHojeRoute: AppHojeRoute,
+  AppLerQrRoute: AppLerQrRoute,
+  AppMinhasLimpezasRoute: AppMinhasLimpezasRoute,
+  AppPainelRoute: AppPainelRoute,
+  AppPessoasRoute: AppPessoasRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
+  LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
