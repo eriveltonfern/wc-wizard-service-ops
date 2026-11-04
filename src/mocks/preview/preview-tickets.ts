@@ -4,6 +4,7 @@ import {
   type PvTicket, type TicketCategory, type TicketPriority,
   addDays, iso, loadPreview, opDate, photoSvg, savePreview,
 } from "./preview-data";
+import { isClosed } from "./preview-reports";
 import { type Body, type Res, cleaningContracts, cleaningView, err, fingerprint, num, ok, scope } from "./preview-handlers";
 
 const CATEGORIES: TicketCategory[] = ["hidraulica", "eletrica", "estrutura", "abastecimento", "outros"];
