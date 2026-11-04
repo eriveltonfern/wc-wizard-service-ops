@@ -22,6 +22,10 @@ import { Route as AppMinhasLimpezasRouteImport } from './routes/_app.minhas-limp
 import { Route as AppPainelRouteImport } from './routes/_app.painel'
 import { Route as AppContratosIndexRouteImport } from './routes/_app.contratos.index'
 import { Route as AppContratosIdRouteImport } from './routes/_app.contratos.$id'
+import { Route as AppEmpresasIndexRouteImport } from './routes/_app.empresas.index'
+import { Route as AppEmpresasIdRouteImport } from './routes/_app.empresas.$id'
+import { Route as AppPessoasIndexRouteImport } from './routes/_app.pessoas.index'
+import { Route as AppPessoasIdRouteImport } from './routes/_app.pessoas.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -87,6 +91,26 @@ const AppContratosIdRoute = AppContratosIdRouteImport.update({
   path: '/contratos/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppEmpresasIndexRoute = AppEmpresasIndexRouteImport.update({
+  id: '/empresas/',
+  path: '/empresas/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppEmpresasIdRoute = AppEmpresasIdRouteImport.update({
+  id: '/empresas/$id',
+  path: '/empresas/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPessoasIndexRoute = AppPessoasIndexRouteImport.update({
+  id: '/pessoas/',
+  path: '/pessoas/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPessoasIdRoute = AppPessoasIdRouteImport.update({
+  id: '/pessoas/$id',
+  path: '/pessoas/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -100,7 +124,11 @@ export interface FileRoutesByFullPath {
   '/minhas-limpezas': typeof AppMinhasLimpezasRoute
   '/painel': typeof AppPainelRoute
   '/contratos/$id': typeof AppContratosIdRoute
+  '/empresas/$id': typeof AppEmpresasIdRoute
+  '/pessoas/$id': typeof AppPessoasIdRoute
   '/contratos/': typeof AppContratosIndexRoute
+  '/empresas/': typeof AppEmpresasIndexRoute
+  '/pessoas/': typeof AppPessoasIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -114,7 +142,11 @@ export interface FileRoutesByTo {
   '/minhas-limpezas': typeof AppMinhasLimpezasRoute
   '/painel': typeof AppPainelRoute
   '/contratos/$id': typeof AppContratosIdRoute
+  '/empresas/$id': typeof AppEmpresasIdRoute
+  '/pessoas/$id': typeof AppPessoasIdRoute
   '/contratos': typeof AppContratosIndexRoute
+  '/empresas': typeof AppEmpresasIndexRoute
+  '/pessoas': typeof AppPessoasIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -130,7 +162,11 @@ export interface FileRoutesById {
   '/_app/minhas-limpezas': typeof AppMinhasLimpezasRoute
   '/_app/painel': typeof AppPainelRoute
   '/_app/contratos/$id': typeof AppContratosIdRoute
+  '/_app/empresas/$id': typeof AppEmpresasIdRoute
+  '/_app/pessoas/$id': typeof AppPessoasIdRoute
   '/_app/contratos/': typeof AppContratosIndexRoute
+  '/_app/empresas/': typeof AppEmpresasIndexRoute
+  '/_app/pessoas/': typeof AppPessoasIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -146,7 +182,11 @@ export interface FileRouteTypes {
     | '/minhas-limpezas'
     | '/painel'
     | '/contratos/$id'
+    | '/empresas/$id'
+    | '/pessoas/$id'
     | '/contratos/'
+    | '/empresas/'
+    | '/pessoas/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -160,7 +200,11 @@ export interface FileRouteTypes {
     | '/minhas-limpezas'
     | '/painel'
     | '/contratos/$id'
+    | '/empresas/$id'
+    | '/pessoas/$id'
     | '/contratos'
+    | '/empresas'
+    | '/pessoas'
   id:
     | '__root__'
     | '/'
@@ -175,7 +219,11 @@ export interface FileRouteTypes {
     | '/_app/minhas-limpezas'
     | '/_app/painel'
     | '/_app/contratos/$id'
+    | '/_app/empresas/$id'
+    | '/_app/pessoas/$id'
     | '/_app/contratos/'
+    | '/_app/empresas/'
+    | '/_app/pessoas/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -277,6 +325,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppContratosIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/empresas/': {
+      id: '/_app/empresas/'
+      path: '/empresas'
+      fullPath: '/empresas/'
+      preLoaderRoute: typeof AppEmpresasIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/empresas/$id': {
+      id: '/_app/empresas/$id'
+      path: '/empresas/$id'
+      fullPath: '/empresas/$id'
+      preLoaderRoute: typeof AppEmpresasIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/pessoas/': {
+      id: '/_app/pessoas/'
+      path: '/pessoas'
+      fullPath: '/pessoas/'
+      preLoaderRoute: typeof AppPessoasIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/pessoas/$id': {
+      id: '/_app/pessoas/$id'
+      path: '/pessoas/$id'
+      fullPath: '/pessoas/$id'
+      preLoaderRoute: typeof AppPessoasIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -290,7 +366,11 @@ interface AppRouteChildren {
   AppMinhasLimpezasRoute: typeof AppMinhasLimpezasRoute
   AppPainelRoute: typeof AppPainelRoute
   AppContratosIdRoute: typeof AppContratosIdRoute
+  AppEmpresasIdRoute: typeof AppEmpresasIdRoute
+  AppPessoasIdRoute: typeof AppPessoasIdRoute
   AppContratosIndexRoute: typeof AppContratosIndexRoute
+  AppEmpresasIndexRoute: typeof AppEmpresasIndexRoute
+  AppPessoasIndexRoute: typeof AppPessoasIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -303,7 +383,11 @@ const AppRouteChildren: AppRouteChildren = {
   AppMinhasLimpezasRoute: AppMinhasLimpezasRoute,
   AppPainelRoute: AppPainelRoute,
   AppContratosIdRoute: AppContratosIdRoute,
+  AppEmpresasIdRoute: AppEmpresasIdRoute,
+  AppPessoasIdRoute: AppPessoasIdRoute,
   AppContratosIndexRoute: AppContratosIndexRoute,
+  AppEmpresasIndexRoute: AppEmpresasIndexRoute,
+  AppPessoasIndexRoute: AppPessoasIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
