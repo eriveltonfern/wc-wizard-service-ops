@@ -174,7 +174,6 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
-    font-feature-settings: "tnum" 0;
   }
   .tabular, td, th { font-variant-numeric: tabular-nums; }
 }
