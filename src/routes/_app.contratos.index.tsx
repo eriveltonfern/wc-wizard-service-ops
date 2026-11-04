@@ -22,6 +22,8 @@ export const Route = createFileRoute("/_app/contratos/")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  validateSearch: (s: Record<string, unknown>): { status?: string } =>
+    typeof s["status"] === "string" && s["status"] ? { status: s["status"] } : {},
   component: ContractsPage,
 });
 
@@ -30,7 +32,8 @@ function ContractsPage() {
   const isAdmin = isAdminRole(me.role);
   const navigate = useNavigate();
   const [q, setQ] = useState("");
-  const [status, setStatus] = useState("");
+  const search = Route.useSearch();
+  const [status, setStatus] = useState(search.status ?? "");
   const [creating, setCreating] = useState(false);
   const query = useQuery({ queryKey: ["contracts", { status }], queryFn: () => listContracts(status ? { status } : undefined) });
 
