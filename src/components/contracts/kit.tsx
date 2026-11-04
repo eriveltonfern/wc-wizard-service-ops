@@ -3,7 +3,8 @@ import { useState, type ReactNode, type SelectHTMLAttributes } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { AlertTriangle, Loader2, RefreshCw } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { EmptyState, ErrorState, SkeletonBlock } from "@/components/ui-kit";
 import { ApiError } from "@/lib/api";
 import { missingLabel, statusLabel, WEEKDAY_SHORT, todayIso } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -51,7 +52,7 @@ export function Field({ label, id, error, hint, children }: { label: string; id:
 export function NativeSelect({ className, children, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select {...props}
-      className={cn("flex h-11 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50", className)}>
+      className={cn("flex h-11 w-full rounded-md border border-input bg-card px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50", className)}>
       {children}
     </select>
   );
@@ -61,7 +62,7 @@ export function NativeSelect({ className, children, ...props }: SelectHTMLAttrib
 export function FormError({ error }: { error: ApiError | null }) {
   if (!error) return null;
   return (
-    <div role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">
+    <div role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm font-medium text-danger">
       <p>{error.message}</p>
       {error.missing && error.missing.length > 0 && (
         <ul className="mt-1 list-disc pl-5 font-normal">{error.missing.map((m) => <li key={m}>{missingLabel[m] ?? m}</li>)}</ul>
@@ -75,36 +76,16 @@ export function FormError({ error }: { error: ApiError | null }) {
   );
 }
 
-const badgeTone: Record<string, string> = {
-  active: "bg-primary/10 text-primary border-primary/30",
-  draft: "bg-secondary text-secondary-foreground border-border",
-  suspended: "bg-warning/20 text-warning-foreground border-warning/50",
-  ended: "bg-muted text-muted-foreground border-border",
-  inactive: "bg-muted text-muted-foreground border-border",
-};
-export function StatusBadge({ status }: { status: string }) {
-  return <span className={cn("inline-flex items-center whitespace-nowrap rounded-full border px-2.5 py-0.5 text-xs font-semibold", badgeTone[status] ?? badgeTone["draft"])}>{statusLabel(status)}</span>;
-}
-
+// Visual vem do ui-kit (padrão de layout).
+export { StatusBadge } from "@/components/ui-kit";
 export function LoadingBlock({ label = "Carregando…" }: { label?: string }) {
-  return <div className="flex items-center justify-center gap-2 rounded-xl border bg-card py-12 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />{label}</div>;
+  return <SkeletonBlock label={label} />;
 }
 export function ErrorBlock({ message, onRetry }: { message: string; onRetry?: (() => void) | undefined }) {
-  return (
-    <div role="alert" className="flex flex-col items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/5 px-6 py-10 text-center">
-      <AlertTriangle className="h-6 w-6 text-destructive" />
-      <p className="text-sm font-medium text-foreground">{message}</p>
-      {onRetry && <Button variant="outline" className="min-h-11" onClick={onRetry}><RefreshCw className="h-4 w-4" />Tentar de novo</Button>}
-    </div>
-  );
+  return <ErrorState message={message} onRetry={onRetry} />;
 }
 export function EmptyBlock({ title, children }: { title: string; children?: ReactNode }) {
-  return (
-    <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed bg-card px-6 py-12 text-center">
-      <p className="font-medium text-foreground">{title}</p>
-      {children}
-    </div>
-  );
+  return <EmptyState title={title}>{children}</EmptyState>;
 }
 
 export function PendingButton({ pending, children, ...props }: React.ComponentProps<typeof Button> & { pending?: boolean | undefined }) {
@@ -175,7 +156,7 @@ export function ConfirmDialog({ open, onOpenChange, title, description, submitLa
 
 export function HistoryNotice({ children }: { children: ReactNode }) {
   return (
-    <div role="alert" className="space-y-3 rounded-md border border-warning/50 bg-warning/15 p-3 text-sm text-foreground">
+    <div role="alert" className="space-y-3 rounded-md border border-pending/30 bg-pending-soft p-3 text-sm text-foreground">
       <p className="font-medium">Este cadastro tem histórico. Você pode inativá-lo.</p>
       <div className="flex flex-wrap gap-2">{children}</div>
     </div>
@@ -191,7 +172,7 @@ export function WeekdayChips({ value, onChange, disabled, id }: { value: number[
           <button key={d} type="button" disabled={disabled} aria-pressed={on}
             onClick={() => onChange(on ? value.filter((x) => x !== d) : [...value, d].sort((a, b) => a - b))}
             className={cn("min-h-11 min-w-12 rounded-full border px-3 text-sm font-medium transition-colors disabled:opacity-60",
-              on ? "border-primary bg-primary text-primary-foreground" : "border-input bg-background text-foreground hover:bg-secondary")}>
+              on ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground hover:bg-secondary")}>
             {WEEKDAY_SHORT[d]}
           </button>
         );

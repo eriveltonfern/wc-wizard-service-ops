@@ -100,7 +100,7 @@ function BathroomsPage() {
             : <EmptyBlock title="Nenhum banheiro cadastrado ainda.">{canManage && <Button className="min-h-11" onClick={() => setCreating(true)}><Plus className="h-4 w-4" />Novo banheiro</Button>}</EmptyBlock>
         ) : (
           <>
-            {total > limit && <p role="status" className="rounded-md border border-warning/50 bg-warning/15 px-3 py-2 text-sm font-medium text-foreground">Mostrando {limit} de {total}. Refine a busca.</p>}
+            {total > limit && <p role="status" className="rounded-md border border-pending/30 bg-pending-soft px-3 py-2 text-sm font-medium text-foreground">Mostrando {limit} de {total}. Refine a busca.</p>}
             <div className="hidden overflow-x-auto rounded-xl border bg-card md:block">
               <table className="w-full text-sm">
                 <thead className="border-b bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
