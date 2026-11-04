@@ -33,7 +33,7 @@ export function RulesTab({ contract: c, ctx }: { contract: ContractDetail; ctx: 
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
-      <form className="space-y-5 rounded-xl border bg-card p-5" onSubmit={(ev) => { ev.preventDefault(); void save.run(); }}>
+      <form className="space-y-5 rounded-[10px] border bg-card p-5" onSubmit={(ev) => { ev.preventDefault(); void save.run(); }}>
         <h2 className="text-lg font-semibold text-foreground">Regras do contrato</h2>
         <Field label="Foto antes da limpeza" id="photo_before" error={e["photo_before"]}>
           <Options id="photo_before" value={r.photo_before} options={photoRuleLabel as Record<PhotoRule, string>} disabled={ro} onChange={(v) => setR({ ...r, photo_before: v })} />
@@ -97,7 +97,7 @@ function ChecklistSection({ contract: c, readOnly }: { contract: ContractDetail;
   const busy = move.pending || edit.pending;
 
   return (
-    <section className="space-y-4 rounded-xl border bg-card p-5">
+    <section className="space-y-4 rounded-[10px] border bg-card p-5">
       <h2 className="text-lg font-semibold text-foreground">Checklist da limpeza</h2>
       {items.length === 0 ? <p className="text-sm text-muted-foreground">Nenhum item no checklist.</p> : (
         <ol className="divide-y rounded-md border">
@@ -112,7 +112,7 @@ function ChecklistSection({ contract: c, readOnly }: { contract: ContractDetail;
                   <Button size="icon" variant="ghost" className="h-11 w-11" aria-label={`Descer ${it.label}`} disabled={i === items.length - 1 || busy} onClick={() => void move.run(i, i + 1)}><ArrowDown className="h-4 w-4" /></Button>
                   <Button size="icon" variant="ghost" className="h-11 w-11" aria-label={`Editar ${it.label}`} onClick={() => { edit.reset(); setEditLabel(it.label); setEditing(it); }}><Pencil className="h-4 w-4" /></Button>
                   <Button variant="ghost" className="min-h-11" disabled={busy} onClick={() => void edit.run(it, { active: !it.active })}>{it.active ? "Desativar" : "Ativar"}</Button>
-                  <Button size="icon" variant="ghost" className="h-11 w-11 text-destructive" aria-label={`Remover ${it.label}`} onClick={() => { remove.reset(); setRemoving(it); }}><Trash2 className="h-4 w-4" /></Button>
+                  <Button size="icon" variant="ghost" className="h-11 w-11 text-danger" aria-label={`Remover ${it.label}`} onClick={() => { remove.reset(); setRemoving(it); }}><Trash2 className="h-4 w-4" /></Button>
                 </div>
               )}
             </li>
@@ -124,7 +124,7 @@ function ChecklistSection({ contract: c, readOnly }: { contract: ContractDetail;
         <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); void add.run(); }}>
           <div className="flex-1">
             <Input aria-label="Novo item do checklist" placeholder="Novo item do checklist" className="h-11" value={label} onChange={(e) => setLabel(e.target.value)} />
-            {add.fields["label"] && <p className="mt-1 text-sm font-medium text-destructive">{add.fields["label"]}</p>}
+            {add.fields["label"] && <p className="mt-1 text-sm font-medium text-danger">{add.fields["label"]}</p>}
           </div>
           <PendingButton type="submit" pending={add.pending}><Plus className="h-4 w-4" />Adicionar</PendingButton>
         </form>

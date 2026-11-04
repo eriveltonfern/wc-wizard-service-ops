@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { PageHelp, PageHeader } from "@/components/layout/PageHeader";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Plus, Search } from "lucide-react";
@@ -21,6 +22,8 @@ export const Route = createFileRoute("/_app/contratos/")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  validateSearch: (s: Record<string, unknown>): { status?: string } =>
+    typeof s["status"] === "string" && s["status"] ? { status: s["status"] } : {},
   component: ContractsPage,
 });
 
@@ -29,7 +32,8 @@ function ContractsPage() {
   const isAdmin = isAdminRole(me.role);
   const navigate = useNavigate();
   const [q, setQ] = useState("");
-  const [status, setStatus] = useState("");
+  const search = Route.useSearch();
+  const [status, setStatus] = useState(search.status ?? "");
   const [creating, setCreating] = useState(false);
   const query = useQuery({ queryKey: ["contracts", { status }], queryFn: () => listContracts(status ? { status } : undefined) });
 
@@ -43,14 +47,9 @@ function ContractsPage() {
   );
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">Contratos</h1>
-          <p className="mt-1 text-muted-foreground">Contratos de limpeza e manutenção, com banheiros e equipes.</p>
-        </div>
-        {createButton}
-      </div>
+    <div className="space-y-6">
+      <PageHelp>Aqui ficam todos os contratos que você pode ver. Use a busca para achar pelo código, nome ou empresa e o filtro para ver só rascunhos, ativos, suspensos ou encerrados. Clique numa linha para abrir o contrato.</PageHelp>
+      <PageHeader title="Contratos" subtitle="Contratos de limpeza e manutenção, com banheiros e equipes." actions={createButton} />
 
       <div className="flex flex-col gap-3 sm:flex-row">
         <div className="relative flex-1">
@@ -69,7 +68,7 @@ function ContractsPage() {
         : (query.data?.length ?? 0) === 0 && !status ? <EmptyBlock title="Nenhum contrato ainda.">{createButton}</EmptyBlock>
         : rows.length === 0 ? <EmptyBlock title="Nenhum contrato encontrado com esses filtros." />
         : (
-          <ul className="divide-y overflow-hidden rounded-xl border bg-card">
+          <ul className="divide-y overflow-hidden rounded-[10px] border bg-card">
             {rows.map((c) => (
               <li key={c.id}>
                 <Link to="/contratos/$id" params={{ id: String(c.id) }}

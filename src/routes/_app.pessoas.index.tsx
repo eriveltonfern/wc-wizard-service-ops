@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { PageHelp, PageHeader } from "@/components/layout/PageHeader";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Plus, Search } from "lucide-react";
@@ -60,14 +61,9 @@ function PeoplePage() {
   const createBtn = roles.length > 0 && <Button className="min-h-11" onClick={() => setCreating(true)}><Plus className="h-4 w-4" />Nova pessoa</Button>;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">Pessoas</h1>
-          <p className="mt-1 text-muted-foreground">Diretoria, gestores, fiscais e equipes de campo.</p>
-        </div>
-        {createBtn}
-      </div>
+    <div className="space-y-6">
+      <PageHelp>Todas as pessoas com acesso ao sistema. Busque pelo nome ou e-mail, filtre por perfil e situação e clique numa pessoa para ver equipes e linha do tempo.</PageHelp>
+      <PageHeader title="Pessoas" subtitle="Diretoria, gestores, fiscais e equipes de campo." actions={createBtn} />
       <div className="flex flex-col gap-3 sm:flex-row">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -86,7 +82,7 @@ function PeoplePage() {
         : query.isError ? <ErrorBlock message="Não foi possível carregar as pessoas." onRetry={() => void query.refetch()} />
         : !rows.length ? <EmptyBlock title={q || role || status ? "Ninguém encontrado com esses filtros." : "Nenhuma pessoa cadastrada."}>{!q && !role && !status && createBtn}</EmptyBlock>
         : (
-          <ul className="divide-y overflow-hidden rounded-xl border bg-card">
+          <ul className="divide-y overflow-hidden rounded-[10px] border bg-card">
             {rows.map((u) => {
               const t = teams.data?.get(u.id) ?? [];
               return (

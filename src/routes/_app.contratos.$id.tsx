@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { PageHelp } from "@/components/layout/PageHeader";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { getContract } from "@/lib/endpoints";
@@ -49,11 +50,11 @@ function ContractPage() {
     </Link>
   );
 
-  if (q.isLoading) return <div className="mx-auto max-w-6xl space-y-4">{back}<LoadingBlock label="Carregando contrato…" /></div>;
+  if (q.isLoading) return <div className="space-y-4">{back}<LoadingBlock label="Carregando contrato…" /></div>;
   if (q.isError || !q.data) {
     const nf = q.error instanceof ApiError && q.error.status === 404;
     return (
-      <div className="mx-auto max-w-6xl space-y-4">
+      <div className="space-y-4">
         {back}
         <ErrorBlock message={nf ? "Contrato não encontrado." : "Não foi possível carregar o contrato."} onRetry={nf ? undefined : () => void q.refetch()} />
       </div>
@@ -62,14 +63,15 @@ function ContractPage() {
   const c = q.data;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="space-y-6">
       {back}
-      <header className="rounded-xl border bg-card p-5">
+      <PageHelp>Use as abas para ver a visão geral, os banheiros, as equipes e as regras do contrato. Um rascunho só pode ser ativado quando todas as pendências estiverem resolvidas.</PageHelp>
+      <header className="rounded-[10px] border bg-card p-5">
         <div className="flex flex-wrap items-center gap-2">
           <span className="font-mono text-sm font-semibold text-muted-foreground">{c.code}</span>
           <StatusBadge status={c.status} />
         </div>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight text-foreground">{c.name}</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight text-ink">{c.name}</h1>
         <dl className="mt-3 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-3">
           <div><dt className="text-muted-foreground">Empresa</dt><dd className="font-medium text-foreground">{c.company.name}</dd></div>
           <div><dt className="text-muted-foreground">Gestor</dt><dd className="font-medium text-foreground">{c.manager?.name ?? "Não definido"}</dd></div>

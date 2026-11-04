@@ -1,7 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import {
   LayoutDashboard, FileText, Building2, Users, Wrench, ClipboardCheck, QrCode,
-  CalendarCheck, Search, Toilet, ScanLine, ListChecks, type LucideIcon,
+  CalendarCheck, Search, Toilet, ScanLine, ListChecks, HelpCircle, type LucideIcon,
 } from "lucide-react";
 import { getMe } from "./endpoints";
 import type { Role } from "./types";
@@ -38,15 +38,34 @@ const I = {
   buscar: { title: "Buscar banheiro", to: "/buscar", icon: Search },
   lerQr: { title: "Ler QR", to: "/ler-qr", icon: ScanLine },
   minhas: { title: "Minhas limpezas", to: "/minhas-limpezas", icon: ListChecks },
+  ajuda: { title: "Ajuda", to: "/ajuda", icon: HelpCircle },
 } satisfies Record<string, NavItem>;
 
-export const navByRole: Record<Role, NavItem[]> = {
-  admin: [I.painel, I.contratos, I.banheiros, I.empresas, I.pessoas, I.chamados, I.conferencia, I.etiquetas],
-  gestor: [I.painel, I.contratos, I.banheiros, I.pessoas, I.chamados, I.conferencia, I.etiquetas],
-  fiscal: [I.contratos, I.banheiros],
-  limpeza: [I.hoje, I.buscar, I.lerQr, I.minhas],
-  manutencao: [I.chamados],
+export type NavGroup = { label: string; items: NavItem[] };
+
+/** Menu agrupado por perfil (DIA A DIA, GESTÃO, AJUSTES). Também define o acesso às rotas. */
+export const navGroupsByRole: Record<Role, NavGroup[]> = {
+  admin: [
+    { label: "Dia a dia", items: [I.painel] },
+    { label: "Gestão", items: [I.contratos, I.banheiros, I.empresas, I.pessoas, I.etiquetas] },
+    { label: "Ajustes", items: [I.ajuda] },
+  ],
+  gestor: [
+    { label: "Dia a dia", items: [I.painel] },
+    { label: "Gestão", items: [I.contratos, I.banheiros, I.pessoas, I.etiquetas] },
+    { label: "Ajustes", items: [I.ajuda] },
+  ],
+  fiscal: [
+    { label: "Gestão", items: [I.contratos, I.banheiros] },
+    { label: "Ajustes", items: [I.ajuda] },
+  ],
+  limpeza: [{ label: "Dia a dia", items: [I.hoje, I.buscar, I.lerQr, I.minhas] }],
+  manutencao: [{ label: "Dia a dia", items: [I.chamados] }],
 };
+
+export const navByRole: Record<Role, NavItem[]> = Object.fromEntries(
+  Object.entries(navGroupsByRole).map(([r, groups]) => [r, groups.flatMap((g) => g.items)]),
+) as Record<Role, NavItem[]>;
 
 // Quais botões de contrato aparecem para cada perfil (a API continua sendo quem decide).
 export const canManageContracts = (r: Role) => r === "admin" || r === "gestor";

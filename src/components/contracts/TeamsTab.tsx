@@ -72,7 +72,7 @@ function TeamCard({ team: t, teams, ctx, onEdit }: { team: Team; teams: Team[]; 
   const exMembers = past.data?.filter((m) => m.ends_on && m.ends_on <= todayIso()) ?? [];
 
   return (
-    <article className="flex flex-col rounded-xl border bg-card p-5">
+    <article className="flex flex-col rounded-[10px] border bg-card p-5">
       <div className="flex items-start justify-between gap-2">
         <div>
           <h3 className="font-semibold text-foreground">{t.name}</h3>
@@ -86,7 +86,7 @@ function TeamCard({ team: t, teams, ctx, onEdit }: { team: Team; teams: Team[]; 
               <DropdownMenuContent align="end">
                 <DropdownMenuItem className="min-h-11" onSelect={onEdit}>Editar</DropdownMenuItem>
                 <DropdownMenuItem className="min-h-11" onSelect={() => void toggle.run(t.status === "active" ? "inactive" : "active")}>{t.status === "active" ? "Inativar" : "Reativar"}</DropdownMenuItem>
-                <DropdownMenuItem className="min-h-11 text-destructive" onSelect={() => { del.reset(); setDeleting(true); }}>Excluir</DropdownMenuItem>
+                <DropdownMenuItem className="min-h-11 text-danger" onSelect={() => { del.reset(); setDeleting(true); }}>Excluir</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           )}
@@ -102,7 +102,7 @@ function TeamCard({ team: t, teams, ctx, onEdit }: { team: Team; teams: Team[]; 
               {ctx.canManage && (
                 <div className="flex gap-1">
                   <Button variant="ghost" className="min-h-11" onClick={() => setMoveM(m)}>Trocar de equipe</Button>
-                  <Button variant="ghost" className="min-h-11 text-destructive" onClick={() => setRemoveM(m)}>Tirar da equipe</Button>
+                  <Button variant="ghost" className="min-h-11 text-danger" onClick={() => setRemoveM(m)}>Tirar da equipe</Button>
                 </div>
               )}
             </li>

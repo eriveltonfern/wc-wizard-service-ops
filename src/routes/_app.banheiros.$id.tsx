@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { PageHelp } from "@/components/layout/PageHeader";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { ArrowLeft, Printer, Trash2 } from "lucide-react";
@@ -39,21 +40,22 @@ function BathroomPage() {
   const toggle = useAction(() => (q.data!.status === "active" ? inactivateBathroom : reactivateBathroom)(bid), { success: "Situação do banheiro atualizada." });
 
   const back = <Link to="/banheiros" className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-primary hover:underline"><ArrowLeft className="h-4 w-4" />Voltar para banheiros</Link>;
-  if (q.isLoading) return <div className="mx-auto max-w-5xl space-y-4">{back}<LoadingBlock label="Carregando banheiro…" /></div>;
+  if (q.isLoading) return <div className="space-y-4">{back}<LoadingBlock label="Carregando banheiro…" /></div>;
   if (q.isError || !q.data) {
     const nf = q.error instanceof ApiError && q.error.status === 404;
-    return <div className="mx-auto max-w-5xl space-y-4">{back}<ErrorBlock message={nf ? "Banheiro não encontrado." : "Não foi possível carregar o banheiro."} onRetry={nf ? undefined : () => void q.refetch()} /></div>;
+    return <div className="space-y-4">{back}<ErrorBlock message={nf ? "Banheiro não encontrado." : "Não foi possível carregar o banheiro."} onRetry={nf ? undefined : () => void q.refetch()} /></div>;
   }
   const b = q.data;
   const url = `https://wccheck.com.br/q/${b.qr_token}`;
   const close = () => setDlg(null);
 
   return (
-    <div className="mx-auto max-w-5xl space-y-5">
+    <div className="space-y-5">
       {back}
-      <header className="rounded-xl border bg-card p-5">
+      <PageHelp>Dados do banheiro, QR atual e interdições. Gerar novo QR faz a etiqueta antiga parar de funcionar.</PageHelp>
+      <header className="rounded-[10px] border bg-card p-5">
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-bold text-foreground">{b.name}</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-ink">{b.name}</h1>
           <StatusBadge status={b.status} />
         </div>
         <p className="mt-1 text-muted-foreground">
@@ -66,14 +68,14 @@ function BathroomPage() {
             <Button variant="outline" className="min-h-11" onClick={() => setDlg("qr")}>Gerar novo QR</Button>
             <Button variant="outline" className="min-h-11" onClick={() => setDlg("periods")}>Interdições</Button>
             {b.status === "active" && <Button asChild variant="outline" className="min-h-11"><Link to="/etiquetas" search={{ contrato: b.contract_id, banheiro: b.id }}><Printer className="h-4 w-4" />Imprimir etiqueta</Link></Button>}
-            <Button variant="outline" className="min-h-11 text-destructive" onClick={() => setDlg("delete")}><Trash2 className="h-4 w-4" />Excluir</Button>
+            <Button variant="outline" className="min-h-11 text-danger" onClick={() => setDlg("delete")}><Trash2 className="h-4 w-4" />Excluir</Button>
           </div>
         )}
         <div className="mt-3"><FormError error={toggle.error} /></div>
       </header>
 
       <div className="grid gap-5 md:grid-cols-[1fr_auto]">
-        <section className="rounded-xl border bg-card p-5">
+        <section className="rounded-[10px] border bg-card p-5">
           <h2 className="text-lg font-semibold text-foreground">Dados</h2>
           <dl className="mt-3 grid gap-3 sm:grid-cols-2">
             <Item k="Local" v={b.location?.name ?? "—"} />
@@ -83,14 +85,14 @@ function BathroomPage() {
             {b.notes && <div className="sm:col-span-2"><Item k="Observações" v={b.notes} /></div>}
           </dl>
         </section>
-        <section className="rounded-xl border bg-card p-5 text-center">
+        <section className="rounded-[10px] border bg-card p-5 text-center">
           <h2 className="text-lg font-semibold text-foreground">QR atual</h2>
           <QrSvg value={url} label={`QR de ${b.name}`} className="mx-auto mt-3 h-44 w-44" />
           <p className="mt-2 break-all text-xs text-muted-foreground">{url.replace(/^https?:\/\//, "")}</p>
         </section>
       </div>
 
-      <section className="rounded-xl border bg-card p-5">
+      <section className="rounded-[10px] border bg-card p-5">
         <h2 className="text-lg font-semibold text-foreground">Interdições</h2>
         {b.status_periods.length === 0 ? <p className="mt-2 text-sm text-muted-foreground">Nenhuma interdição registrada.</p> : (
           <ul className="mt-2 divide-y">

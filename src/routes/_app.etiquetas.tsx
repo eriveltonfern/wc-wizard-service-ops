@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { PageHelp, PageHeader } from "@/components/layout/PageHeader";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { QrSvg } from "@/components/QrSvg";
@@ -69,14 +70,12 @@ function LabelsPage() {
   const setAll = (on: boolean) => setUnchecked(on ? new Set() : new Set((labels.data ?? []).map((l) => l.bathroom_id)));
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="space-y-6">
       <div className="space-y-6 print:hidden">
-        <header>
-          <h1 className="text-2xl font-bold text-foreground">Etiquetas</h1>
-          <p className="text-muted-foreground">Escolha o contrato, marque os banheiros e imprima as etiquetas com QR.</p>
-        </header>
+        <PageHelp>Escolha o contrato, marque os banheiros, escolha o tamanho e clique em Imprimir. Só banheiros ativos têm etiqueta; ao gerar novo QR, imprima de novo.</PageHelp>
+        <PageHeader title="Etiquetas" subtitle="Escolha o contrato, marque os banheiros e imprima as etiquetas com QR." />
 
-        <div className="grid gap-4 rounded-xl border bg-card p-4 sm:grid-cols-2">
+        <div className="grid gap-4 rounded-[10px] border bg-card p-4 sm:grid-cols-2">
           <div className="space-y-1.5">
             <label htmlFor="lbl_contract" className="text-sm font-medium">Contrato</label>
             <NativeSelect id="lbl_contract" value={contrato ? String(contrato) : ""}
@@ -102,7 +101,7 @@ function LabelsPage() {
               <Button asChild className="min-h-11"><Link to="/contratos/$id" params={{ id: String(contrato) }} search={{ tab: "banheiros" }}>Ir para Banheiros</Link></Button>
             </EmptyBlock>
           ) : (
-            <div className="space-y-3 rounded-xl border bg-card p-4">
+            <div className="space-y-3 rounded-[10px] border bg-card p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <div className="relative flex-1">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

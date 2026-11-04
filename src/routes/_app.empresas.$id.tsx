@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { PageHelp } from "@/components/layout/PageHeader";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { ArrowLeft, Pencil, Trash2, UserPlus } from "lucide-react";
@@ -39,18 +40,19 @@ function CompanyPage() {
   const del = useAction(() => deleteCompany(Number(id)), { success: "Empresa excluída.", onSuccess: () => { setDeleting(false); void navigate({ to: "/empresas" }); } });
 
   const back = <Link to="/empresas" className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-primary hover:underline"><ArrowLeft className="h-4 w-4" />Voltar para empresas</Link>;
-  if (q.isLoading) return <div className="mx-auto max-w-5xl space-y-4">{back}<LoadingBlock label="Carregando empresa…" /></div>;
+  if (q.isLoading) return <div className="space-y-4">{back}<LoadingBlock label="Carregando empresa…" /></div>;
   if (q.isError || !q.data) {
     const nf = q.error instanceof ApiError && q.error.status === 404;
-    return <div className="mx-auto max-w-5xl space-y-4">{back}<ErrorBlock message={nf ? "Empresa não encontrada." : "Não foi possível carregar a empresa."} onRetry={nf ? undefined : () => void q.refetch()} /></div>;
+    return <div className="space-y-4">{back}<ErrorBlock message={nf ? "Empresa não encontrada." : "Não foi possível carregar a empresa."} onRetry={nf ? undefined : () => void q.refetch()} /></div>;
   }
   const c = q.data;
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
+    <div className="space-y-6">
       {back}
-      <header className="rounded-xl border bg-card p-5">
-        <div className="flex flex-wrap items-center gap-2"><h1 className="text-2xl font-bold tracking-tight text-foreground">{c.name}</h1><StatusBadge status={c.status} /></div>
+      <PageHelp>Dados da empresa, seus contratos e fiscais. Inativar a empresa suspende os contratos ativos dela.</PageHelp>
+      <header className="rounded-[10px] border bg-card p-5">
+        <div className="flex flex-wrap items-center gap-2"><h1 className="text-2xl font-extrabold tracking-tight text-ink">{c.name}</h1><StatusBadge status={c.status} /></div>
         <dl className="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
           <div><dt className="text-muted-foreground">CNPJ</dt><dd className="font-medium text-foreground">{c.document ?? "—"}</dd></div>
           <div><dt className="text-muted-foreground">Contato</dt><dd className="font-medium text-foreground">{c.contact_name ?? "—"}{c.contact_phone ? ` · ${c.contact_phone}` : ""}</dd></div>
@@ -61,12 +63,12 @@ function CompanyPage() {
           {c.status === "active"
             ? <Button variant="outline" className="min-h-11" onClick={() => { inact.reset(); setInactivating(true); }}>Inativar</Button>
             : <PendingButton variant="outline" pending={react.pending} onClick={() => void react.run()}>Reativar</PendingButton>}
-          <Button variant="outline" className="min-h-11 text-destructive" onClick={() => { del.reset(); setDeleting(true); }}><Trash2 className="h-4 w-4" />Excluir</Button>
+          <Button variant="outline" className="min-h-11 text-danger" onClick={() => { del.reset(); setDeleting(true); }}><Trash2 className="h-4 w-4" />Excluir</Button>
         </div>
         <div className="mt-3"><FormError error={react.error} /></div>
       </header>
 
-      <section className="rounded-xl border bg-card p-5">
+      <section className="rounded-[10px] border bg-card p-5">
         <h2 className="text-lg font-semibold text-foreground">Contratos</h2>
         {c.contracts.length === 0 ? <div className="mt-3"><EmptyBlock title="Nenhum contrato desta empresa." /></div> : (
           <ul className="mt-2 divide-y">
@@ -82,7 +84,7 @@ function CompanyPage() {
         )}
       </section>
 
-      <section className="rounded-xl border bg-card p-5">
+      <section className="rounded-[10px] border bg-card p-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-lg font-semibold text-foreground">Fiscais</h2>
           <Button variant="outline" className="min-h-11" onClick={() => setNewFiscal(true)}><UserPlus className="h-4 w-4" />Novo fiscal</Button>

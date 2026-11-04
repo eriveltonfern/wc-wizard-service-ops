@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { PageHelp, PageHeader } from "@/components/layout/PageHeader";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Plus, Search } from "lucide-react";
@@ -34,14 +35,9 @@ function CompaniesPage() {
   const createBtn = <Button className="min-h-11" onClick={() => setCreating(true)}><Plus className="h-4 w-4" />Nova empresa</Button>;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">Empresas</h1>
-          <p className="mt-1 text-muted-foreground">Empresas contratantes, com seus contratos e fiscais.</p>
-        </div>
-        {createBtn}
-      </div>
+    <div className="space-y-6">
+      <PageHelp>Empresas que contratam a WC Check. Clique numa empresa para ver os contratos, cadastrar fiscais, editar, inativar ou excluir.</PageHelp>
+      <PageHeader title="Empresas" subtitle="Empresas contratantes, com seus contratos e fiscais." actions={createBtn} />
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input aria-label="Buscar empresa" placeholder="Buscar por nome, CNPJ ou contato" className="h-11 pl-9" value={q} onChange={(e) => setQ(e.target.value)} />
@@ -51,7 +47,7 @@ function CompaniesPage() {
         : !query.data?.length ? <EmptyBlock title="Nenhuma empresa ainda.">{createBtn}</EmptyBlock>
         : !rows.length ? <EmptyBlock title="Nenhuma empresa encontrada." />
         : (
-          <ul className="divide-y overflow-hidden rounded-xl border bg-card">
+          <ul className="divide-y overflow-hidden rounded-[10px] border bg-card">
             {rows.map((c) => (
               <li key={c.id}>
                 <Link to="/empresas/$id" params={{ id: String(c.id) }} className="grid gap-2 px-4 py-4 hover:bg-secondary/60 md:grid-cols-[1fr_auto] md:items-center">
