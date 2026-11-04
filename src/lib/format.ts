@@ -35,5 +35,6 @@ export const missingLabel: Record<string, string> = {
   manager: "Definir o gestor",
   bathroom: "Cadastrar ao menos um banheiro ativo",
   cleaning_team: "Criar uma equipe de limpeza com pelo menos uma pessoa",
+  fiscal: "Vincular um fiscal da empresa",
   company: "Empresa ativa",
 };
