@@ -7,9 +7,14 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
+  // Hostinger (Apache) serve somente arquivos estáticos: sem servidor Node.
+  nitro: false,
   tanstackStart: {
-    // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
-    // nitro/vite builds from this
     server: { entry: "server" },
+    // Modo SPA: gera a página-casca index.html; todas as rotas rodam no navegador.
+    spa: {
+      enabled: true,
+      prerender: { outputPath: "/index.html", crawlLinks: false },
+    },
   },
 });
