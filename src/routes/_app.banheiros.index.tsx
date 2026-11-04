@@ -59,7 +59,9 @@ function BathroomsPage() {
     queryFn: () => listBathrooms({ ...(dq ? { q: dq } : {}), ...(search.contrato ? { contract_id: search.contrato } : {}), ...(status !== "todos" ? { status } : {}) }),
   });
   const filtered = !!dq || !!search.contrato || status !== "active";
-  const rows = query.data ?? [];
+  const rows = query.data?.rows ?? [];
+  const total = query.data?.total ?? 0;
+  const limit = query.data?.limit ?? 50;
 
   return (
     <div className="mx-auto max-w-6xl space-y-5">
@@ -98,7 +100,7 @@ function BathroomsPage() {
             : <EmptyBlock title="Nenhum banheiro cadastrado ainda.">{canManage && <Button className="min-h-11" onClick={() => setCreating(true)}><Plus className="h-4 w-4" />Novo banheiro</Button>}</EmptyBlock>
         ) : (
           <>
-            {rows.length >= 50 && <p role="status" className="rounded-md border border-warning/50 bg-warning/15 px-3 py-2 text-sm font-medium text-foreground">Mostrando os 50 primeiros. Refine a busca.</p>}
+            {total > limit && <p role="status" className="rounded-md border border-warning/50 bg-warning/15 px-3 py-2 text-sm font-medium text-foreground">Mostrando {limit} de {total}. Refine a busca.</p>}
             <div className="hidden overflow-x-auto rounded-xl border bg-card md:block">
               <table className="w-full text-sm">
                 <thead className="border-b bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
