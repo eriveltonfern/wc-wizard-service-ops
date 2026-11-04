@@ -3,7 +3,7 @@ export const TOKEN_KEY = "wccheck.token";
 
 export class ApiError extends Error {
   code: string;
-  fields?: Record<string, string>;
+  fields: Record<string, string> | undefined;
   status: number;
   constructor(code: string, message: string, status: number, fields?: Record<string, string>) {
     super(message);
@@ -13,8 +13,8 @@ export class ApiError extends Error {
   }
 }
 
-export const USE_MOCKS = import.meta.env.VITE_USE_MOCKS !== "false";
-const BASE_URL = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
+export const USE_MOCKS = import.meta.env["VITE_USE_MOCKS"] !== "false";
+const BASE_URL = String(import.meta.env["VITE_API_URL"] ?? "").replace(/\/$/, "");
 
 export function getToken() {
   if (typeof window === "undefined") return null;
