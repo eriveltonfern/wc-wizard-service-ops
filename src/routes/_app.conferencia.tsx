@@ -18,7 +18,7 @@ import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/
 const FLAGS: { key: ReviewFlag; label: string }[] = [
   { key: "repeated_photo", label: "Foto repetida" }, { key: "offline", label: "Enviado sem internet" }, { key: "out_of_shift", label: "Fora do turno" },
 ];
-type Search = { aba?: "conferidas"; marca?: ReviewFlag; contrato?: number; limpeza?: number };
+type Search = { aba?: "conferidas" | undefined; marca?: ReviewFlag | undefined; contrato?: number | undefined; limpeza?: number | undefined };
 
 export const Route = createFileRoute("/_app/conferencia")({
   validateSearch: (s: Record<string, unknown>): Search => {
@@ -110,7 +110,7 @@ function ReviewPage() {
       {q.isPending ? <SkeletonBlock rows={6} /> : q.isError ? <ErrorState message="Não foi possível carregar a conferência." onRetry={() => void q.refetch()} /> :
         q.data.rows.length === 0 ? (
           <EmptyState icon={reviewed ? ClipboardCheck : CheckCircle2} title={reviewed ? "Nenhuma limpeza conferida nos últimos 30 dias." : "Nada para conferir."}
-            description={reviewed ? undefined : "Todas as limpezas com marca já foram conferidas."} />
+            {...(reviewed ? {} : { description: "Todas as limpezas com marca já foram conferidas." })} />
         ) : (
           <DataCard title={reviewed ? "Conferidas (últimos 30 dias)" : "Limpezas para conferir"} actions={<span className="text-sm tabular-nums text-muted-foreground">{q.data.rows.length}</span>}>
             <ul className="divide-y">

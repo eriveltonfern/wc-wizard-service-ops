@@ -11,7 +11,7 @@ import { PreviewBanner } from "@/components/field/kit";
 import { TicketForm } from "@/components/tickets/kit";
 import { Button } from "@/components/ui/button";
 
-type Search = { limpeza?: number; n?: number };
+type Search = { limpeza?: number | undefined; n?: number | undefined };
 
 export const Route = createFileRoute("/_app/relatar/$id")({
   validateSearch: (s: Record<string, unknown>): Search => {
