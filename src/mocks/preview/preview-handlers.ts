@@ -236,7 +236,5 @@ function pvRepeatedWith(c: PvCleaning) {
 function cancelEffect(c: PvCleaning) {
   if (!c.task_id) return { kind: "extra" as const };
   const date = c.task_id.split("-").slice(1, 4).join("-");
-  const shift = SHIFT_ORDER[(() => { const p = loadedPreview(); return p ? 0 : 0; })()];
-  void shift;
   return { kind: new Date() >= dayClose(date) ? ("not_done" as const) : ("pending" as const), task_date: date };
 }

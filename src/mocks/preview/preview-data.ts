@@ -10,11 +10,23 @@ export type PvCleaning = {
   checklist: { item_id: number; label: string; answer: Answer; open_ticket: boolean }[];
   notes: string | null; latitude: number | null; longitude: number | null; accuracy: number | null;
   status: "valid" | "cancelled"; cancel_reason: string | null; idempotency_key: string | null;
+  reviewed_by: number | null; reviewed_at: string | null; review_outcome: "ok" | "cancelled" | null;
 };
-export type PreviewDb = { version: number; generated_on: string; cleanings: PvCleaning[]; cancelled_tasks: string[] };
+export type TicketCategory = "hidraulica" | "eletrica" | "estrutura" | "abastecimento" | "outros";
+export type TicketPriority = "baixa" | "normal" | "urgente";
+export type TicketStatus = "open" | "in_progress" | "done" | "cancelled";
+export type TicketEventKind = "opened" | "assigned" | "taken" | "started" | "done" | "cancelled" | "comment" | "priority";
+export type PvTicket = {
+  id: number; contract_id: number; bathroom_id: number; category: TicketCategory; priority: TicketPriority; status: TicketStatus;
+  description: string; opened_by: number; opened_at: string; assignee_id: number | null; started_at: string | null;
+  done_at: string | null; done_note: string | null; cancel_reason: string | null; cleaning_id: number | null;
+  photo_open: string | null; photo_done: string | null; idempotency_key: string | null;
+  events: { id: number; kind: TicketEventKind; actor_id: number; at: string; text: string | null }[];
+};
+export type PreviewDb = { version: number; generated_on: string; cleanings: PvCleaning[]; cancelled_tasks: string[]; tickets: PvTicket[] };
 
 const KEY = "wccheck.previewdb";
-const VERSION = 1;
+const VERSION = 2;
 let pdb: PreviewDb | null = null;
 
 // ---------- datas e turnos (hora oficial = relógio deste "servidor") ----------
@@ -71,7 +83,7 @@ export function cleanersOf(d: MockDb, contractId: number, date: string) {
 }
 
 // ---------- fotos de exemplo (SVG gerado aqui, nada da internet) ----------
-export function photoSvg(label: "Foto antes" | "Foto depois") {
+export function photoSvg(label: string) {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360" viewBox="0 0 480 360">
 <rect width="480" height="360" fill="#D5DAE2"/>
 <rect x="190" y="120" width="100" height="72" rx="10" fill="#8A94A6"/><rect x="215" y="108" width="50" height="16" rx="4" fill="#8A94A6"/>
@@ -116,6 +128,7 @@ export function generate(d: MockDb, now = new Date()): PreviewDb {
       notes: r() < 0.08 ? "Faltou papel toalha no dispenser." : null,
       latitude: hasLoc ? base[0] + (r() - 0.5) * 0.002 : null, longitude: hasLoc ? base[1] + (r() - 0.5) * 0.002 : null, accuracy: hasLoc ? Math.round(5 + r() * 25) : null,
       status: cancelledByManager ? "cancelled" : "valid", cancel_reason: cancelledByManager ? CANCEL_REASONS[Math.floor(r() * CANCEL_REASONS.length)]! : null, idempotency_key: null,
+      reviewed_by: null, reviewed_at: null, review_outcome: null,
     });
   };
 
@@ -148,8 +161,105 @@ export function generate(d: MockDb, now = new Date()): PreviewDb {
     }
   }
   cleanings.sort((a, b) => a.registered_at.localeCompare(b.registered_at)).forEach((c, i) => (c.id = i + 1));
-  return { version: VERSION, generated_on: today, cleanings, cancelled_tasks: cancelled };
+  markReviews(d, cleanings);
+  return { version: VERSION, generated_on: today, cleanings, cancelled_tasks: cancelled, tickets: genTickets(d, now, r) };
 }
+
+/** Deixa ~8 limpezas com marca para conferir (espalhadas por contrato e marca); as demais já foram conferidas pelo gestor. */
+function markReviews(d: MockDb, cleanings: PvCleaning[]) {
+  const flagOf = (c: PvCleaning) => (c.repeated_photo ? "r" : c.offline ? "o" : c.out_of_shift ? "s" : null);
+  const marked = cleanings.filter((c) => c.status === "valid" && flagOf(c)).reverse();
+  const buckets = new Map<string, PvCleaning[]>();
+  for (const c of marked) { const k = `${c.contract_id}-${flagOf(c)}`; buckets.set(k, [...(buckets.get(k) ?? []), c]); }
+  const keep = new Set<number>();
+  for (let round = 0; keep.size < 8 && round < 10; round++)
+    for (const list of buckets.values()) { if (keep.size >= 8) break; const c = list[round]; if (c) keep.add(c.id); }
+  for (const c of marked) {
+    if (keep.has(c.id)) continue;
+    c.reviewed_by = d.contracts.find((x) => x.id === c.contract_id)?.manager_id ?? 1;
+    c.reviewed_at = new Date(new Date(c.registered_at).getTime() + 20 * 3600000).toISOString();
+    c.review_outcome = "ok";
+  }
+}
+
+const TICKET_SAMPLES: [TicketCategory, TicketPriority, string][] = [
+  ["hidraulica", "urgente", "Vaso sanitário entupido."],
+  ["estrutura", "urgente", "Porta da cabine não tranca."],
+  ["eletrica", "normal", "Lâmpada queimada sobre a pia."],
+  ["abastecimento", "normal", "Dispenser de papel toalha quebrado."],
+  ["hidraulica", "normal", "Torneira da pia pingando sem parar."],
+  ["outros", "urgente", "Mau cheiro forte vindo do ralo."],
+  ["estrutura", "baixa", "Azulejo solto atrás do vaso."],
+  ["eletrica", "baixa", "Tomada do secador de mãos sem energia."],
+  ["abastecimento", "normal", "Saboneteira sem refil há dois dias."],
+  ["outros", "baixa", "Espelho riscado."],
+  ["hidraulica", "normal", "Descarga não para de correr água."],
+  ["estrutura", "normal", "Trinco da porta principal solto."],
+  ["eletrica", "urgente", "Fio exposto perto do interruptor."],
+  ["hidraulica", "baixa", "Ralo do piso escoando devagar."],
+  ["abastecimento", "baixa", "Lixeira sem tampa."],
+];
+const DONE_NOTES = ["Troquei a peça e testei. Funcionando.", "Desentupido com sonda. Banheiro liberado.", "Lâmpada trocada por LED.", "Ajustei o trinco e lubrifiquei a dobradiça."];
+
+/** Chamados de exemplo: abertos, em andamento, concluídos nos últimos 7 dias e um cancelado. */
+function genTickets(d: MockDb, now: Date, r: () => number): PvTicket[] {
+  const today = iso(now);
+  const maint = (cid: number) => {
+    const teams = d.teams.filter((t) => t.contract_id === cid && t.kind === "manutencao" && t.status === "active").map((t) => t.id);
+    return d.members.filter((m) => teams.includes(m.team_id) && isCurrent(m, today)).map((m) => m.user_id);
+  };
+  // [contrato, status, horas atrás]
+  const plan: [number, TicketStatus, number][] = [
+    [1, "open", 1.2], [1, "open", 5], [3, "open", 3], [2, "open", 26], [1, "open", 50],
+    [1, "in_progress", 3.5], [3, "in_progress", 7], [1, "in_progress", 22],
+    [1, "done", 30], [1, "done", 70], [3, "done", 52], [3, "done", 120], [1, "done", 150],
+    [1, "cancelled", 40], [1, "done", 240],
+  ];
+  const out: PvTicket[] = [];
+  plan.forEach(([cid, status, hoursAgo], i) => {
+    const c = d.contracts.find((x) => x.id === cid && x.status === "active");
+    const bs = d.bathrooms.filter((b) => b.contract_id === cid && b.status === "active");
+    if (!c || !bs.length) return;
+    const [category, priority, description] = TICKET_SAMPLES[i % TICKET_SAMPLES.length]!;
+    const cleaners = cleanersOf(d, cid, today);
+    const opener = i % 3 === 2 || !cleaners.length ? c.manager_id ?? 1 : cleaners[i % cleaners.length]!;
+    const techs = maint(cid);
+    const tech = techs.length ? techs[i % techs.length]! : null;
+    const t0 = new Date(now.getTime() - hoursAgo * 3600000);
+    const at = (h: number) => new Date(t0.getTime() + h * 3600000).toISOString();
+    let ev = 0;
+    const events: PvTicket["events"] = [{ id: ++ev, kind: "opened", actor_id: opener, at: t0.toISOString(), text: null }];
+    const tk: PvTicket = {
+      id: i + 1, contract_id: cid, bathroom_id: bs[(i * 7) % bs.length]!.id, category, priority, status, description,
+      opened_by: opener, opened_at: t0.toISOString(), assignee_id: null, started_at: null, done_at: null, done_note: null,
+      cancel_reason: null, cleaning_id: null, photo_open: r() < 0.75 ? `tk-open-${i}` : null, photo_done: null, idempotency_key: null, events,
+    };
+    if ((status === "in_progress" || status === "done") && tech) {
+      const s = Math.min(hoursAgo * 0.3, 2);
+      if (i % 2 === 0 && c.manager_id) events.push({ id: ++ev, kind: "assigned", actor_id: c.manager_id, at: at(s * 0.5), text: d.users.find((u) => u.id === tech)?.name ?? null });
+      else events.push({ id: ++ev, kind: "taken", actor_id: tech, at: at(s * 0.9), text: null });
+      events.push({ id: ++ev, kind: "started", actor_id: tech, at: at(s), text: null });
+      tk.assignee_id = tech; tk.started_at = at(s);
+      if (status === "done") {
+        const dur = 0.8 + r() * 6;
+        tk.done_at = at(s + dur); tk.done_note = DONE_NOTES[i % DONE_NOTES.length]!; tk.photo_done = `tk-done-${i}`;
+        events.push({ id: ++ev, kind: "done", actor_id: tech, at: tk.done_at, text: tk.done_note });
+      }
+    } else if (status === "in_progress" || status === "done") {
+      tk.status = "open";
+    }
+    if (status === "open" && i === 1 && c.manager_id) events.push({ id: ++ev, kind: "comment", actor_id: c.manager_id, at: at(0.5), text: "Prioridade para antes da troca de turno." });
+    if (status === "cancelled") {
+      tk.cancel_reason = "Problema já resolvido pela equipe do cliente.";
+      events.push({ id: ++ev, kind: "cancelled", actor_id: c.manager_id ?? 1, at: at(3), text: tk.cancel_reason });
+    }
+    out.push(tk);
+  });
+  return out;
+}
+
+let loadedRef: PreviewDb | null = null;
+export const loadedPreview = () => loadedRef ?? pdb;
 
 export function loadPreview(d: MockDb): PreviewDb {
   const today = opDate(new Date());
@@ -162,6 +272,7 @@ export function loadPreview(d: MockDb): PreviewDb {
     pdb = generate(d);
   }
   savePreview();
+  loadedRef = pdb;
   return pdb;
 }
 export function savePreview() {
