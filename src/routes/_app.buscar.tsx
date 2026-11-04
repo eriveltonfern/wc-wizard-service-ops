@@ -47,9 +47,14 @@ function SearchPage() {
               <li key={b.id} className="rounded-[10px] border bg-card p-4">
                 <p className="font-bold text-ink">{b.name}</p>
                 <p className="text-sm text-muted-foreground">{b.location?.name ?? "Sem local"} · {b.contract.code} – {b.contract.name}</p>
-                <Button asChild className="mt-3 h-12 w-full">
-                  <Link to="/registrar/$id" params={{ id: String(b.id) }}>Registrar limpeza</Link>
-                </Button>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  <Button asChild className="h-12 w-full">
+                    <Link to="/registrar/$id" params={{ id: String(b.id) }}>Registrar limpeza</Link>
+                  </Button>
+                  <Button asChild variant="outline" className="h-12 w-full">
+                    <Link to="/relatar/$id" params={{ id: String(b.id) }}>Relatar problema</Link>
+                  </Button>
+                </div>
               </li>
             ))}
           </ul>

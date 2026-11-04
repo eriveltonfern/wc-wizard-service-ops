@@ -36,6 +36,7 @@ function QrRedirect() {
     lookupQr(token).then((r) => {
       const id = String(r.bathroom_id);
       if (canAccess(me.role, "/registrar")) navigate({ to: "/registrar/$id", params: { id }, replace: true });
+      else if (me.role === "manutencao") navigate({ to: "/chamados", search: { f: "todos", banheiro: Number(id) }, replace: true });
       else if (canAccess(me.role, "/banheiros")) navigate({ to: "/banheiros/$id", params: { id }, replace: true });
       else navigate({ to: homeFor(me.role), replace: true });
     }).catch((e) => setError(e instanceof ApiError && e.status === 404 ? "Etiqueta não encontrada ou de um contrato que não é seu." : "Não foi possível abrir a etiqueta."));
