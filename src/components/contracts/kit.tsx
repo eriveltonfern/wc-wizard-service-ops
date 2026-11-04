@@ -36,7 +36,7 @@ export function useAction<A extends unknown[], R>(fn: (...a: A) => Promise<R>, o
   return { run, pending, error, fields: error?.fields ?? {}, reset: () => setError(null) };
 }
 
-export function Field({ label, id, error, hint, children }: { label: string; id: string; error?: string | undefined; hint?: string; children: ReactNode }) {
+export function Field({ label, id, error, hint, children }: { label: string; id: string; error?: string | undefined; hint?: string | undefined; children: ReactNode }) {
   return (
     <div className="space-y-1.5">
       <Label htmlFor={id}>{label}</Label>
@@ -83,7 +83,7 @@ export function StatusBadge({ status }: { status: string }) {
 export function LoadingBlock({ label = "Carregando…" }: { label?: string }) {
   return <div className="flex items-center justify-center gap-2 rounded-xl border bg-card py-12 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />{label}</div>;
 }
-export function ErrorBlock({ message, onRetry }: { message: string; onRetry?: () => void }) {
+export function ErrorBlock({ message, onRetry }: { message: string; onRetry?: () => void | undefined }) {
   return (
     <div role="alert" className="flex flex-col items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/5 px-6 py-10 text-center">
       <AlertTriangle className="h-6 w-6 text-destructive" />
@@ -101,7 +101,7 @@ export function EmptyBlock({ title, children }: { title: string; children?: Reac
   );
 }
 
-export function PendingButton({ pending, children, ...props }: React.ComponentProps<typeof Button> & { pending?: boolean }) {
+export function PendingButton({ pending, children, ...props }: React.ComponentProps<typeof Button> & { pending?: boolean | undefined }) {
   return (
     <Button {...props} disabled={pending || props.disabled} className={cn("min-h-11", props.className)}>
       {pending && <Loader2 className="h-4 w-4 animate-spin" />}
@@ -112,8 +112,8 @@ export function PendingButton({ pending, children, ...props }: React.ComponentPr
 
 /** Diálogo simples com formulário. */
 export function FormDialog({ open, onOpenChange, title, description, children, onSubmit, submitLabel, pending, destructive }: {
-  open: boolean; onOpenChange: (o: boolean) => void; title: string; description?: string; children?: ReactNode;
-  onSubmit: () => void; submitLabel: string; pending?: boolean; destructive?: boolean;
+  open: boolean; onOpenChange: (o: boolean) => void; title: string; description?: string | undefined; children?: ReactNode;
+  onSubmit: () => void; submitLabel: string; pending?: boolean | undefined; destructive?: boolean | undefined;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -136,8 +136,8 @@ export function FormDialog({ open, onOpenChange, title, description, children, o
 
 /** Pede um motivo antes de executar a ação. */
 export function ReasonDialog({ open, onOpenChange, title, description, submitLabel, onConfirm, destructive, error }: {
-  open: boolean; onOpenChange: (o: boolean) => void; title: string; description?: string; submitLabel: string;
-  onConfirm: (reason: string) => Promise<boolean>; destructive?: boolean; error?: ApiError | null;
+  open: boolean; onOpenChange: (o: boolean) => void; title: string; description?: string | undefined; submitLabel: string;
+  onConfirm: (reason: string) => Promise<boolean>; destructive?: boolean | undefined; error?: ApiError | null | undefined;
 }) {
   const [reason, setReason] = useState("");
   const [pending, setPending] = useState(false);
@@ -156,7 +156,7 @@ export function ReasonDialog({ open, onOpenChange, title, description, submitLab
 /** Confirmação simples (sem campos). */
 export function ConfirmDialog({ open, onOpenChange, title, description, submitLabel, onConfirm, pending, error, children }: {
   open: boolean; onOpenChange: (o: boolean) => void; title: string; description: string; submitLabel: string;
-  onConfirm: () => void; pending?: boolean; error?: ApiError | null; children?: ReactNode;
+  onConfirm: () => void; pending?: boolean | undefined; error?: ApiError | null | undefined; children?: ReactNode;
 }) {
   return (
     <FormDialog open={open} onOpenChange={onOpenChange} title={title} description={description} submitLabel={submitLabel}

@@ -26,7 +26,7 @@ export const planLabel = (p: { cleanings_per_day: number; weekdays: number[] }) 
 export const hasOwnPlan = (b: Bathroom) => b.cleanings_per_day != null || b.weekdays != null;
 
 export const contractStatusLabel: Record<ContractStatus, string> = { draft: "Rascunho", active: "Ativo", suspended: "Suspenso", ended: "Encerrado" };
-export const statusLabel = (s: string) => ({ active: "Ativo", inactive: "Inativo", ...contractStatusLabel } as Record<string, string>)[s] ?? s;
+export const statusLabel = (s: string) => ({ ...contractStatusLabel, inactive: "Inativo" } as Record<string, string>)[s] ?? s;
 export const bathroomKindLabel: Record<string, string> = { masculino: "Masculino", feminino: "Feminino", unissex: "Unissex", pcd: "PCD" };
 export const teamKindLabel: Record<string, string> = { limpeza: "Limpeza", manutencao: "Manutenção" };
 export const shiftLabel: Record<string, string> = { manha: "Manhã", tarde: "Tarde", noite: "Noite" };
