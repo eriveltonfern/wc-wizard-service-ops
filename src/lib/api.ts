@@ -16,7 +16,7 @@ export class ApiError extends Error {
   status: number;
   missing: string[] | undefined;
   counts: Record<string, number> | undefined;
-  constructor(code: string, message: string, status: number, fields?: Record<string, string>, extra?: Pick<ErrorPayload, "missing" | "counts">) {
+  constructor(code: string, message: string, status: number, fields?: Record<string, string>, extra?: { missing?: string[] | undefined; counts?: Record<string, number> | undefined }) {
     super(message);
     this.code = code;
     this.status = status;
