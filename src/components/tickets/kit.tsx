@@ -6,7 +6,6 @@ import {
   Ban, Camera, CircleHelp, Droplets, Hammer, Loader2, MessageSquare, Package, Play, RotateCcw, Search, UserCheck, UserPlus, Wrench, Zap,
   CheckCircle2, Flag, CirclePlus, type LucideIcon,
 } from "lucide-react";
-import { ApiError } from "@/lib/api";
 import { assignTicket, cancelTicket, commentTicket, createTicket, listBathrooms, setTicketPriority } from "@/lib/endpoints";
 import { dataUrlToBlob } from "@/lib/outbox";
 import { shrinkPhoto } from "@/lib/photo";
@@ -51,7 +50,8 @@ export function fmtAgo(isoStr: string) {
 }
 export const fmtDateTime = (isoStr: string) => {
   const d = new Date(isoStr);
-  return `${fmtDate(isoStr.slice(0, 10) && `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`)} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  const two = (n: number) => String(n).padStart(2, "0");
+  return `${fmtDate(`${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())}`)} ${two(d.getHours())}:${two(d.getMinutes())}`;
 };
 export const fmtDuration = (min: number | null) => {
   if (min === null) return "—";
@@ -330,7 +330,7 @@ export function TicketForm({ bathroom, initial, cleaningId, onDone, submitLabel 
         <Textarea id="tk-desc" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="O que está acontecendo?" />
       </Field>
       <PhotoInput label="Foto do problema" value={photo} onChange={setPhoto} />
-      <FormError error={create.error && !Object.keys(f).length ? create.error : create.error && f ? new ApiError(create.error.code, create.error.message, create.error.status) : null} />
+      <FormError error={create.error} />
       <PendingButton type="submit" pending={create.pending} className="h-12 w-full text-base">{submitLabel}</PendingButton>
     </form>
   );
