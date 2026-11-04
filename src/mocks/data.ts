@@ -1,57 +1,125 @@
-export const users = [
-  { id: 1, name: "Ana Diretora", email: "admin@wccheck.test", role: "admin", company_id: null, password: "wccheck123" },
-  { id: 2, name: "Bruno Gestor", email: "gestor@wccheck.test", role: "gestor", company_id: null, password: "wccheck123" },
-  { id: 3, name: "Carla Fiscal", email: "fiscal@wccheck.test", role: "fiscal", company_id: 1, password: "wccheck123" },
-  { id: 4, name: "Diego Limpeza", email: "limpeza@wccheck.test", role: "limpeza", company_id: null, password: "wccheck123" },
-  { id: 5, name: "Elisa Manutenção", email: "manutencao@wccheck.test", role: "manutencao", company_id: null, password: "wccheck123" },
-];
+// Estado inicial do servidor simulado. Formato interno (linhas de "tabela"), igual ao que a API guarda.
+import type { BathroomKind, ContractRules, Role, TeamKind } from "../lib/types";
 
-export const companies = [
-  { id: 1, name: "Mineração Serra Azul", segment: "mineradora", city: "Itabira/MG" },
-  { id: 2, name: "Shopping Parque Central", segment: "shopping", city: "Belo Horizonte/MG" },
-];
+export type DbUser = {
+  id: number; name: string; email: string; phone: string | null; role: Role; company_id: number | null;
+  status: "active" | "inactive"; must_change_password: boolean; password: string;
+};
+export type DbCompany = { id: number; name: string; document: string | null; contact_name: string | null; contact_phone: string | null; notes: string | null; status: "active" | "inactive" };
+export type DbContract = {
+  id: number; company_id: number; code: string; name: string; manager_id: number | null;
+  starts_on: string; ends_on: string | null; status: "draft" | "active" | "suspended" | "ended"; timezone: string; rules: ContractRules;
+};
+export type DbFiscalLink = { id: number; contract_id: number; user_id: number; starts_on: string; ends_on: string | null };
+export type DbChecklist = { id: number; contract_id: number; label: string; position: number; active: boolean };
+export type DbLocation = { id: number; contract_id: number; name: string; status: "active" | "inactive" };
+export type DbBathroom = {
+  id: number; contract_id: number; location_id: number | null; name: string; qr_token: string; kind: BathroomKind;
+  floor: string | null; notes: string | null; cleanings_per_day: number | null; weekdays: number[] | null; status: "active" | "inactive";
+};
+export type DbStatusPeriod = { id: number; bathroom_id: number; starts_on: string; ends_on: string; reason: string };
+export type DbTeam = { id: number; contract_id: number; kind: TeamKind; name: string; shift: string | null; status: "active" | "inactive" };
+export type DbMember = { id: number; team_id: number; user_id: number; starts_on: string; ends_on: string | null; removal_reason: string | null };
+export type DbAudit = {
+  id: number; action: string; entity: string; entity_id: number; before: Record<string, unknown> | null;
+  after: Record<string, unknown> | null; reason: string | null; created_at: string; actor_id: number | null;
+};
 
-export const contracts = [
-  { id: 1, company_id: 1, code: "CT-2026-001", name: "Serra Azul – Mina Norte", manager_id: 2, status: "ativo", start_date: "2026-01-10" },
-  { id: 2, company_id: 1, code: "CT-2026-002", name: "Serra Azul – Planta de Beneficiamento", manager_id: 2, status: "ativo", start_date: "2026-03-01" },
-  { id: 3, company_id: 2, code: "CT-2026-003", name: "Parque Central – Áreas comuns", manager_id: 2, status: "ativo", start_date: "2026-05-15" },
-];
+export type MockDb = {
+  users: DbUser[]; companies: DbCompany[]; contracts: DbContract[]; fiscal_links: DbFiscalLink[];
+  checklist: DbChecklist[]; locations: DbLocation[]; bathrooms: DbBathroom[]; status_periods: DbStatusPeriod[];
+  teams: DbTeam[]; members: DbMember[]; audit: DbAudit[]; revoked_tokens: string[];
+};
 
-const bathroomSpecs: [number, string, string][] = [
-  [1, "Vestiário Portaria", "Portaria principal"],
-  [1, "Banheiro Químico 01", "Frente de lavra A"],
-  [1, "Banheiro Químico 02", "Frente de lavra B"],
-  [1, "Refeitório Norte", "Refeitório"],
-  [2, "Vestiário Masculino", "Planta – bloco 1"],
-  [2, "Vestiário Feminino", "Planta – bloco 1"],
-  [2, "Sanitário Administrativo", "Prédio administrativo"],
-  [3, "Piso 1 – Masculino", "Ala leste"],
-  [3, "Piso 1 – Feminino", "Ala leste"],
-  [3, "Piso 2 – Família", "Praça de alimentação"],
-  [3, "Piso 2 – Acessível", "Praça de alimentação"],
-  [3, "Estacionamento G1", "Subsolo"],
-];
-export const bathrooms = bathroomSpecs.map(([contract_id, name, location], i) => ({
-  id: i + 1,
-  contract_id,
-  name,
-  location,
-  qr_code: `WC-${String(i + 1).padStart(4, "0")}`,
-  status: "ativo",
-}));
+export const DEFAULT_CHECKLIST = ["Piso limpo", "Papel higiênico abastecido", "Sabonete abastecido", "Lixeiras esvaziadas", "Pias e vasos limpos"];
+export const defaultRules = (): ContractRules => ({
+  photo_before: "required", photo_after: "required", capture_location: true,
+  default_cleanings_per_day: 1, default_weekdays: [1, 2, 3, 4, 5, 6, 7], shifts: ["manha", "tarde", "noite"],
+});
 
-export const teams = [
-  { id: 1, name: "Equipe Serra Azul", contract_ids: [1, 2], leader_id: 1 },
-  { id: 2, name: "Equipe Parque Central", contract_ids: [3], leader_id: 5 },
-];
+const PW = "wccheck123";
+const u = (id: number, name: string, email: string, role: Role, phone: string | null, company_id: number | null = null): DbUser => ({
+  id, name, email, phone, role, company_id, status: "active", must_change_password: false, password: PW,
+});
 
-export const people = [
-  { id: 1, name: "Diego Limpeza", role: "limpeza", team_id: 1, user_id: 4, phone: "(31) 99999-0001" },
-  { id: 2, name: "Fernanda Souza", role: "limpeza", team_id: 1, user_id: null, phone: "(31) 99999-0002" },
-  { id: 3, name: "Gustavo Lima", role: "limpeza", team_id: 1, user_id: null, phone: "(31) 99999-0003" },
-  { id: 4, name: "Elisa Manutenção", role: "manutencao", team_id: 1, user_id: 5, phone: "(31) 99999-0004" },
-  { id: 5, name: "Helena Rocha", role: "limpeza", team_id: 2, user_id: null, phone: "(31) 99999-0005" },
-  { id: 6, name: "Igor Martins", role: "limpeza", team_id: 2, user_id: null, phone: "(31) 99999-0006" },
-  { id: 7, name: "Júlia Pereira", role: "limpeza", team_id: 2, user_id: null, phone: "(31) 99999-0007" },
-  { id: 8, name: "Kleber Alves", role: "manutencao", team_id: 2, user_id: null, phone: "(31) 99999-0008" },
-];
+export function seed(): MockDb {
+  const users: DbUser[] = [
+    u(1, "Ana Diretora", "admin@wccheck.test", "admin", null),
+    u(2, "Bruno Gestor", "gestor@wccheck.test", "gestor", null),
+    u(3, "Carla Fiscal", "fiscal@wccheck.test", "fiscal", null, 1),
+    u(4, "Diego Limpeza", "limpeza@wccheck.test", "limpeza", "(31) 99999-0001"),
+    u(5, "Elisa Manutenção", "manutencao@wccheck.test", "manutencao", "(31) 99999-0004"),
+    u(6, "Fernanda Souza", "fernanda.souza@wccheck.test", "limpeza", "(31) 99999-0002"),
+    u(7, "Gustavo Lima", "gustavo.lima@wccheck.test", "limpeza", "(31) 99999-0003"),
+    u(8, "Helena Rocha", "helena.rocha@wccheck.test", "limpeza", "(31) 99999-0005"),
+    u(9, "Igor Martins", "igor.martins@wccheck.test", "limpeza", "(31) 99999-0006"),
+    u(10, "Júlia Pereira", "julia.pereira@wccheck.test", "limpeza", "(31) 99999-0007"),
+    u(11, "Kleber Alves", "kleber.alves@wccheck.test", "manutencao", "(31) 99999-0008"),
+  ];
+  const companies: DbCompany[] = [
+    { id: 1, name: "Mineração Serra Azul", document: null, contact_name: null, contact_phone: null, notes: "Mineradora – Itabira/MG", status: "active" },
+    { id: 2, name: "Shopping Parque Central", document: null, contact_name: null, contact_phone: null, notes: "Shopping – Belo Horizonte/MG", status: "active" },
+  ];
+  const c = (id: number, company_id: number, code: string, name: string, starts_on: string): DbContract => ({
+    id, company_id, code, name, manager_id: 2, starts_on, ends_on: null, status: "active", timezone: "America/Sao_Paulo", rules: defaultRules(),
+  });
+  const contracts = [
+    c(1, 1, "CT-2026-001", "Serra Azul – Mina Norte", "2026-01-10"),
+    c(2, 1, "CT-2026-002", "Serra Azul – Planta de Beneficiamento", "2026-03-01"),
+    c(3, 2, "CT-2026-003", "Parque Central – Áreas comuns", "2026-05-15"),
+  ];
+  let ck = 0;
+  const checklist: DbChecklist[] = contracts.flatMap((ct) =>
+    DEFAULT_CHECKLIST.map((label, i) => ({ id: ++ck, contract_id: ct.id, label, position: i + 1, active: true })));
+
+  const specs: [number, string, string, BathroomKind][] = [
+    [1, "Vestiário Portaria", "Portaria principal", "unissex"],
+    [1, "Banheiro Químico 01", "Frente de lavra A", "unissex"],
+    [1, "Banheiro Químico 02", "Frente de lavra B", "unissex"],
+    [1, "Refeitório Norte", "Refeitório", "unissex"],
+    [2, "Vestiário Masculino", "Planta – bloco 1", "masculino"],
+    [2, "Vestiário Feminino", "Planta – bloco 1", "feminino"],
+    [2, "Sanitário Administrativo", "Prédio administrativo", "unissex"],
+    [3, "Piso 1 – Masculino", "Ala leste", "masculino"],
+    [3, "Piso 1 – Feminino", "Ala leste", "feminino"],
+    [3, "Piso 2 – Família", "Praça de alimentação", "unissex"],
+    [3, "Piso 2 – Acessível", "Praça de alimentação", "pcd"],
+    [3, "Estacionamento G1", "Subsolo", "unissex"],
+  ];
+  const locations: DbLocation[] = [];
+  const bathrooms: DbBathroom[] = specs.map(([contract_id, name, locName, kind], i) => {
+    let loc = locations.find((l) => l.contract_id === contract_id && l.name === locName);
+    if (!loc) { loc = { id: locations.length + 1, contract_id, name: locName, status: "active" }; locations.push(loc); }
+    const tokens = ["K7MPQ2RXA9TB", "H3NWY8CZD4FE", "P6RTU2VKX7GM", "Q9ZBC4DHJ3LN", "W2XYA5EFK8RS", "T4UVM6NPQ9AB",
+      "B8CDH3JKL5MZ", "E5FGR7STU2WX", "J6KLN4PQR8YZ", "M3NPA9BCD6EF", "R7STV2WXY4GH", "U9VWZ3ABC5JK"];
+    return { id: i + 1, contract_id, location_id: loc.id, name, qr_token: tokens[i]!, kind, floor: null, notes: null, cleanings_per_day: null, weekdays: null, status: "active" };
+  });
+
+  const teams: DbTeam[] = [
+    { id: 1, contract_id: 1, kind: "limpeza", name: "Limpeza Mina Norte", shift: "manha", status: "active" },
+    { id: 2, contract_id: 1, kind: "manutencao", name: "Manutenção Mina Norte", shift: null, status: "active" },
+    { id: 3, contract_id: 2, kind: "limpeza", name: "Limpeza Planta", shift: "tarde", status: "active" },
+    { id: 4, contract_id: 3, kind: "limpeza", name: "Limpeza Parque Central", shift: "manha", status: "active" },
+    { id: 5, contract_id: 3, kind: "manutencao", name: "Manutenção Parque Central", shift: null, status: "active" },
+  ];
+  const members: DbMember[] = [
+    { id: 1, team_id: 1, user_id: 4, starts_on: "2026-01-10", ends_on: null, removal_reason: null },
+    { id: 2, team_id: 1, user_id: 6, starts_on: "2026-01-10", ends_on: null, removal_reason: null },
+    { id: 3, team_id: 1, user_id: 7, starts_on: "2026-01-10", ends_on: "2026-03-01", removal_reason: "Remanejado para a Planta" },
+    { id: 4, team_id: 3, user_id: 7, starts_on: "2026-03-01", ends_on: null, removal_reason: null },
+    { id: 5, team_id: 2, user_id: 5, starts_on: "2026-01-10", ends_on: null, removal_reason: null },
+    { id: 6, team_id: 4, user_id: 8, starts_on: "2026-05-15", ends_on: null, removal_reason: null },
+    { id: 7, team_id: 4, user_id: 9, starts_on: "2026-05-15", ends_on: null, removal_reason: null },
+    { id: 8, team_id: 4, user_id: 10, starts_on: "2026-05-15", ends_on: null, removal_reason: null },
+    { id: 9, team_id: 5, user_id: 11, starts_on: "2026-05-15", ends_on: null, removal_reason: null },
+  ];
+  const fiscal_links: DbFiscalLink[] = [
+    { id: 1, contract_id: 1, user_id: 3, starts_on: "2026-01-10", ends_on: null },
+    { id: 2, contract_id: 2, user_id: 3, starts_on: "2026-03-01", ends_on: null },
+  ];
+  const audit: DbAudit[] = [
+    { id: 1, action: "team_member.moved", entity: "user", entity_id: 7, before: { team_id: 1 }, after: { team_id: 3 },
+      reason: "Remanejado para a Planta", created_at: "2026-03-01T08:00:00-03:00", actor_id: 2 },
+  ];
+  return { users, companies, contracts, fiscal_links, checklist, locations, bathrooms, status_periods: [], teams, members, audit, revoked_tokens: [] };
+}
