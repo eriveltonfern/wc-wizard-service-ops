@@ -63,7 +63,6 @@ export function cleaningView(d: MockDb, c: PvCleaning) {
   if (c.repeated_photo) marks.push("repeated_photo");
   if (c.offline) marks.push("offline");
   if (c.out_of_shift) marks.push("out_of_shift");
-  if (c.latitude === null && ct?.rules.capture_location) marks.push("no_location");
   return {
     id: c.id,
     bathroom: { id: c.bathroom_id, name: b?.name ?? "—" },
@@ -76,7 +75,6 @@ export function cleaningView(d: MockDb, c: PvCleaning) {
     photo_before_url: c.photo_before ? photoSvg("Foto antes") : undefined,
     photo_after_url: c.photo_after ? photoSvg("Foto depois") : undefined,
     checklist: c.checklist, notes: c.notes ?? undefined,
-    position: c.latitude !== null && c.longitude !== null ? { latitude: c.latitude, longitude: c.longitude, accuracy: c.accuracy ?? undefined } : undefined,
     ticket_suggestions: c.checklist.filter((i) => i.open_ticket).map((i) => ({ item_id: i.item_id, label: i.label, category: suggestCategory(i.label), description: `Checklist: ${i.label} não OK` })),
     review: c.reviewed_by ? { by: { id: c.reviewed_by, name: d.users.find((x) => x.id === c.reviewed_by)?.name ?? "—" }, at: c.reviewed_at ?? "", outcome: c.review_outcome ?? "ok" } : undefined,
     repeated_with: c.repeated_photo ? pvRepeatedWith(c) : undefined,
@@ -143,7 +141,7 @@ export function handlePreview(method: string, path: string, query: URLSearchPara
     return ok({
       bathroom: { id: b.id, name: b.name, location: d.locations.find((l) => l.id === b.location_id)?.name, status: b.status },
       contract: { id: c.id, code: c.code, name: c.name },
-      rules: { photo_before: c.rules.photo_before, photo_after: c.rules.photo_after, capture_location: c.rules.capture_location },
+      rules: { photo_before: c.rules.photo_before, photo_after: c.rules.photo_after },
       checklist: d.checklist.filter((i) => i.contract_id === c.id && i.active).sort((a, z) => a.position - z.position).map((i) => ({ id: i.id, label: i.label })),
       pending_task: pending,
     });
@@ -189,7 +187,6 @@ export function handlePreview(method: string, path: string, query: URLSearchPara
     const task = pending.find((t) => t.shift === shiftNow) ?? pending[0] ?? null;
     const prints = p.cleanings.flatMap((x) => [x.photo_before, x.photo_after]).filter(Boolean);
     const repeated = (before !== null && prints.includes(before)) || (after !== null && prints.includes(after)) || (before !== null && before === after);
-    const lat = num(body["latitude"]); const lng = num(body["longitude"]);
     const row: PvCleaning = {
       id: p.cleanings.reduce((m, x) => Math.max(m, x.id), 0) + 1, bathroom_id: b.id, contract_id: c.id, user_id: me.id,
       task_id: task?.id ?? null, registered_at: now.toISOString(), client_finished_at: client.toISOString(),
@@ -200,8 +197,6 @@ export function handlePreview(method: string, path: string, query: URLSearchPara
         return { item_id: i.id, label: i.label, answer: a.answer, open_ticket: a.answer === "not_ok" && !!a.open_ticket };
       }),
       notes: typeof body["notes"] === "string" && body["notes"].trim() ? body["notes"].trim() : null,
-      latitude: lat !== null && lng !== null ? lat : null, longitude: lat !== null && lng !== null ? lng : null,
-      accuracy: lat !== null && lng !== null ? num(body["accuracy"]) : null,
       status: "valid", cancel_reason: null, idempotency_key: key, reviewed_by: null, reviewed_at: null, review_outcome: null,
     };
     p.cleanings.push(row);

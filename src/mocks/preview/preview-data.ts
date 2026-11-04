@@ -8,7 +8,7 @@ export type PvCleaning = {
   registered_at: string; client_finished_at: string; offline: boolean; out_of_shift: boolean; repeated_photo: boolean;
   photo_before: string | null; photo_after: string | null; // impressão digital da foto (para "Foto repetida")
   checklist: { item_id: number; label: string; answer: Answer; open_ticket: boolean }[];
-  notes: string | null; latitude: number | null; longitude: number | null; accuracy: number | null;
+  notes: string | null;
   status: "valid" | "cancelled"; cancel_reason: string | null; idempotency_key: string | null;
   reviewed_by: number | null; reviewed_at: string | null; review_outcome: "ok" | "cancelled" | null;
 };
@@ -104,7 +104,6 @@ function rng(seed: number) {
 }
 const between = (r: () => number, a: Date, b: Date) => new Date(a.getTime() + Math.floor(r() * Math.max(0, b.getTime() - a.getTime())));
 const CANCEL_REASONS = ["Foto não mostra o banheiro correto.", "Registro duplicado pela equipe.", "Banheiro estava interditado nesse horário."];
-const BASE_POINT: Record<number, [number, number]> = { 1: [-19.619, -43.226], 2: [-19.631, -43.212], 3: [-19.921, -43.938] };
 
 export function generate(d: MockDb, now = new Date()): PreviewDb {
   const today = opDate(now);
@@ -120,8 +119,6 @@ export function generate(d: MockDb, now = new Date()): PreviewDb {
     const prev = repeated ? same[Math.floor(r() * same.length)]! : null;
     const before = t.contract.rules.photo_before === "off" ? null : prev?.photo_before ?? `ex-${++fp}`;
     const after = t.contract.rules.photo_after === "off" || (t.contract.rules.photo_after === "optional" && r() < 0.15) ? null : `ex-${++fp}`;
-    const hasLoc = t.contract.rules.capture_location && r() < 0.88;
-    const base = BASE_POINT[t.contract.id] ?? [-19.9, -43.9];
     const cancelledByManager = r() < 0.015;
     const client = offline ? new Date(when.getTime() - (40 + Math.floor(r() * 140)) * 60000) : new Date(when.getTime() - Math.floor(r() * 50) * 1000);
     cleanings.push({
@@ -131,7 +128,6 @@ export function generate(d: MockDb, now = new Date()): PreviewDb {
       photo_before: before, photo_after: after,
       checklist: checklistOf(t.contract.id).map((i) => ({ item_id: i.id, label: i.label, answer: r() < 0.05 ? "not_ok" : r() < 0.03 ? "na" : "ok", open_ticket: false })),
       notes: r() < 0.08 ? "Faltou papel toalha no dispenser." : null,
-      latitude: hasLoc ? base[0] + (r() - 0.5) * 0.002 : null, longitude: hasLoc ? base[1] + (r() - 0.5) * 0.002 : null, accuracy: hasLoc ? Math.round(5 + r() * 25) : null,
       status: cancelledByManager ? "cancelled" : "valid", cancel_reason: cancelledByManager ? CANCEL_REASONS[Math.floor(r() * CANCEL_REASONS.length)]! : null, idempotency_key: null,
       reviewed_by: null, reviewed_at: null, review_outcome: null,
     });

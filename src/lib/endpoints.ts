@@ -113,11 +113,6 @@ export function createCleaning(input: CleaningInput) {
   if (input.photo_after) f.set("photo_after", input.photo_after, "depois.jpg");
   f.set("checklist", JSON.stringify(input.checklist));
   if (input.notes) f.set("notes", input.notes);
-  if (input.latitude !== undefined && input.longitude !== undefined) {
-    f.set("latitude", String(input.latitude));
-    f.set("longitude", String(input.longitude));
-    if (input.accuracy !== undefined) f.set("accuracy", String(input.accuracy));
-  }
   f.set("client_finished_at", input.client_finished_at);
   f.set("idempotency_key", input.idempotency_key);
   if (input.queued) f.set("queued", "1");

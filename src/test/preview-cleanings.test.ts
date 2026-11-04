@@ -26,16 +26,13 @@ it("foto antes obrigatória e checklist completo são exigidos; foto depois opci
   expect(okSemDepois.status).toBe(201);
 });
 
-it("sem localização a limpeza vale, com a marca; repetir a mesma chave não duplica", () => {
+it("repetir a mesma chave não duplica", () => {
   resetMockDb();
   const body = base();
   const a = r("POST", "/cleanings", form(body));
   expect(a.status).toBe(201);
-  expect(a.body.data.cleaning.marks).toContain("no_location");
   const again = r("POST", "/cleanings", form(body));
   expect(again.body.data.cleaning.id).toBe(a.body.data.cleaning.id);
-  const loc = r("POST", "/cleanings", form(base({ latitude: "-19.6", longitude: "-43.2", accuracy: "12" })));
-  expect(loc.body.data.cleaning.marks).not.toContain("no_location");
 });
 
 it("limpeza sem tarefa pendente vira extra e não entra no percentual", () => {

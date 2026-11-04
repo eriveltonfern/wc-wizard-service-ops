@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, ArrowLeft, Camera, Wrench, Check, CloudOff, Loader2, MapPin, MapPinOff, RotateCcw } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Camera, Wrench, Check, CloudOff, Loader2, RotateCcw } from "lucide-react";
 import { ApiError } from "@/lib/api";
 import { shrinkPhoto } from "@/lib/photo";
 import { createCleaning, getCleaningForm } from "@/lib/endpoints";
@@ -35,7 +35,6 @@ function RegisterRoute() {
 }
 
 type StepKey = "before" | "checklist" | "after" | "review";
-type Geo = { state: "pending" } | { state: "ok"; lat: number; lng: number; acc: number } | { state: "missing" };
 type Answers = Record<number, { answer: ChecklistAnswer; ticket?: boolean | undefined }>;
 type Done = { kind: "sent"; cleaning: Cleaning; next: Task | null } | { kind: "queued" };
 
@@ -65,23 +64,12 @@ function Wizard({ form }: { form: CleaningForm }) {
   const [photos, setPhotos] = useState<{ before?: string | undefined; after?: string | undefined }>({});
   const [answers, setAnswers] = useState<Answers>({});
   const [notes, setNotes] = useState("");
-  const [geo, setGeo] = useState<Geo>(form.rules.capture_location ? { state: "pending" } : { state: "missing" });
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState<Done | null>(null);
   const key = useRef(crypto.randomUUID());
   const top = useRef<HTMLDivElement>(null);
   const current = steps[step]!;
-
-  useEffect(() => {
-    if (!form.rules.capture_location) return;
-    if (!("geolocation" in navigator)) { setGeo({ state: "missing" }); return; }
-    navigator.geolocation.getCurrentPosition(
-      (p) => setGeo({ state: "ok", lat: p.coords.latitude, lng: p.coords.longitude, acc: Math.round(p.coords.accuracy) }),
-      () => setGeo({ state: "missing" }),
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
-    );
-  }, [form.rules.capture_location]);
 
   const go = (i: number) => { setError(null); setStep(i); top.current?.scrollIntoView({ block: "start" }); };
   const back = () => (step === 0 ? router.history.back() : go(step - 1));
@@ -93,7 +81,6 @@ function Wizard({ form }: { form: CleaningForm }) {
       photo_before: photos.before, photo_after: photos.after,
       checklist: form.checklist.map((i) => ({ item_id: i.id, answer: answers[i.id]?.answer ?? ("" as ChecklistAnswer), open_ticket: answers[i.id]?.ticket })),
       notes: notes.trim() || undefined,
-      ...(geo.state === "ok" ? { latitude: geo.lat, longitude: geo.lng, accuracy: geo.acc } : {}),
       client_finished_at: new Date().toISOString(), idempotency_key: key.current,
     };
     if (isOffline()) { enqueueCleaning(item); setDone({ kind: "queued" }); return; }
@@ -137,7 +124,6 @@ function Wizard({ form }: { form: CleaningForm }) {
         <p className="text-sm text-muted-foreground">{c.bathroom.name}{c.location ? ` · ${c.location}` : ""}</p>
         <div className="flex flex-wrap justify-center gap-2">
           {c.link.kind === "extra" ? <Pill tone="info">Limpeza extra</Pill> : <Pill tone="success">{shiftTaskLabel[c.link.shift ?? ""] ?? "Tarefa do dia"}</Pill>}
-          {c.marks.includes("no_location") && <Pill tone="neutral">Registrada sem localização</Pill>}
         </div>
         {c.link.kind === "extra" && <p className="text-xs text-muted-foreground">Não havia limpeza pendente para este banheiro agora. Ela fica registrada à parte e não entra no percentual.</p>}
         <div className="grid w-full gap-2">
@@ -222,11 +208,6 @@ function Wizard({ form }: { form: CleaningForm }) {
             <Label htmlFor="obs">Observação (opcional)</Label>
             <Textarea id="obs" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Ex.: faltou papel toalha" />
           </div>
-          {form.rules.capture_location && (
-            <p className={cn("flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold", geo.state === "ok" ? "bg-success-soft text-success" : "bg-neutral-soft text-neutral")} role="status">
-              {geo.state === "ok" ? <><MapPin className="h-4 w-4" />Localização registrada</> : geo.state === "pending" ? <><Loader2 className="h-4 w-4 animate-spin" />Buscando localização…</> : <><MapPinOff className="h-4 w-4" />Sem localização — a limpeza vale do mesmo jeito</>}
-            </p>
-          )}
           <Button className="h-14 w-full text-base" onClick={() => void submit()} disabled={sending}>
             {sending && <Loader2 className="h-5 w-5 animate-spin" />}Enviar limpeza
           </Button>

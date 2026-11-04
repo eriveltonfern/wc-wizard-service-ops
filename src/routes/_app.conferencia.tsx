@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, ClipboardCheck, MapPin, MapPinOff } from "lucide-react";
+import { CheckCircle2, ClipboardCheck } from "lucide-react";
 import { toast } from "sonner";
 import { approveCleaning, cancelCleaning, getCleaning, listContracts, listReview } from "@/lib/endpoints";
 import { fmtDate } from "@/lib/format";
@@ -116,7 +116,7 @@ function ReviewPage() {
       <Sheet open={!!search.limpeza} onOpenChange={(o) => { if (!o) set({ limpeza: undefined }); }}>
         <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-xl">
           <SheetTitle className="sr-only">Conferir limpeza</SheetTitle>
-          <SheetDescription className="sr-only">Fotos, checklist, localização e ações.</SheetDescription>
+          <SheetDescription className="sr-only">Fotos, checklist e ações.</SheetDescription>
           {search.limpeza && <CleaningDetail id={search.limpeza} onClose={() => set({ limpeza: undefined })} />}
         </SheetContent>
       </Sheet>

@@ -360,7 +360,6 @@ function contractInput(d: MockDb, body: Body, existing?: DbContract) {
   const photos = ["required", "optional", "off"] as const;
   const photo_before = v.oneOf("photo_before", photos, true);
   const photo_after = v.oneOf("photo_after", photos, true);
-  const capture_location = v.bool("capture_location") ?? true;
   const cpd = v.int("default_cleanings_per_day", true, 1);
   const wd = weekdays(v, "default_weekdays", true);
   const rawShifts = merged["shifts"];
@@ -370,7 +369,7 @@ function contractInput(d: MockDb, body: Body, existing?: DbContract) {
   else shifts = [...new Set(rawShifts as ("manha" | "tarde" | "noite")[])];
   v.done();
   return { company_id: company_id!, code: code!, name: name!, starts_on: starts_on!, ends_on: ends_on, manager_id: manager_id, timezone: timezone!,
-    rules: { photo_before: photo_before!, photo_after: photo_after!, capture_location, default_cleanings_per_day: cpd!, default_weekdays: wd!, shifts } };
+    rules: { photo_before: photo_before!, photo_after: photo_after!, default_cleanings_per_day: cpd!, default_weekdays: wd!, shifts } };
 }
 on("GET", "/contracts", ({ d, me, query }) => {
   const ids = scopeIds(d, me);

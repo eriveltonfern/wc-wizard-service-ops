@@ -63,7 +63,6 @@ export function CleaningPills({ c }: { c: Cleaning }) {
       {c.status === "cancelled" && <Pill tone="danger">Cancelada pelo gestor{c.cancel_reason ? `: ${c.cancel_reason}` : ""}</Pill>}
       {c.marks.includes("offline") && <Pill tone="warning">Enviado sem internet</Pill>}
       {c.link.kind === "extra" && <Pill tone="info">Extra</Pill>}
-      {c.marks.includes("no_location") && <Pill tone="neutral">Sem localização</Pill>}
     </>
   );
 }

@@ -81,7 +81,7 @@ function HistoricoPage() {
       <PreviewBanner />
       <PageHelp>
         Em "Limpezas" você vê o que foi feito no período escolhido, com os mesmos números do Painel e dos Relatórios. Clique numa limpeza para ver fotos,
-        checklist e localização. Em "Alterações" aparece quem mudou o quê nos cadastros (contratos, banheiros, equipes, pessoas e empresas).
+        e checklist. Em "Alterações" aparece quem mudou o quê nos cadastros (contratos, banheiros, equipes, pessoas e empresas).
       </PageHelp>
       <PageHeader title="Histórico" subtitle="Limpezas feitas e alterações nos cadastros." />
       <Tabs value={search.aba ?? ""} onChange={(aba) => set({ aba })} />
@@ -172,7 +172,7 @@ function CleaningsTab({ search, set }: { search: Search; set: (p: Partial<Search
       <Sheet open={!!search.limpeza} onOpenChange={(o) => { if (!o) set({ limpeza: undefined }); }}>
         <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-xl">
           <SheetTitle className="sr-only">Limpeza</SheetTitle>
-          <SheetDescription className="sr-only">Fotos, checklist, localização e marcas.</SheetDescription>
+          <SheetDescription className="sr-only">Fotos, checklist e marcas.</SheetDescription>
           {search.limpeza && <CleaningDetail id={search.limpeza} readOnly onClose={() => set({ limpeza: undefined })} />}
         </SheetContent>
       </Sheet>

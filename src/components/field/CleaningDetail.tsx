@@ -1,7 +1,7 @@
-// Detalhe de uma limpeza (fotos, checklist, localização, marcas). Usado na Conferência e no Histórico (só leitura).
+// Detalhe de uma limpeza (fotos, checklist, marcas). Usado na Conferência e no Histórico (só leitura).
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, MapPin, MapPinOff } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { approveCleaning, cancelCleaning, getCleaning } from "@/lib/endpoints";
 import { fmtDate } from "@/lib/format";
@@ -94,10 +94,6 @@ export function CleaningDetail({ id, onClose, readOnly }: { id: number; onClose:
           ))}
         </ul>
       </section>
-      <p className="flex items-center gap-2 rounded-[10px] border bg-card px-4 py-3 text-sm">
-        {c.position ? <><MapPin className="h-4 w-4 text-success" />Localização registrada ({c.position.latitude.toFixed(4)}, {c.position.longitude.toFixed(4)}{c.position.accuracy ? ` · ±${c.position.accuracy} m` : ""})</>
-          : <><MapPinOff className="h-4 w-4 text-muted-foreground" />Sem localização</>}
-      </p>
       {c.notes && <p className="rounded-[10px] border bg-card px-4 py-3 text-sm text-ink">Observação: {c.notes}</p>}
       {c.review && <p className="text-sm text-muted-foreground">Conferida por <strong className="text-ink">{c.review.by.name}</strong> em {fmtDateTime(c.review.at)}.</p>}
       {open && (

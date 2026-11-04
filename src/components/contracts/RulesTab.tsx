@@ -6,7 +6,6 @@ import { photoRuleLabel, shiftLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import type { ContractCtx } from "./ctx";
 import { ConfirmDialog, Field, FormDialog, FormError, PendingButton, WeekdayChips, useAction } from "./kit";
 
@@ -41,13 +40,6 @@ export function RulesTab({ contract: c, ctx }: { contract: ContractDetail; ctx: 
         <Field label="Foto depois da limpeza" id="photo_after" error={e["photo_after"]}>
           <Options id="photo_after" value={r.photo_after} options={photoRuleLabel as Record<PhotoRule, string>} disabled={ro} onChange={(v) => setR({ ...r, photo_after: v })} />
         </Field>
-        <div className="flex items-start gap-3">
-          <Switch id="capture_location" checked={r.capture_location} disabled={ro} onCheckedChange={(v) => setR({ ...r, capture_location: v })} className="mt-1" />
-          <div>
-            <label htmlFor="capture_location" className="font-medium text-foreground">Capturar localização</label>
-            <p className="text-sm text-muted-foreground">A localização nunca bloqueia o registro; se o celular não permitir, a limpeza é registrada sem ela.</p>
-          </div>
-        </div>
         <Field label="Limpezas por dia" id="cpd" error={e["default_cleanings_per_day"]}>
           <Input id="cpd" type="number" min={1} max={24} className="h-11 w-32" disabled={ro} value={r.default_cleanings_per_day}
             onChange={(ev) => setR({ ...r, default_cleanings_per_day: Number(ev.target.value) })} />

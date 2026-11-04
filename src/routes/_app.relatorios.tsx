@@ -147,7 +147,7 @@ function RelatoriosPage() {
           <DataCard title="Por pessoa e equipe">
             <table className="w-full text-sm">
               <thead className="bg-secondary/60 text-left text-xs uppercase text-muted-foreground">
-                <tr><th className="px-4 py-2">Pessoa</th><th className="px-4 py-2">Equipe</th><th className="px-4 py-2 text-right">Limpezas feitas</th><th className="px-4 py-2 text-right">% no prazo</th><th className="px-4 py-2 text-right">Tempo médio</th></tr>
+                <tr><th className="px-4 py-2">Pessoa</th><th className="px-4 py-2">Equipe</th><th className="px-4 py-2 text-right">Limpezas feitas</th><th className="px-4 py-2 text-right">% no prazo</th></tr>
               </thead>
               <tbody className="divide-y">
                 {q.data.by_person.map((p) => (
@@ -156,12 +156,11 @@ function RelatoriosPage() {
                     <td className="px-4 py-2.5 text-muted-foreground">{p.teams.join(", ") || "—"}</td>
                     <td className="px-4 py-2.5 text-right tabular-nums">{p.done}</td>
                     <td className="px-4 py-2.5 text-right tabular-nums">{pct(p.done ? p.on_time / p.done : null)}</td>
-                    <td className="px-4 py-2.5 text-right tabular-nums">{p.avg_minutes ? `${p.avg_minutes} min` : "—"}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            <p className="border-t px-4 py-2 text-xs text-muted-foreground">Extras não entram nesta conta. Tempo médio é um valor de exemplo.</p>
+            <p className="border-t px-4 py-2 text-xs text-muted-foreground">Extras não entram nesta conta.</p>
           </DataCard>
         )}
     </div>
