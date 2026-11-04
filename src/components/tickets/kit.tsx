@@ -263,7 +263,7 @@ export function TicketForm({ bathroom, initial, cleaningId, onDone, submitLabel 
   const key = useRef(crypto.randomUUID());
   const search = useQuery({
     queryKey: ["bathrooms", "ticket-search", q], enabled: !bathroom && !picked,
-    queryFn: () => listBathrooms({ q: q.trim() || undefined, status: "active" }),
+    queryFn: () => listBathrooms({ ...(q.trim() ? { q: q.trim() } : {}), status: "active" }),
   });
   const create = useAction(() => createTicket({
     bathroom_id: picked?.id ?? 0, category: category as TicketCategory, priority: showPriority ? priority : undefined,
