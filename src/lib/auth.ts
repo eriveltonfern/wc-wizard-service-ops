@@ -1,7 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import {
   LayoutDashboard, FileText, Building2, Users, Wrench, ClipboardCheck, QrCode,
-  CalendarCheck, Search, ScanLine, ListChecks, type LucideIcon,
+  CalendarCheck, Search, Toilet, ScanLine, ListChecks, type LucideIcon,
 } from "lucide-react";
 import { getMe } from "./endpoints";
 import type { Role } from "./types";
@@ -28,6 +28,7 @@ export type NavItem = { title: string; to: string; icon: LucideIcon };
 const I = {
   painel: { title: "Painel", to: "/painel", icon: LayoutDashboard },
   contratos: { title: "Contratos", to: "/contratos", icon: FileText },
+  banheiros: { title: "Banheiros", to: "/banheiros", icon: Toilet },
   empresas: { title: "Empresas", to: "/empresas", icon: Building2 },
   pessoas: { title: "Pessoas", to: "/pessoas", icon: Users },
   chamados: { title: "Chamados", to: "/chamados", icon: Wrench },
@@ -40,9 +41,9 @@ const I = {
 } satisfies Record<string, NavItem>;
 
 export const navByRole: Record<Role, NavItem[]> = {
-  admin: [I.painel, I.contratos, I.empresas, I.pessoas, I.chamados, I.conferencia, I.etiquetas],
-  gestor: [I.painel, I.contratos, I.pessoas, I.chamados, I.conferencia, I.etiquetas],
-  fiscal: [I.contratos],
+  admin: [I.painel, I.contratos, I.banheiros, I.empresas, I.pessoas, I.chamados, I.conferencia, I.etiquetas],
+  gestor: [I.painel, I.contratos, I.banheiros, I.pessoas, I.chamados, I.conferencia, I.etiquetas],
+  fiscal: [I.contratos, I.banheiros],
   limpeza: [I.hoje, I.buscar, I.lerQr, I.minhas],
   manutencao: [I.chamados],
 };

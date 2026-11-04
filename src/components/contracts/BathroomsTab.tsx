@@ -105,7 +105,7 @@ export function BathroomsTab({ contract: c, ctx }: { contract: ContractDetail; c
   );
 }
 
-function BathroomForm({ contract: c, bathroom: b, onClose }: { contract: ContractDetail; bathroom?: Bathroom | undefined; onClose: () => void }) {
+export function BathroomForm({ contract: c, bathroom: b, onClose }: { contract: ContractDetail; bathroom?: Bathroom | undefined; onClose: () => void }) {
   const locations = useQuery({ queryKey: ["locations", c.id], queryFn: () => listLocations(c.id) });
   const [f, setF] = useState({
     name: b?.name ?? "", location_id: b?.location ? String(b.location.id) : "", kind: b?.kind ?? "unissex", floor: b?.floor ?? "", notes: b?.notes ?? "",
@@ -179,7 +179,7 @@ function BathroomForm({ contract: c, bathroom: b, onClose }: { contract: Contrac
   );
 }
 
-function RegenerateQr({ b, onClose }: { b: Bathroom; onClose: () => void }) {
+export function RegenerateQr({ b, onClose }: { b: Bathroom; onClose: () => void }) {
   const a = useAction(() => regenerateBathroomQr(b.id), { success: "Novo QR gerado. Imprima a nova etiqueta.", onSuccess: onClose });
   return (
     <ConfirmDialog open onOpenChange={(o) => !o && onClose()} title="Gerar novo QR"
@@ -188,8 +188,8 @@ function RegenerateQr({ b, onClose }: { b: Bathroom; onClose: () => void }) {
   );
 }
 
-function DeleteBathroom({ b, onClose }: { b: Bathroom; onClose: () => void }) {
-  const del = useAction(() => deleteBathroom(b.id), { success: "Banheiro excluído.", onSuccess: onClose });
+export function DeleteBathroom({ b, onClose, onDeleted }: { b: Bathroom; onClose: () => void; onDeleted?: () => void }) {
+  const del = useAction(() => deleteBathroom(b.id), { success: "Banheiro excluído.", onSuccess: () => { onClose(); onDeleted?.(); } });
   const inact = useAction(() => inactivateBathroom(b.id), { success: "Banheiro inativado.", onSuccess: onClose });
   return (
     <ConfirmDialog open onOpenChange={(o) => !o && onClose()} title="Excluir banheiro" description={`Excluir "${b.name}"? Esta ação não pode ser desfeita.`}
@@ -205,7 +205,7 @@ function DeleteBathroom({ b, onClose }: { b: Bathroom; onClose: () => void }) {
   );
 }
 
-function PeriodsDialog({ b, onClose }: { b: Bathroom; onClose: () => void }) {
+export function PeriodsDialog({ b, onClose }: { b: Bathroom; onClose: () => void }) {
   const detail = useQuery({ queryKey: ["bathroom", b.id], queryFn: () => getBathroom(b.id) });
   const [f, setF] = useState({ starts_on: todayIso(), ends_on: todayIso(), reason: "" });
   const add = useAction(() => createStatusPeriod(b.id, f), { success: "Interdição registrada.", onSuccess: () => setF({ starts_on: todayIso(), ends_on: todayIso(), reason: "" }) });

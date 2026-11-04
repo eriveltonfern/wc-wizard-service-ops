@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import QRCode from "qrcode";
+import { QrSvg } from "@/components/QrSvg";
 import { Printer, Search } from "lucide-react";
 import { listContracts, listLabels } from "@/lib/endpoints";
 import type { Label } from "@/lib/types";
@@ -145,17 +145,10 @@ function LabelsPage() {
 
 function LabelCard({ label, size, code }: { label: Label; size: Size; code: string }) {
   const st = SIZE_STYLE[size];
-  const [svg, setSvg] = useState("");
-  useEffect(() => {
-    let alive = true;
-    void QRCode.toString(label.url, { type: "svg", margin: 1, errorCorrectionLevel: "M" }).then((s) => { if (alive) setSvg(s); });
-    return () => { alive = false; };
-  }, [label.url]);
   return (
     <article data-url={label.url} className="label-card flex flex-col items-center justify-center gap-2 border border-dashed border-foreground p-[5mm] text-center text-foreground"
       style={{ height: st.h, breakInside: "avoid", pageBreakInside: "avoid" }}>
-      <div role="img" aria-label={`QR de ${label.name}`} style={{ width: st.qr, height: st.qr }} className="[&>svg]:h-full [&>svg]:w-full"
-        dangerouslySetInnerHTML={{ __html: svg }} />
+      <QrSvg value={label.url} label={`QR de ${label.name}`} style={{ width: st.qr, height: st.qr }} />
       <p className={cn("font-bold leading-tight", st.name)}>{label.name}</p>
       {label.location && <p className={size === "grande" ? "text-2xl" : "text-base"}>{label.location}</p>}
       <p className={size === "grande" ? "text-xl" : "text-sm"}>Escaneie para registrar a limpeza</p>

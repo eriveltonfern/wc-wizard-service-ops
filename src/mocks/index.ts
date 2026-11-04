@@ -546,7 +546,8 @@ on("GET", "/bathrooms", ({ d, me, query }) => {
     if (status && b.status !== status) return false;
     if (q) {
       const loc = d.locations.find((l) => l.id === b.location_id)?.name ?? "";
-      if (!norm(`${b.name} ${loc} ${b.floor ?? ""} ${b.qr_token}`).includes(q)) return false;
+      const ct = d.contracts.find((c) => c.id === b.contract_id);
+      if (!norm(`${b.name} ${loc} ${b.floor ?? ""} ${b.qr_token} ${ct?.code ?? ""} ${ct?.name ?? ""}`).includes(q)) return false;
     }
     return true;
   }).slice(0, 50);
