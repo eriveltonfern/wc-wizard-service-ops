@@ -59,7 +59,11 @@ function BathroomPage() {
           <StatusBadge status={b.status} />
         </div>
         <p className="mt-1 text-muted-foreground">
-          <Link to="/contratos/$id" params={{ id: String(b.contract.id) }} search={{ tab: "banheiros" }} className="text-primary hover:underline">{b.contract.code} · {b.contract.name}</Link>
+          {me.role === "admin"
+            ? <Link to="/empresas/$id" params={{ id: String(b.company.id) }} className="text-primary hover:underline">{b.company.name}</Link>
+            : <span className="font-medium text-foreground">{b.company.name}</span>}
+          {" · "}
+          <Link to="/contratos/$id" params={{ id: String(b.contract.id) }} search={{ tab: "banheiros" }} className="text-primary hover:underline">{b.contract.code} {b.contract.name}</Link>
         </p>
         {canManage && (
           <div className="mt-4 flex flex-wrap gap-2">
