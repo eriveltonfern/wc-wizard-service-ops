@@ -1,15 +1,28 @@
 // Único ponto de acesso a dados do app. Nenhum fetch fora deste arquivo.
+// VITE_API_URL deve incluir o prefixo /api (ex.: https://wccheck.com.br/api).
 export const TOKEN_KEY = "wccheck.token";
+
+type ErrorPayload = {
+  code: string;
+  message: string;
+  fields?: Record<string, string>;
+  missing?: string[];
+  counts?: Record<string, number>;
+};
 
 export class ApiError extends Error {
   code: string;
   fields: Record<string, string> | undefined;
   status: number;
-  constructor(code: string, message: string, status: number, fields?: Record<string, string>) {
+  missing: string[] | undefined;
+  counts: Record<string, number> | undefined;
+  constructor(code: string, message: string, status: number, fields?: Record<string, string>, extra?: Pick<ErrorPayload, "missing" | "counts">) {
     super(message);
     this.code = code;
     this.status = status;
     this.fields = fields;
+    this.missing = extra?.missing;
+    this.counts = extra?.counts;
   }
 }
 
@@ -25,7 +38,14 @@ export function setToken(t: string | null) {
   else localStorage.removeItem(TOKEN_KEY);
 }
 
-type Envelope = { data?: unknown; meta?: unknown; error?: { code: string; message: string; fields?: Record<string, string> } };
+/** Apaga os dados simulados e volta ao estado inicial (só no modo simulado). */
+export async function resetMockData() {
+  if (!USE_MOCKS) return;
+  const { resetMockDb } = await import("../mocks");
+  resetMockDb();
+}
+
+type Envelope = { data?: unknown; meta?: unknown; error?: ErrorPayload } | null;
 
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   const token = getToken();
@@ -34,7 +54,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 
   if (USE_MOCKS) {
     const { handleMock } = await import("../mocks");
-    await new Promise((r) => setTimeout(r, 300));
+    await new Promise((r) => setTimeout(r, 250));
     const res = handleMock(method, path, body, token);
     status = res.status;
     json = res.body as Envelope;
@@ -48,7 +68,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
       body: body !== undefined ? JSON.stringify(body) : null,
     });
     status = res.status;
-    json = (await res.json().catch(() => ({}))) as Envelope;
+    json = status === 204 ? null : ((await res.json().catch(() => ({}))) as Envelope);
   }
 
   if (status === 401 && path !== "/auth/login") {
@@ -57,11 +77,11 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
       window.location.href = "/login";
     }
   }
-  if (status >= 400 || json.error) {
-    const e = json.error ?? { code: "unknown", message: "Erro inesperado." };
-    throw new ApiError(e.code, e.message, status, e.fields);
+  if (status >= 400 || json?.error) {
+    const e = json?.error ?? { code: "unknown", message: "Erro inesperado." };
+    throw new ApiError(e.code, e.message, status, e.fields, { missing: e.missing, counts: e.counts });
   }
-  return json.data as T;
+  return (json?.data ?? undefined) as T;
 }
 
 export const api = {

@@ -1,0 +1,102 @@
+// Uma função por operação de docs/api-contract.md. Todas passam por api.ts.
+import { api } from "./api";
+import type {
+  Activation, AuditEvent, Bathroom, BathroomDetail, BathroomInput, ChecklistItem, Company, CompanyDetail,
+  CompanyInput, Contract, ContractDetail, ContractInput, FiscalLink, Health, ISODate, Label, Location,
+  LoginInput, Member, Membership, QrLookup, StatusPeriod, Team, User, UserDetail, UserInput,
+} from "./types";
+
+type Params = Record<string, string | number | boolean | undefined | null>;
+function qs(p?: Params) {
+  if (!p) return "";
+  const s = new URLSearchParams();
+  for (const [k, v] of Object.entries(p)) if (v !== undefined && v !== null && v !== "") s.set(k, String(v));
+  const out = s.toString();
+  return out ? `?${out}` : "";
+}
+type Reason = { reason: string };
+
+// Saúde e sessão
+export const getHealth = () => api.get<Health>("/health");
+export const login = (input: LoginInput) => api.post<{ token: string; user: User }>("/auth/login", input);
+export const logout = () => api.post<void>("/auth/logout");
+export const getMe = () => api.get<User>("/me");
+export const changeMyPassword = (input: { current: string; new: string }) => api.post<{ changed: boolean }>("/me/password", input);
+
+// Empresas
+export const listCompanies = () => api.get<Company[]>("/companies");
+export const createCompany = (input: CompanyInput) => api.post<CompanyDetail>("/companies", input);
+export const getCompany = (id: number) => api.get<CompanyDetail>(`/companies/${id}`);
+export const updateCompany = (id: number, input: Partial<CompanyInput>) => api.patch<CompanyDetail>(`/companies/${id}`, input);
+export const deleteCompany = (id: number) => api.delete<void>(`/companies/${id}`);
+export const inactivateCompany = (id: number, input: Reason) => api.post<CompanyDetail>(`/companies/${id}/inactivate`, input);
+export const reactivateCompany = (id: number) => api.post<CompanyDetail>(`/companies/${id}/reactivate`);
+
+// Contratos
+export const listContracts = (params?: Params) => api.get<Contract[]>(`/contracts${qs(params)}`);
+export const createContract = (input: ContractInput) => api.post<ContractDetail>("/contracts", input);
+export const getContract = (id: number) => api.get<ContractDetail>(`/contracts/${id}`);
+export const updateContract = (id: number, input: Partial<ContractInput>) => api.patch<ContractDetail>(`/contracts/${id}`, input);
+export const deleteContract = (id: number) => api.delete<void>(`/contracts/${id}`);
+export const getContractActivation = (id: number) => api.get<Activation>(`/contracts/${id}/activation`);
+export const activateContract = (id: number, input: Reason = { reason: "" }) => api.post<ContractDetail>(`/contracts/${id}/activate`, input);
+export const reactivateContract = (id: number, input: Reason) => api.post<ContractDetail>(`/contracts/${id}/reactivate`, input);
+export const suspendContract = (id: number, input: Reason) => api.post<ContractDetail>(`/contracts/${id}/suspend`, input);
+export const endContract = (id: number, input: Reason) => api.post<ContractDetail>(`/contracts/${id}/end`, input);
+
+// Fiscais do contrato
+export const addContractFiscal = (contractId: number, input: { user_id: number; starts_on: ISODate; ends_on?: ISODate }) =>
+  api.post<FiscalLink>(`/contracts/${contractId}/fiscals`, input);
+export const endContractFiscal = (contractId: number, linkId: number, input: { ends_on: ISODate }) =>
+  api.post<FiscalLink>(`/contracts/${contractId}/fiscals/${linkId}/end`, input);
+
+// Checklist
+export const listChecklist = (contractId: number) => api.get<ChecklistItem[]>(`/contracts/${contractId}/checklist`);
+export const addChecklistItem = (contractId: number, input: { label: string }) => api.post<ChecklistItem>(`/contracts/${contractId}/checklist`, input);
+export const reorderChecklist = (contractId: number, ids: number[]) => api.post<ChecklistItem[]>(`/contracts/${contractId}/checklist/reorder`, { ids });
+export const updateChecklistItem = (contractId: number, itemId: number, input: Partial<{ label: string; active: boolean }>) =>
+  api.patch<ChecklistItem>(`/contracts/${contractId}/checklist/${itemId}`, input);
+export const deleteChecklistItem = (contractId: number, itemId: number) => api.delete<void>(`/contracts/${contractId}/checklist/${itemId}`);
+
+// Locais
+export const listLocations = (contractId: number) => api.get<Location[]>(`/contracts/${contractId}/locations`);
+export const createLocation = (contractId: number, input: { name: string }) => api.post<Location>(`/contracts/${contractId}/locations`, input);
+export const updateLocation = (id: number, input: Partial<{ name: string; status: string }>) => api.patch<Location>(`/locations/${id}`, input);
+export const deleteLocation = (id: number) => api.delete<void>(`/locations/${id}`);
+
+// Banheiros
+export const listBathrooms = (params?: { contract_id?: number; q?: string; status?: string }) => api.get<Bathroom[]>(`/bathrooms${qs(params)}`);
+export const createBathroom = (contractId: number, input: BathroomInput) => api.post<BathroomDetail>(`/contracts/${contractId}/bathrooms`, input);
+export const getBathroom = (id: number) => api.get<BathroomDetail>(`/bathrooms/${id}`);
+export const updateBathroom = (id: number, input: Partial<BathroomInput>) => api.patch<BathroomDetail>(`/bathrooms/${id}`, input);
+export const deleteBathroom = (id: number) => api.delete<void>(`/bathrooms/${id}`);
+export const inactivateBathroom = (id: number) => api.post<BathroomDetail>(`/bathrooms/${id}/inactivate`);
+export const reactivateBathroom = (id: number) => api.post<BathroomDetail>(`/bathrooms/${id}/reactivate`);
+export const regenerateBathroomQr = (id: number) => api.post<BathroomDetail>(`/bathrooms/${id}/regenerate-qr`);
+export const listStatusPeriods = (bathroomId: number) => api.get<StatusPeriod[]>(`/bathrooms/${bathroomId}/status-periods`);
+export const createStatusPeriod = (bathroomId: number, input: { starts_on: ISODate; ends_on: ISODate; reason: string }) =>
+  api.post<StatusPeriod>(`/bathrooms/${bathroomId}/status-periods`, input);
+export const deleteStatusPeriod = (id: number) => api.delete<void>(`/status-periods/${id}`);
+export const lookupQr = (token: string) => api.get<QrLookup>(`/q/${encodeURIComponent(token)}`);
+export const listLabels = (contractId: number) => api.get<Label[]>(`/contracts/${contractId}/labels`);
+
+// Equipes
+export const listTeams = (contractId: number) => api.get<Team[]>(`/contracts/${contractId}/teams`);
+export const createTeam = (contractId: number, input: { name: string; kind: string; shift?: string }) => api.post<Team>(`/contracts/${contractId}/teams`, input);
+export const updateTeam = (id: number, input: Partial<{ name: string; shift: string; status: string }>) => api.patch<Team>(`/teams/${id}`, input);
+export const deleteTeam = (id: number) => api.delete<void>(`/teams/${id}`);
+export const listTeamMembers = (teamId: number, includePast = false) => api.get<Member[]>(`/teams/${teamId}/members${includePast ? "?include_past=1" : ""}`);
+export const addTeamMember = (teamId: number, input: { user_id: number; starts_on: ISODate }) => api.post<Member>(`/teams/${teamId}/members`, input);
+export const endTeamMember = (memberId: number, input: { ends_on: ISODate; reason: string }) => api.post<Member>(`/team-members/${memberId}/end`, input);
+export const moveTeamMember = (memberId: number, input: { to_team_id: number; date: ISODate; reason: string }) => api.post<Member>(`/team-members/${memberId}/move`, input);
+
+// Pessoas
+export const listUsers = (params?: { role?: string; status?: string; q?: string }) => api.get<User[]>(`/users${qs(params)}`);
+export const createUser = (input: UserInput) => api.post<{ user: User; temporary_password: string }>("/users", input);
+export const getUser = (id: number) => api.get<UserDetail>(`/users/${id}`);
+export const updateUser = (id: number, input: Partial<UserInput>) => api.patch<User>(`/users/${id}`, input);
+export const deleteUser = (id: number) => api.delete<void>(`/users/${id}`);
+export const inactivateUser = (id: number, input: Reason) => api.post<User>(`/users/${id}/inactivate`, input);
+export const reactivateUser = (id: number) => api.post<User>(`/users/${id}/reactivate`);
+export const changeUserRole = (id: number, input: { role: string; reason: string; company_id?: number }) => api.patch<User>(`/users/${id}/role`, input);
+export const getUserHistory = (id: number) => api.get<{ events: AuditEvent[]; memberships: Membership[] }>(`/users/${id}/history`);
