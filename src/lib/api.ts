@@ -51,7 +51,9 @@ export async function resetMockData() {
 
 type Envelope = { data?: unknown; meta?: unknown; error?: ErrorPayload } | null;
 
-async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+type RequestResult = { data: unknown; meta: Record<string, unknown> | undefined };
+
+async function requestRaw(method: string, path: string, body?: unknown): Promise<RequestResult> {
   const token = getToken();
   let status: number;
   let json: Envelope;
@@ -85,7 +87,23 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     const e = json?.error ?? { code: "unknown", message: "Erro inesperado." };
     throw new ApiError(e.code, e.message, status, e.fields, { missing: e.missing, counts: e.counts, contracts: e.contracts });
   }
-  return (json?.data ?? undefined) as T;
+  return { data: json?.data, meta: (json?.meta ?? undefined) as RequestResult["meta"] };
+}
+
+async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  const { data } = await requestRaw(method, path, body);
+  return data as T;
+}
+
+/** Lista paginada: devolve as linhas e o meta da API (total, limit...). */
+export type Page<T> = { rows: T[]; total: number; limit?: number | undefined };
+
+async function requestPage<T>(method: string, path: string, body?: unknown): Promise<Page<T>> {
+  const { data, meta } = await requestRaw(method, path, body);
+  const rows = (Array.isArray(data) ? data : []) as T[];
+  const total = typeof meta?.["total"] === "number" ? (meta["total"] as number) : rows.length;
+  const limit = typeof meta?.["limit"] === "number" ? (meta["limit"] as number) : undefined;
+  return { rows, total, limit };
 }
 
 export const api = {
@@ -93,4 +111,5 @@ export const api = {
   post: <T>(path: string, body?: unknown) => request<T>("POST", path, body),
   patch: <T>(path: string, body?: unknown) => request<T>("PATCH", path, body),
   delete: <T>(path: string) => request<T>("DELETE", path),
+  getPage: <T>(path: string) => requestPage<T>("GET", path),
 };

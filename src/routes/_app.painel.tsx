@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_app/painel")({
 
 function PainelPage() {
   const active = useQuery({ queryKey: ["bathrooms", "active-count"], queryFn: () => listBathrooms({ status: "active" }) });
-  const n = active.data?.length;
+  const n = active.data?.total;
   return (
     <div className="space-y-6">
       <div className="mx-auto max-w-4xl">
@@ -29,7 +29,7 @@ function PainelPage() {
           <span className="flex-1">
             <span className="block text-sm font-medium text-muted-foreground">Banheiros ativos</span>
             <span className="block text-3xl font-bold text-foreground">
-              {active.isLoading ? "…" : active.isError ? "—" : n !== undefined && n >= 50 ? "50+" : n}
+              {active.isLoading ? "…" : active.isError ? "—" : n ?? "—"}
             </span>
           </span>
           <span className="inline-flex items-center gap-1 text-sm font-medium text-primary">Ver banheiros<ChevronRight className="h-4 w-4" /></span>

@@ -65,7 +65,7 @@ export const updateLocation = (id: number, input: Partial<{ name: string; status
 export const deleteLocation = (id: number) => api.delete<void>(`/locations/${id}`);
 
 // Banheiros
-export const listBathrooms = (params?: { contract_id?: number; q?: string; status?: string }) => api.get<Bathroom[]>(`/bathrooms${qs(params)}`);
+export const listBathrooms = (params?: { contract_id?: number; q?: string; status?: string }) => api.getPage<Bathroom>(`/bathrooms${qs(params)}`);
 export const createBathroom = (contractId: number, input: BathroomInput) => api.post<BathroomDetail>(`/contracts/${contractId}/bathrooms`, input);
 export const getBathroom = (id: number) => api.get<BathroomDetail>(`/bathrooms/${id}`);
 export const updateBathroom = (id: number, input: Partial<BathroomInput>) => api.patch<BathroomDetail>(`/bathrooms/${id}`, input);

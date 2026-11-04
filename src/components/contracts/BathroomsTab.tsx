@@ -55,7 +55,7 @@ export function BathroomsTab({ contract: c, ctx }: { contract: ContractDetail; c
 
       {query.isLoading ? <LoadingBlock label="Carregando banheiros…" />
         : query.isError ? <ErrorBlock message="Não foi possível carregar os banheiros." onRetry={() => void query.refetch()} />
-        : !query.data?.length ? (
+        : !query.data?.rows.length ? (
           <EmptyBlock title={dq || status ? "Nenhum banheiro encontrado." : "Nenhum banheiro cadastrado."}>
             {ctx.canManage && !dq && !status && <Button className="min-h-11" onClick={() => setDlg({ kind: "form" })}>Cadastrar banheiro</Button>}
           </EmptyBlock>
@@ -66,7 +66,7 @@ export function BathroomsTab({ contract: c, ctx }: { contract: ContractDetail; c
                 <tr><th className="px-4 py-3">Nome</th><th className="px-4 py-3">Local</th><th className="px-4 py-3">Tipo</th><th className="px-4 py-3">Andar</th><th className="px-4 py-3">Plano</th><th className="px-4 py-3">Situação</th>{ctx.canManage && <th className="px-4 py-3"><span className="sr-only">Ações</span></th>}</tr>
               </thead>
               <tbody className="divide-y">
-                {query.data.map((b) => (
+                {query.data.rows.map((b) => (
                   <tr key={b.id}>
                     <td className="px-4 py-3 font-medium text-foreground">{b.name}</td>
                     <td className="px-4 py-3 text-muted-foreground">{b.location?.name ?? "—"}</td>
