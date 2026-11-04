@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQueries, useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { meQuery } from "@/lib/auth";
 import { CheckCircle2 } from "lucide-react";
-import { getContractActivation, listBathrooms, listContracts } from "@/lib/endpoints";
+import { getContractActivation, listBathrooms, listCompanies, listContracts } from "@/lib/endpoints";
 import type { ActivationMissing } from "@/lib/types";
 import { PageHeader, PageHelp } from "@/components/layout/PageHeader";
 import { AttentionList, AttentionRow, ErrorState, KpiCard, KpiGrid, Pill, SkeletonBlock } from "@/components/ui-kit";
@@ -24,10 +25,15 @@ const missingPill: Partial<Record<ActivationMissing, string>> = {
   manager: "sem gestor",
   bathroom: "sem banheiro",
   cleaning_team: "sem equipe de limpeza",
+  fiscal: "sem fiscal",
   company: "empresa inativa",
 };
 
 function PainelPage() {
+  const { data: me } = useSuspenseQuery(meQuery);
+  const isAdmin = me.role === "admin";
+  const companies = useQuery({ queryKey: ["companies"], queryFn: listCompanies, enabled: isAdmin });
+  const noFiscal = (companies.data ?? []).filter((c) => c.status === "active" && c.fiscals_count === 0);
   const contracts = useQuery({ queryKey: ["contracts", { status: "" }], queryFn: () => listContracts() });
   const active = useQuery({ queryKey: ["bathrooms", "active-count"], queryFn: () => listBathrooms({ status: "active" }) });
   const inactive = useQuery({ queryKey: ["bathrooms", "inactive-count"], queryFn: () => listBathrooms({ status: "inactive" }) });
@@ -42,13 +48,13 @@ function PainelPage() {
   const num = (loading: boolean, error: boolean, v: number | undefined) => (loading ? "…" : error ? "—" : v ?? "—");
   const teams = all.reduce((n, c) => n + c.counts.teams, 0);
   const inactiveN = inactive.data?.total ?? 0;
-  const attentionCount = drafts.length + suspended.length;
+  const attentionCount = noFiscal.length + drafts.length + suspended.length;
 
   return (
     <div className="space-y-6">
       <PageHelp>
-        Os números do topo resumem os contratos, banheiros e equipes que você acompanha. Em "Precisa de atenção" aparecem os contratos em
-        rascunho (com o que falta para ativar) e os suspensos. Clique numa linha para abrir o contrato.
+        Os números do topo resumem os contratos, banheiros e equipes que você acompanha. Em "Precisa de atenção" aparecem as empresas sem fiscal, os contratos em
+        rascunho (com o que falta para ativar) e os suspensos. Clique numa linha para abrir a empresa ou o contrato.
       </PageHelp>
       <PageHeader title="Painel" subtitle="O que precisa da sua atenção agora nos contratos." />
 
@@ -67,6 +73,11 @@ function PainelPage() {
         : (
           <AttentionList title="Precisa de atenção" count={attentionCount}
             empty={<p className="flex items-center justify-center gap-2 text-sm font-semibold text-success"><CheckCircle2 className="h-5 w-5" />Tudo em dia.</p>}>
+            {noFiscal.map((co) => (
+              <AttentionRow key={`co-${co.id}`} to="/empresas/$id" params={{ id: String(co.id) }} name={co.name}
+                detail={`Empresa · ${co.contracts_count} contrato${co.contracts_count === 1 ? "" : "s"}`}
+                pills={<Pill tone="danger">Sem fiscal</Pill>} />
+            ))}
             {drafts.map((c, i) => {
               const act = activations[i]?.data;
               return (

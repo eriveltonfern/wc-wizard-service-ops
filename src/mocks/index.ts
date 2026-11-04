@@ -5,7 +5,7 @@ import type {
   FiscalLink, Location, Member, Membership, Team, User,
 } from "../lib/types";
 import {
-  seed, defaultRules, DEFAULT_CHECKLIST, type DbBathroom, type DbContract, type DbMember, type DbTeam, type DbUser, type MockDb,
+  seed, SEED_VERSION, defaultRules, DEFAULT_CHECKLIST, type DbBathroom, type DbContract, type DbMember, type DbTeam, type DbUser, type MockDb,
 } from "./data";
 
 const DB_KEY = "wccheck.mockdb";
@@ -18,7 +18,9 @@ function load(): MockDb {
   if (db) return db;
   try {
     const raw = typeof localStorage !== "undefined" ? localStorage.getItem(DB_KEY) : null;
-    db = raw ? (JSON.parse(raw) as MockDb) : seed();
+    const parsed = raw ? (JSON.parse(raw) as MockDb) : null;
+    // Dados salvos de uma versão anterior do mock são recriados.
+    db = parsed && parsed.version === SEED_VERSION ? parsed : seed();
   } catch {
     db = seed();
   }
@@ -173,6 +175,9 @@ function activation(d: MockDb, c: DbContract) {
   if (!d.bathrooms.some((b) => b.contract_id === c.id && b.status === "active")) missing.push("bathroom");
   const hasTeam = d.teams.some((t) => t.contract_id === c.id && t.kind === "limpeza" && t.status === "active" && d.members.some((m) => m.team_id === t.id && isCurrent(m)));
   if (!hasTeam) missing.push("cleaning_team");
+  const hasFiscal = d.fiscal_links.some((l) => l.contract_id === c.id && isCurrent(l) &&
+    d.users.some((u) => u.id === l.user_id && u.role === "fiscal" && u.status === "active" && u.company_id === c.company_id));
+  if (!hasFiscal) missing.push("fiscal");
   if (d.companies.find((x) => x.id === c.company_id)?.status !== "active") missing.push("company");
   return { ready: missing.length === 0, missing };
 }
@@ -201,7 +206,8 @@ function location(d: MockDb, id: number): Location {
 function bathroom(d: MockDb, b: DbBathroom): Bathroom {
   const c = d.contracts.find((x) => x.id === b.contract_id)!;
   const l = b.location_id ? d.locations.find((x) => x.id === b.location_id) : undefined;
-  return { id: b.id, contract_id: c.id, contract: { id: c.id, code: c.code, name: c.name }, location: l ? { id: l.id, name: l.name } : undefined,
+  const co = d.companies.find((x) => x.id === c.company_id)!;
+  return { id: b.id, contract_id: c.id, contract: { id: c.id, code: c.code, name: c.name }, company: { id: co.id, name: co.name }, location: l ? { id: l.id, name: l.name } : undefined,
     name: b.name, qr_token: b.qr_token, kind: b.kind, floor: opt(b.floor), notes: opt(b.notes),
     cleanings_per_day: opt(b.cleanings_per_day), weekdays: opt(b.weekdays),
     effective_plan: { cleanings_per_day: b.cleanings_per_day ?? c.rules.default_cleanings_per_day, weekdays: b.weekdays ?? c.rules.default_weekdays },
@@ -547,7 +553,8 @@ on("GET", "/bathrooms", ({ d, me, query }) => {
     if (q) {
       const loc = d.locations.find((l) => l.id === b.location_id)?.name ?? "";
       const ct = d.contracts.find((c) => c.id === b.contract_id);
-      if (!norm(`${b.name} ${loc} ${b.floor ?? ""} ${b.qr_token} ${ct?.code ?? ""} ${ct?.name ?? ""}`).includes(q)) return false;
+      const co = d.companies.find((x) => x.id === ct?.company_id);
+      if (!norm(`${b.name} ${loc} ${b.floor ?? ""} ${b.qr_token} ${ct?.code ?? ""} ${ct?.name ?? ""} ${co?.name ?? ""}`).includes(q)) return false;
     }
     return true;
   });

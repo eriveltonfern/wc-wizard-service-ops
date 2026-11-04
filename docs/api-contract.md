@@ -32,7 +32,7 @@ GET /contracts/{id}/locations — Locais do contrato. → 200 Location[]
 POST /contracts/{id}/locations — Criar local. body {name: string} → 201 Location
 PATCH /locations/{id} — Editar ou inativar local. body {name: string, status: string} → 200 Location
 DELETE /locations/{id} — Excluir local sem banheiros. → 204
-GET /bathrooms — Buscar banheiros (contract_id, q, status; sem acento; até 50). → 200 Bathroom[] (meta {total, limit})
+GET /bathrooms — Buscar banheiros (contract_id, q em nome/local/andar/QR/contrato/empresa, status; sem acento; até 50). → 200 Bathroom[] (meta {total, limit})
 POST /contracts/{id}/bathrooms — Cadastrar banheiro (gera o QR). body BathroomInput → 201 BathroomDetail
 GET /bathrooms/{id} — Ver banheiro com períodos de interdição. → 200 BathroomDetail
 PATCH /bathrooms/{id} — Editar banheiro (null em plano = herda do contrato). body BathroomInput → 200 BathroomDetail
@@ -76,11 +76,11 @@ CompanyInput = {name: string, document?: string, contact_name?: string, contact_
 Contract = {id: integer, code: string, name: string, company: {id: integer, name: string}, manager?: {id: integer, name: string}, starts_on: date, ends_on?: date, status: draft|active|suspended|ended, timezone: string, rules: {photo_before: required|optional|off, photo_after: required|optional|off, capture_location: boolean, default_cleanings_per_day: integer, default_weekdays: integer[], shifts: manha|tarde|noite[]}, counts: {bathrooms: integer, teams: integer}}
 ContractDetail = Contract + {fiscals: FiscalLink[], checklist: ChecklistItem[], activation: Activation}
 ContractInput = {company_id: integer, code: string, name: string, starts_on: date, ends_on?: date, manager_id?: integer, timezone: string} + {photo_before: required|optional|off, photo_after: required|optional|off, capture_location: boolean, default_cleanings_per_day: integer, default_weekdays: integer[], shifts: manha|tarde|noite[]}
-Activation = {ready: boolean, missing: manager|bathroom|cleaning_team|company[]}
+Activation = {ready: boolean, missing: manager|bathroom|cleaning_team|fiscal|company[]} — nesta ordem. "fiscal" falta quando o contrato não tem fiscal ativo da empresa do contrato com vínculo vigente (starts_on <= hoje e ends_on vazio ou >= hoje).
 FiscalLink = {id: integer, user_id: integer, name: string, email: string, starts_on: date, ends_on?: date}
 ChecklistItem = {id: integer, label: string, position: integer, active: boolean}
 Location = {id: integer, contract_id: integer, name: string, status: string, bathrooms_count: integer}
-Bathroom = {id: integer, contract_id: integer, contract: {id: integer, code: string, name: string}, location?: {id: integer, name: string}, name: string, qr_token: string, kind: masculino|feminino|unissex|pcd, floor?: string, notes?: string, cleanings_per_day?: integer, weekdays?: integer[], effective_plan: {cleanings_per_day: integer, weekdays: integer[]}, status: string}
+Bathroom = {id: integer, contract_id: integer, contract: {id: integer, code: string, name: string}, company: {id: integer, name: string} (empresa do contrato), location?: {id: integer, name: string}, name: string, qr_token: string, kind: masculino|feminino|unissex|pcd, floor?: string, notes?: string, cleanings_per_day?: integer, weekdays?: integer[], effective_plan: {cleanings_per_day: integer, weekdays: integer[]}, status: string}
 BathroomDetail = Bathroom + {status_periods: StatusPeriod[]}
 BathroomInput = {name: string, location_id?: integer, kind: string, floor?: string, notes?: string, cleanings_per_day?: integer, weekdays?: integer[]}
 StatusPeriod = {id: integer, bathroom_id: integer, starts_on: date, ends_on: date, reason: string}

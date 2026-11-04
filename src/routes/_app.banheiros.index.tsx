@@ -66,7 +66,7 @@ function BathroomsPage() {
 
   return (
     <div className="space-y-5">
-      <PageHelp>Encontre qualquer banheiro digitando o nome, o local ou o contrato (não precisa de acento). Filtre por contrato ou situação e clique no banheiro para ver o QR, as interdições e as ações.</PageHelp>
+      <PageHelp>Encontre qualquer banheiro digitando o nome, o local, o contrato ou a empresa (não precisa de acento). Filtre por contrato ou situação e clique no banheiro para ver o QR, as interdições e as ações.</PageHelp>
       <PageHeader title="Banheiros" subtitle="Encontre qualquer banheiro de todos os contratos." actions={canManage && <Button className="min-h-11" onClick={() => setCreating(true)}><Plus className="h-4 w-4" />Novo banheiro</Button>} />
 
       <div className="space-y-3 rounded-[10px] border bg-card p-4">
@@ -100,14 +100,14 @@ function BathroomsPage() {
             <div className="hidden overflow-x-auto rounded-[10px] border bg-card md:block">
               <table className="w-full text-sm">
                 <thead className="border-b bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
-                  <tr><th className="px-4 py-3">Banheiro</th><th className="px-4 py-3">Local</th><th className="px-4 py-3">Contrato</th><th className="px-4 py-3">Tipo</th><th className="px-4 py-3">Andar</th><th className="px-4 py-3">Plano</th><th className="px-4 py-3">Situação</th></tr>
+                  <tr><th className="px-4 py-3">Banheiro</th><th className="px-4 py-3">Local</th><th className="px-4 py-3">Empresa · Contrato</th><th className="px-4 py-3">Tipo</th><th className="px-4 py-3">Andar</th><th className="px-4 py-3">Plano</th><th className="px-4 py-3">Situação</th></tr>
                 </thead>
                 <tbody className="divide-y">
                   {rows.map((b) => (
                     <tr key={b.id} className="hover:bg-muted/40">
                       <td className="px-4 py-3"><Link to="/banheiros/$id" params={{ id: String(b.id) }} className="text-base font-semibold text-primary hover:underline">{b.name}</Link></td>
                       <td className="px-4 py-3 text-muted-foreground">{b.location?.name ?? "—"}</td>
-                      <td className="px-4 py-3"><Link to="/contratos/$id" params={{ id: String(b.contract.id) }} className="hover:underline">{b.contract.code} · {b.contract.name}</Link></td>
+                      <td className="px-4 py-3"><Link to="/contratos/$id" params={{ id: String(b.contract.id) }} className="hover:underline"><span className="text-muted-foreground">{b.company.name} · </span>{b.contract.code} {b.contract.name}</Link></td>
                       <td className="px-4 py-3">{bathroomKindLabel[b.kind]}</td>
                       <td className="px-4 py-3">{b.floor ?? "—"}</td>
                       <td className="px-4 py-3"><PlanCell b={b} /></td>
@@ -126,7 +126,7 @@ function BathroomsPage() {
                   </div>
                   <p className="text-sm text-muted-foreground">{[b.location?.name, b.floor && `Andar ${b.floor}`, bathroomKindLabel[b.kind]].filter(Boolean).join(" · ")}</p>
                   <p className="mt-1 text-sm"><PlanCell b={b} /></p>
-                  <Link to="/contratos/$id" params={{ id: String(b.contract.id) }} className="mt-1 inline-flex min-h-11 items-center text-sm text-primary hover:underline">{b.contract.code} · {b.contract.name}</Link>
+                  <Link to="/contratos/$id" params={{ id: String(b.contract.id) }} className="mt-1 inline-flex min-h-11 items-center text-sm text-primary hover:underline">{b.company.name} · {b.contract.code} {b.contract.name}</Link>
                 </li>
               ))}
             </ul>

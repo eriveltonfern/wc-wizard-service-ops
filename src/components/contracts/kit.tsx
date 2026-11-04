@@ -98,9 +98,9 @@ export function PendingButton({ pending, children, ...props }: React.ComponentPr
 }
 
 /** Diálogo simples com formulário. */
-export function FormDialog({ open, onOpenChange, title, description, children, onSubmit, submitLabel, pending, destructive }: {
+export function FormDialog({ open, onOpenChange, title, description, children, onSubmit, submitLabel, pending, destructive, cancelLabel = "Cancelar" }: {
   open: boolean; onOpenChange: (o: boolean) => void; title: string; description?: string | undefined; children?: ReactNode;
-  onSubmit: () => void; submitLabel: string; pending?: boolean | undefined; destructive?: boolean | undefined;
+  onSubmit: () => void; submitLabel: string; pending?: boolean | undefined; destructive?: boolean | undefined; cancelLabel?: string | undefined;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -112,7 +112,7 @@ export function FormDialog({ open, onOpenChange, title, description, children, o
           </DialogHeader>
           {children}
           <DialogFooter className="gap-2">
-            <Button type="button" variant="outline" className="min-h-11" onClick={() => onOpenChange(false)}>Cancelar</Button>
+            <Button type="button" variant="outline" className="min-h-11" onClick={() => onOpenChange(false)}>{cancelLabel}</Button>
             <PendingButton type="submit" pending={pending} variant={destructive ? "destructive" : "default"}>{submitLabel}</PendingButton>
           </DialogFooter>
         </form>

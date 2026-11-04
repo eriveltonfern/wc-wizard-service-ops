@@ -8,6 +8,7 @@ import { normalize } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CompanyForm } from "@/components/people/CompanyForm";
+import { Pill } from "@/components/ui-kit";
 import { EmptyBlock, ErrorBlock, LoadingBlock, StatusBadge } from "@/components/contracts/kit";
 
 export const Route = createFileRoute("/_app/empresas/")({
@@ -36,7 +37,7 @@ function CompaniesPage() {
 
   return (
     <div className="space-y-6">
-      <PageHelp>Empresas que contratam a WC Check. Clique numa empresa para ver os contratos, cadastrar fiscais, editar, inativar ou excluir.</PageHelp>
+      <PageHelp>Empresas que contratam a WC Check. Clique numa empresa para ver os contratos, cadastrar fiscais, editar, inativar ou excluir. O selo vermelho "Sem fiscal" indica empresa cujos contratos ainda não podem ser ativados.</PageHelp>
       <PageHeader title="Empresas" subtitle="Empresas contratantes, com seus contratos e fiscais." actions={createBtn} />
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -52,7 +53,7 @@ function CompaniesPage() {
               <li key={c.id}>
                 <Link to="/empresas/$id" params={{ id: String(c.id) }} className="grid gap-2 px-4 py-4 hover:bg-secondary/60 md:grid-cols-[1fr_auto] md:items-center">
                   <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2"><span className="font-semibold text-foreground">{c.name}</span><StatusBadge status={c.status} /></div>
+                    <div className="flex flex-wrap items-center gap-2"><span className="font-semibold text-foreground">{c.name}</span><StatusBadge status={c.status} />{c.fiscals_count === 0 && <Pill tone="danger">Sem fiscal</Pill>}</div>
                     <p className="text-sm text-muted-foreground">
                       {c.document ? `CNPJ ${c.document}` : "Sem CNPJ"} · {c.contact_name ? `${c.contact_name}${c.contact_phone ? ` · ${c.contact_phone}` : ""}` : "Sem contato"}
                     </p>

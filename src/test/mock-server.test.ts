@@ -11,7 +11,7 @@ it("contract", () => {
   expect(c.status).toBe(201); expect(c.body.data.status).toBe("draft"); expect(c.body.data.checklist).toHaveLength(5);
   expect(r("POST","/contracts",{company_id:2,code:"x1",name:"N",starts_on:"2026-02-01",ends_on:"2026-01-01"},1).body.error.fields).toEqual({code:"Já existe um contrato com este código.",ends_on:"A data final deve ser igual ou posterior à inicial."});
   const a = r("POST",`/contracts/${c.body.data.id}/activate`,{},1);
-  expect(a.status).toBe(409); expect(a.body.error.missing).toEqual(["manager","bathroom","cleaning_team"]);
+  expect(a.status).toBe(409); expect(a.body.error.missing).toEqual(["manager","bathroom","cleaning_team","fiscal"]);
   const u = r("POST","/users",{name:"Zé",email:"ze@x.com",role:"limpeza"},2);
   expect(u.body.data.temporary_password).toMatch(/^[A-Z2-9]{4}(-[A-Z2-9]{4}){3}$/); expect(u.body.data.user.must_change_password).toBe(true);
   expect(r("POST","/users",{name:"G",email:"g@x.com",role:"gestor"},2).status).toBe(422);
@@ -30,4 +30,25 @@ it("nova senha precisa de pelo menos 10 caracteres", () => {
   const r = (b: unknown) => handleMock("POST", "/me/password", b, "mock-token-4") as any;
   expect(r({ current: "wccheck123", new: "123456789" }).body.error.fields.new).toBe("A senha deve ter pelo menos 10 caracteres.");
   expect(r({ current: "wccheck123", new: "1234567890" }).body.data).toEqual({ changed: true });
+});
+
+it("ativação exige fiscal vigente da empresa e banheiro traz a empresa", () => {
+  resetMockDb();
+  const r = (m: string, p: string, b: unknown, id = 1) => handleMock(m, p, b, `mock-token-${id}`) as any;
+  // Contrato 4 (Construtora Horizonte, sem fiscal) está em rascunho
+  expect(r("GET", "/contracts/4/activation", null).body.data.missing).toEqual(["bathroom", "cleaning_team", "fiscal"]);
+  const f = r("POST", "/users", { name: "Novo Fiscal", email: "nf@cliente.test", role: "fiscal", company_id: 3 }).body.data.user;
+  // vínculo futuro ainda não conta
+  expect(r("POST", "/contracts/4/fiscals", { user_id: f.id, starts_on: "2999-01-01" }).status).toBe(201);
+  expect(r("GET", "/contracts/4/activation", null).body.data.missing).toContain("fiscal");
+  expect(r("POST", "/contracts/4/fiscals", { user_id: f.id, starts_on: "2020-01-01" }).status).toBe(422); // já vinculado
+  const r2 = r("POST", "/contracts/4/fiscals", { user_id: 3, starts_on: "2020-01-01" }); // fiscal de outra empresa
+  expect(r2.status).toBe(422);
+  // contratos ativos do seed têm fiscal
+  for (const id of [1, 2, 3]) expect(r("GET", `/contracts/${id}/activation`, null).body.data.missing).not.toContain("fiscal");
+  const b = r("GET", "/bathrooms/1", null).body.data;
+  expect(b.company).toEqual({ id: 1, name: "Mineração Serra Azul" });
+  const found = r("GET", "/bathrooms?q=parque central", null).body;
+  expect(found.data.every((x: any) => x.company.name === "Shopping Parque Central")).toBe(true);
+  expect(r("GET", "/bathrooms?q=shopping", null).body.meta.total).toBe(5);
 });

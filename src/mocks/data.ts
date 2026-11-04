@@ -25,7 +25,9 @@ export type DbAudit = {
   after: Record<string, unknown> | null; reason: string | null; created_at: string; actor_id: number | null;
 };
 
+export const SEED_VERSION = 2;
 export type MockDb = {
+  version?: number;
   users: DbUser[]; companies: DbCompany[]; contracts: DbContract[]; fiscal_links: DbFiscalLink[];
   checklist: DbChecklist[]; locations: DbLocation[]; bathrooms: DbBathroom[]; status_periods: DbStatusPeriod[];
   teams: DbTeam[]; members: DbMember[]; audit: DbAudit[]; revoked_tokens: string[];
@@ -56,10 +58,12 @@ export function seed(): MockDb {
     u(10, "Júlia Pereira", "julia.pereira@wccheck.test", "limpeza", "(31) 99999-0007"),
     u(11, "Kleber Alves", "kleber.alves@wccheck.test", "manutencao", "(31) 99999-0008"),
     u(12, "Paula Gestora", "paula.gestora@wccheck.test", "gestor", null),
+    u(13, "Marcos Tavares", "marcos.tavares@cliente.test", "fiscal", null, 2),
   ];
   const companies: DbCompany[] = [
     { id: 1, name: "Mineração Serra Azul", document: null, contact_name: null, contact_phone: null, notes: "Mineradora – Itabira/MG", status: "active" },
     { id: 2, name: "Shopping Parque Central", document: null, contact_name: null, contact_phone: null, notes: "Shopping – Belo Horizonte/MG", status: "active" },
+    { id: 3, name: "Construtora Horizonte", document: null, contact_name: null, contact_phone: null, notes: "Obra – Contagem/MG (ainda sem fiscal)", status: "active" },
   ];
   const c = (id: number, company_id: number, code: string, name: string, starts_on: string): DbContract => ({
     id, company_id, code, name, manager_id: 2, starts_on, ends_on: null, status: "active", timezone: "America/Sao_Paulo", rules: defaultRules(),
@@ -68,6 +72,7 @@ export function seed(): MockDb {
     c(1, 1, "CT-2026-001", "Serra Azul – Mina Norte", "2026-01-10"),
     c(2, 1, "CT-2026-002", "Serra Azul – Planta de Beneficiamento", "2026-03-01"),
     { ...c(3, 2, "CT-2026-003", "Parque Central – Áreas comuns", "2026-05-15"), manager_id: 12 },
+    { ...c(4, 3, "CT-2026-004", "Horizonte – Canteiro Contagem", "2026-12-01"), status: "draft" as const },
   ];
   let ck = 0;
   const checklist: DbChecklist[] = contracts.flatMap((ct) =>
@@ -117,10 +122,11 @@ export function seed(): MockDb {
   const fiscal_links: DbFiscalLink[] = [
     { id: 1, contract_id: 1, user_id: 3, starts_on: "2026-01-10", ends_on: null },
     { id: 2, contract_id: 2, user_id: 3, starts_on: "2026-03-01", ends_on: null },
+    { id: 3, contract_id: 3, user_id: 13, starts_on: "2026-05-15", ends_on: null },
   ];
   const audit: DbAudit[] = [
     { id: 1, action: "team_member.moved", entity: "user", entity_id: 7, before: { team_id: 1 }, after: { team_id: 3 },
       reason: "Remanejado para a Planta", created_at: "2026-03-01T08:00:00-03:00", actor_id: 2 },
   ];
-  return { users, companies, contracts, fiscal_links, checklist, locations, bathrooms, status_periods: [], teams, members, audit, revoked_tokens: [] };
+  return { version: SEED_VERSION, users, companies, contracts, fiscal_links, checklist, locations, bathrooms, status_periods: [], teams, members, audit, revoked_tokens: [] };
 }

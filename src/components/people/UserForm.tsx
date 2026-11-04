@@ -11,9 +11,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Field, FormDialog, FormError, NativeSelect, useAction } from "@/components/contracts/kit";
 
 /** Cadastro (com perfis permitidos) ou edição dos dados de uma pessoa. */
-export function UserForm({ open, onOpenChange, roles, user, preset, onCreated }: {
+export function UserForm({ open, onOpenChange, roles, user, preset, onCreated, title, description, cancelLabel }: {
   open: boolean; onOpenChange: (o: boolean) => void; roles: Role[]; user?: User | undefined;
-  preset?: { role?: Role; company_id?: number } | undefined; onCreated?: (u: User, password: string) => void;
+  preset?: { role?: Role; company_id?: number; company_name?: string } | undefined; onCreated?: (u: User, password: string) => void;
+  title?: string | undefined; description?: string | undefined; cancelLabel?: string | undefined;
 }) {
   const editing = !!user;
   const [f, setF] = useState({ name: "", email: "", phone: "", role: "", company_id: "" });
@@ -33,13 +34,13 @@ export function UserForm({ open, onOpenChange, roles, user, preset, onCreated }:
     return createUser({ ...base, role: f.role, ...(f.role === "fiscal" && f.company_id ? { company_id: Number(f.company_id) } : {}) });
   }, {
     success: editing ? "Dados atualizados." : "Pessoa cadastrada.",
-    onSuccess: (r) => { onOpenChange(false); if (!editing) onCreated?.(r.user, r.temporary_password); },
+    onSuccess: (r) => { if (!editing) onCreated?.(r.user, r.temporary_password); onOpenChange(false); },
   });
   const e = save.fields;
 
   return (
-    <FormDialog open={open} onOpenChange={onOpenChange} title={editing ? "Editar pessoa" : "Nova pessoa"} submitLabel={editing ? "Salvar" : "Cadastrar"}
-      pending={save.pending} onSubmit={() => void save.run()}>
+    <FormDialog open={open} onOpenChange={onOpenChange} title={title ?? (editing ? "Editar pessoa" : "Nova pessoa")} submitLabel={editing ? "Salvar" : "Cadastrar"}
+      description={description} cancelLabel={cancelLabel} pending={save.pending} onSubmit={() => void save.run()}>
       <Field label="Nome" id="u_name" error={e["name"]}><Input id="u_name" autoFocus className="h-11" value={f.name} onChange={(ev) => setF({ ...f, name: ev.target.value })} /></Field>
       <Field label="E-mail" id="u_email" error={e["email"]}><Input id="u_email" type="email" className="h-11" value={f.email} onChange={(ev) => setF({ ...f, email: ev.target.value })} /></Field>
       <Field label="Telefone (opcional)" id="u_phone" error={e["phone"]}><Input id="u_phone" type="tel" className="h-11" value={f.phone} onChange={(ev) => setF({ ...f, phone: ev.target.value })} /></Field>
@@ -49,6 +50,11 @@ export function UserForm({ open, onOpenChange, roles, user, preset, onCreated }:
             {roles.length > 1 && <option value="">Escolha o perfil</option>}
             {roles.map((r) => <option key={r} value={r}>{roleLabel[r]}</option>)}
           </NativeSelect>
+        </Field>
+      )}
+      {needsCompany && preset?.company_name && (
+        <Field label="Empresa" id="u_company_locked">
+          <Input id="u_company_locked" className="h-11" value={preset.company_name} disabled readOnly />
         </Field>
       )}
       {needsCompany && !preset?.company_id && (

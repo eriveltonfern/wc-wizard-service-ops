@@ -1,18 +1,19 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Pencil, Trash2, UserPlus, X } from "lucide-react";
 import {
   activateContract, addContractFiscal, deleteContract, endContract, endContractFiscal, listUsers, reactivateContract, suspendContract,
 } from "@/lib/endpoints";
-import type { ActivationMissing, ContractDetail, FiscalLink } from "@/lib/types";
+import type { ActivationMissing, ContractDetail, FiscalLink, User } from "@/lib/types";
+import { TempPasswordDialog, UserForm } from "@/components/people/UserForm";
 import { fmtPeriod, missingLabel, todayIso } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { ContractForm } from "./ContractForm";
 import type { ContractCtx, ContractTab } from "./ctx";
 import { ConfirmDialog, DateInput, EmptyBlock, Field, FormDialog, FormError, HistoryNotice, NativeSelect, PendingButton, ReasonDialog, useAction } from "./kit";
 
-const ALL_MISSING: ActivationMissing[] = ["manager", "bathroom", "cleaning_team", "company"];
+const ALL_MISSING: ActivationMissing[] = ["manager", "bathroom", "cleaning_team", "fiscal", "company"];
 const missingTab: Partial<Record<ActivationMissing, ContractTab>> = { bathroom: "banheiros", cleaning_team: "equipes" };
 
 export function OverviewTab({ contract: c, ctx }: { contract: ContractDetail; ctx: ContractCtx }) {
@@ -20,6 +21,7 @@ export function OverviewTab({ contract: c, ctx }: { contract: ContractDetail; ct
   const [editing, setEditing] = useState(false);
   const [reasonFor, setReasonFor] = useState<null | "suspend" | "reactivate" | "end">(null);
   const [deleting, setDeleting] = useState(false);
+  const [fiscalReq, setFiscalReq] = useState(0);
 
   const activate = useAction(() => activateContract(c.id, { reason: "" }), { success: "Contrato ativado." });
   const statusAction = useAction(
@@ -55,6 +57,7 @@ export function OverviewTab({ contract: c, ctx }: { contract: ContractDetail; ct
                   <span className={pending ? "font-medium text-foreground" : "text-muted-foreground"}>{missingLabel[m]}</span>
                   {pending && ctx.canManage && (
                     m === "manager" ? (ctx.isAdmin && <Button variant="link" className="h-auto p-0" onClick={() => setEditing(true)}>Definir agora</Button>)
+                    : m === "fiscal" ? <Button variant="link" className="h-auto p-0" onClick={() => setFiscalReq((n) => n + 1)}>Vincular agora</Button>
                     : m === "company" ? (ctx.isAdmin && <Button variant="link" className="h-auto p-0" onClick={() => void navigate({ to: "/empresas" })}>Ver empresas</Button>)
                     : tab && <Button variant="link" className="h-auto p-0" onClick={() => ctx.goTab(tab)}>Ir para {tab === "banheiros" ? "Banheiros" : "Equipes"}</Button>
                   )}
@@ -82,7 +85,7 @@ export function OverviewTab({ contract: c, ctx }: { contract: ContractDetail; ct
         </section>
       )}
 
-      <FiscalsSection contract={c} ctx={ctx} />
+      <FiscalsSection contract={c} ctx={ctx} openRequest={fiscalReq} />
 
       <ContractForm open={editing} onOpenChange={setEditing} isAdmin={ctx.isAdmin} contract={c} />
       {reasonFor && (
@@ -104,8 +107,11 @@ export function OverviewTab({ contract: c, ctx }: { contract: ContractDetail; ct
   );
 }
 
-function FiscalsSection({ contract: c, ctx }: { contract: ContractDetail; ctx: ContractCtx }) {
+function FiscalsSection({ contract: c, ctx, openRequest }: { contract: ContractDetail; ctx: ContractCtx; openRequest: number }) {
   const [adding, setAdding] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [temp, setTemp] = useState<{ user: User; password: string } | null>(null);
+  const sectionRef = useRef<HTMLElement>(null);
   const [ending, setEnding] = useState<FiscalLink | null>(null);
   const [form, setForm] = useState({ user_id: "", starts_on: todayIso(), ends_on: "" });
   const [endDate, setEndDate] = useState(todayIso());
@@ -116,14 +122,24 @@ function FiscalsSection({ contract: c, ctx }: { contract: ContractDetail; ctx: C
     () => addContractFiscal(c.id, { user_id: Number(form.user_id) || (undefined as unknown as number), starts_on: form.starts_on, ...(form.ends_on ? { ends_on: form.ends_on } : {}) }),
     { success: "Fiscal vinculado.", onSuccess: () => setAdding(false) },
   );
+  const openAdd = (userId = "") => { add.reset(); setForm({ user_id: userId, starts_on: todayIso(), ends_on: "" }); setAdding(true); };
+  // Link do checklist de ativação: rola até esta seção e abre "Vincular fiscal".
+  useEffect(() => {
+    if (!openRequest) return;
+    sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    openAdd();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openRequest]);
+  const companyFiscals = fiscals.data?.filter((u) => u.company_id === c.company.id) ?? [];
+  const noFiscal = fiscals.isSuccess && companyFiscals.length === 0;
   const end = useAction((l: FiscalLink) => endContractFiscal(c.id, l.id, { ends_on: endDate }), { success: "Vínculo encerrado.", onSuccess: () => setEnding(null) });
 
   return (
-    <section className="rounded-[10px] border bg-card p-5">
+    <section ref={sectionRef} id="fiscais" className="scroll-mt-20 rounded-[10px] border bg-card p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg font-semibold text-foreground">Fiscais do contrato</h2>
         {ctx.canManage && (
-          <Button variant="outline" className="min-h-11" onClick={() => { add.reset(); setForm({ user_id: "", starts_on: todayIso(), ends_on: "" }); setAdding(true); }}>
+          <Button variant="outline" className="min-h-11" onClick={() => openAdd()}>
             <UserPlus className="h-4 w-4" />Vincular fiscal
           </Button>
         )}
@@ -145,10 +161,18 @@ function FiscalsSection({ contract: c, ctx }: { contract: ContractDetail; ctx: C
       )}
 
       <FormDialog open={adding} onOpenChange={setAdding} title="Vincular fiscal" submitLabel="Vincular" pending={add.pending} onSubmit={() => void add.run()}>
+        {noFiscal && (
+          <div role="alert" className="space-y-3 rounded-md border border-danger/30 bg-danger-soft p-3">
+            <p className="text-sm font-semibold text-danger">Esta empresa ainda não tem fiscal.</p>
+            {ctx.isAdmin
+              ? <Button type="button" className="min-h-11" onClick={() => { setAdding(false); setCreating(true); }}><UserPlus className="h-4 w-4" />Cadastrar fiscal</Button>
+              : <p className="text-sm text-foreground">Peça à diretoria para cadastrar o fiscal de {c.company.name}.</p>}
+          </div>
+        )}
         <Field label="Fiscal" id="fiscal_user" error={add.fields["user_id"]} hint="Só aparecem fiscais da mesma empresa do contrato.">
           <NativeSelect id="fiscal_user" autoFocus value={form.user_id} onChange={(e) => setForm({ ...form, user_id: e.target.value })}>
             <option value="">{fiscals.isLoading ? "Carregando…" : "Escolha o fiscal"}</option>
-            {fiscals.data?.filter((u) => u.company_id === c.company.id).map((u) => <option key={u.id} value={u.id}>{u.name} ({u.email})</option>)}
+            {companyFiscals.map((u) => <option key={u.id} value={u.id}>{u.name} ({u.email})</option>)}
           </NativeSelect>
         </Field>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -164,6 +188,10 @@ function FiscalsSection({ contract: c, ctx }: { contract: ContractDetail; ctx: C
         <Field label="Data final" id="fiscal_end_date" error={end.fields["ends_on"]}><DateInput id="fiscal_end_date" value={endDate} onChange={setEndDate} /></Field>
         {end.error && Object.keys(end.fields).length === 0 && <FormError error={end.error} />}
       </FormDialog>
+      <UserForm open={creating} onOpenChange={setCreating} roles={["fiscal"]} title="Cadastrar fiscal"
+        preset={{ role: "fiscal", company_id: c.company.id, company_name: c.company.name }}
+        onCreated={(user, password) => setTemp({ user, password })} />
+      <TempPasswordDialog data={temp} onClose={() => { const id = temp?.user.id; setTemp(null); openAdd(id ? String(id) : ""); }} />
     </section>
   );
 }
