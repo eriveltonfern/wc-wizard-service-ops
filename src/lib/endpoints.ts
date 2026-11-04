@@ -1,7 +1,7 @@
 // Uma função por operação de docs/api-contract.md. Todas passam por api.ts.
 import { api } from "./api";
 import type {
-  Activation, AuditEvent, Bathroom, Cleaning, CleaningForm, CleaningInput, MeToday, Task, BathroomDetail, BathroomInput, ChecklistItem, Company, CompanyDetail,
+  Activation, AuditEvent, CancelEffect, ReviewFlag, ReviewList, Ticket, TicketFilters, TicketInput, TicketPriority, TicketSummary, Bathroom, Cleaning, CleaningForm, CleaningInput, MeToday, Task, BathroomDetail, BathroomInput, ChecklistItem, Company, CompanyDetail,
   CompanyInput, Contract, ContractDetail, ContractInput, FiscalLink, Health, ISODate, Label, Location,
   LoginInput, Member, Membership, QrLookup, StatusPeriod, Team, User, UserDetail, UserInput,
 } from "./types";
@@ -124,3 +124,36 @@ export function createCleaning(input: CleaningInput) {
 }
 export const listMyCleanings = () => api.get<Cleaning[]>("/me/cleanings");
 export const getCleaning = (id: number) => api.get<Cleaning>(`/cleanings/${id}`);
+
+// Chamados (Parte 2)
+export const listTickets = (f?: TicketFilters) => api.get<Ticket[]>(`/tickets${qs(f)}`);
+export const getTicketSummary = (f?: Pick<TicketFilters, "contract_id" | "category" | "priority">) => api.get<TicketSummary>(`/tickets/summary${qs(f)}`);
+export const getTicket = (id: number) => api.get<Ticket>(`/tickets/${id}`);
+export function createTicket(input: TicketInput) {
+  const f = new FormData();
+  f.set("bathroom_id", String(input.bathroom_id));
+  f.set("category", input.category);
+  if (input.priority) f.set("priority", input.priority);
+  f.set("description", input.description);
+  if (input.photo) f.set("photo", input.photo, "problema.jpg");
+  if (input.cleaning_id) f.set("cleaning_id", String(input.cleaning_id));
+  f.set("idempotency_key", input.idempotency_key);
+  return api.post<Ticket>("/tickets", f);
+}
+export const assignTicket = (id: number, user_id: number) => api.post<Ticket>(`/tickets/${id}/assign`, { user_id });
+export const startTicket = (id: number, idempotency_key?: string) => api.post<Ticket>(`/tickets/${id}/start`, { idempotency_key });
+export function finishTicket(id: number, input: { photo?: Blob | null | undefined; note: string; idempotency_key: string }) {
+  const f = new FormData();
+  if (input.photo) f.set("photo", input.photo, "reparo.jpg");
+  f.set("note", input.note);
+  f.set("idempotency_key", input.idempotency_key);
+  return api.post<Ticket>(`/tickets/${id}/done`, f);
+}
+export const cancelTicket = (id: number, reason: string) => api.post<Ticket>(`/tickets/${id}/cancel`, { reason });
+export const commentTicket = (id: number, text: string) => api.post<Ticket>(`/tickets/${id}/comments`, { text });
+export const setTicketPriority = (id: number, priority: TicketPriority) => api.post<Ticket>(`/tickets/${id}/priority`, { priority });
+
+// Conferência (Parte 2)
+export const listReview = (p?: { flag?: ReviewFlag | undefined; contract_id?: number | undefined; reviewed?: 1 | undefined }) => api.get<ReviewList>(`/review${qs(p)}`);
+export const approveCleaning = (id: number) => api.post<Cleaning>(`/cleanings/${id}/review`);
+export const cancelCleaning = (id: number, reason: string) => api.post<{ cleaning: Cleaning; effect: CancelEffect }>(`/cleanings/${id}/cancel`, { reason });

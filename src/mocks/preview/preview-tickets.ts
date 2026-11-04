@@ -1,7 +1,7 @@
 // Chamados e Conferência (rotas propostas). Só chamado por preview-handlers.ts.
 import type { DbUser, MockDb } from "../data";
 import {
-  type PvTicket, type TicketCategory, type TicketPriority, type TicketStatus,
+  type PvTicket, type TicketCategory, type TicketPriority,
   addDays, iso, loadPreview, opDate, photoSvg, savePreview,
 } from "./preview-data";
 import { type Body, type Res, cleaningContracts, cleaningView, err, fingerprint, num, ok, scope } from "./preview-handlers";

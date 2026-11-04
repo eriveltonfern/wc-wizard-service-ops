@@ -123,6 +123,10 @@ export type Cleaning = {
   checklist: { item_id: number; label: string; answer: ChecklistAnswer; open_ticket: boolean }[];
   notes?: string | undefined;
   position?: { latitude: number; longitude: number; accuracy?: number | undefined } | undefined;
+  ticket_suggestions?: { item_id: number; label: string; category: TicketCategory; description: string }[] | undefined;
+  review?: { by: { id: number; name: string }; at: string; outcome: "ok" | "cancelled" } | undefined;
+  repeated_with?: number | undefined;
+  cancel_effect?: CancelEffect | undefined;
 };
 export type CleaningForm = {
   bathroom: { id: number; name: string; location?: string | undefined; status: string };
@@ -139,3 +143,35 @@ export type CleaningInput = {
   latitude?: number | undefined; longitude?: number | undefined; accuracy?: number | undefined;
   client_finished_at: string; idempotency_key: string; queued?: boolean | undefined;
 };
+
+// ---------- Protótipo Parte 2: chamados e conferência ----------
+export type TicketCategory = "hidraulica" | "eletrica" | "estrutura" | "abastecimento" | "outros";
+export type TicketPriority = "baixa" | "normal" | "urgente";
+export type TicketStatus = "open" | "in_progress" | "done" | "cancelled";
+export type TicketEventKind = "opened" | "assigned" | "taken" | "started" | "done" | "cancelled" | "comment" | "priority";
+export type TicketPerson = { id: number; name: string; role: Role };
+export type Ticket = {
+  id: number; code: string;
+  contract: { id: number; code: string; name: string }; company: { id: number; name: string };
+  bathroom: { id: number; name: string }; location?: string | undefined;
+  category: TicketCategory; priority: TicketPriority; status: TicketStatus; description: string;
+  opened_by: TicketPerson; opened_at: string; assignee?: TicketPerson | undefined;
+  started_at?: string | undefined; done_at?: string | undefined; done_note?: string | undefined;
+  cancel_reason?: string | undefined; cleaning_id?: number | undefined;
+  photo_open_url?: string | undefined; photo_done_url?: string | undefined;
+  events: { id: number; kind: TicketEventKind; actor: TicketPerson; at: string; text?: string | undefined }[];
+  can: { start: boolean; done: boolean; assign: boolean; cancel: boolean; priority: boolean; comment: boolean };
+  assignable?: { id: number; name: string }[] | undefined;
+};
+export type TicketSummary = { open: number; urgent: number; in_progress: number; done_7d: number; avg_resolution_minutes: number | null };
+export type TicketFilters = {
+  status?: "active" | TicketStatus | undefined; mine?: 1 | undefined; contract_id?: number | undefined; bathroom_id?: number | undefined;
+  category?: TicketCategory | undefined; priority?: TicketPriority | undefined;
+};
+export type TicketInput = {
+  bathroom_id: number; category: TicketCategory; priority?: TicketPriority | undefined; description: string;
+  photo?: Blob | null | undefined; cleaning_id?: number | undefined; idempotency_key: string;
+};
+export type ReviewFlag = "repeated_photo" | "offline" | "out_of_shift";
+export type ReviewList = { rows: Cleaning[]; counts: { total: number; repeated_photo: number; offline: number; out_of_shift: number } };
+export type CancelEffect = { kind: "pending" | "not_done"; task_date: ISODate } | { kind: "extra" };
