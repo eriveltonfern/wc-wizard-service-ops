@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, MapPin, MapPinOff } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { ApiError } from "@/lib/api";
 import { getCleaning } from "@/lib/endpoints";
 import { fmtDate } from "@/lib/format";
@@ -46,9 +46,6 @@ function CleaningDetailPage() {
                 <div><dt className="text-muted-foreground">Registrada pelo servidor</dt><dd className="font-bold tabular-nums text-ink">{fmtDate(isoDay(c.registered_at))} às {fmtTime(c.registered_at)}</dd></div>
                 {offline && <div><dt className="text-muted-foreground">Feita no celular (sem internet)</dt><dd className="font-bold tabular-nums text-ink">{fmtDate(isoDay(c.client_finished_at))} às {fmtTime(c.client_finished_at)}</dd></div>}
                 <div><dt className="text-muted-foreground">Feita por</dt><dd className="font-bold text-ink">{c.user.name}</dd></div>
-                <div><dt className="text-muted-foreground">Localização</dt><dd className="flex items-center gap-1.5 font-bold text-ink">
-                  {c.position ? <><MapPin className="h-4 w-4 text-success" />Registrada{c.position.accuracy ? ` (±${c.position.accuracy} m)` : ""}</> : <><MapPinOff className="h-4 w-4 text-muted-foreground" />Sem localização</>}
-                </dd></div>
               </dl>
             </DataCard>
             {(c.photo_before_url || c.photo_after_url) && (

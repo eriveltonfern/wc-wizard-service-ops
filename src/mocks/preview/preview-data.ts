@@ -4,13 +4,13 @@ import type { MockDb, DbBathroom, DbContract } from "../data";
 
 export type Answer = "ok" | "not_ok" | "na";
 export type PvCleaning = {
-  id: number; bathroom_id: number; contract_id: number; user_id: number; task_id: string | null;
+  id: number; bathroom_id: number; contract_id: number; user_id: number; task_id: string |notes: string | null;
   registered_at: string; client_finished_at: string; offline: boolean; out_of_shift: boolean; repeated_photo: boolean;
-  photo_before: string | null; photo_after: string | null; // impressão digital da foto (para "Foto repetida")
+  photo_before: string |notes: string | null; photo_after: string |notes: string | null; // impressão digital da foto (para "Foto repetida")
   checklist: { item_id: number; label: string; answer: Answer; open_ticket: boolean }[];
-  notes: string | null; latitude: number | null; longitude: number | null; accuracy: number | null;
-  status: "valid" | "cancelled"; cancel_reason: string | null; idempotency_key: string | null;
-  reviewed_by: number | null; reviewed_at: string | null; review_outcome: "ok" | "cancelled" | null;
+  notes: string | null;|notes: string | null;|notes: string | null;|notes: string | null;|notes: string | null;
+  status: "valid" | "cancelled"; cancel_reason: string |notes: string | null; idempotency_key: string |notes: string | null;
+  reviewed_by: number |notes: string | null; reviewed_at: string |notes: string | null; review_outcome: "ok" | "cancelled" |notes: string | null;
 };
 export type TicketCategory = "hidraulica" | "eletrica" | "estrutura" | "abastecimento" | "outros";
 export type TicketPriority = "baixa" | "normal" | "urgente";
@@ -18,9 +18,9 @@ export type TicketStatus = "open" | "in_progress" | "done" | "cancelled";
 export type TicketEventKind = "opened" | "assigned" | "taken" | "started" | "done" | "cancelled" | "comment" | "priority";
 export type PvTicket = {
   id: number; contract_id: number; bathroom_id: number; category: TicketCategory; priority: TicketPriority; status: TicketStatus;
-  description: string; opened_by: number; opened_at: string; assignee_id: number | null; started_at: string | null;
-  done_at: string | null; done_note: string | null; cancel_reason: string | null; cleaning_id: number | null;
-  photo_open: string | null; photo_done: string | null; idempotency_key: string | null;
+  description: string; opened_by: number; opened_at: string; assignee_id: number |notes: string | null; started_at: string |notes: string | null;
+  done_at: string |notes: string | null; done_note: string |notes: string | null; cancel_reason: string |notes: string | null; cleaning_id: number |notes: string | null;
+  photo_open: string |notes: string | null; photo_done: string |notes: string | null; idempotency_key: string |notes: string | null;
   events: { id: number; kind: TicketEventKind; actor_id: number; at: string; text: string | null }[];
 };
 export type PvClosing = {
@@ -31,7 +31,7 @@ export type PreviewDb = { version: number; generated_on: string; cleanings: PvCl
 
 const KEY = "wccheck.previewdb";
 const VERSION = 3;
-let pdb: PreviewDb | null = null;
+let pdb: PreviewDb | null =notes: string | null;
 
 // ---------- datas e turnos (hora oficial = relógio deste "servidor") ----------
 export const SHIFT_ORDER = ["manha", "tarde", "noite"] as const;
@@ -104,7 +104,6 @@ function rng(seed: number) {
 }
 const between = (r: () => number, a: Date, b: Date) => new Date(a.getTime() + Math.floor(r() * Math.max(0, b.getTime() - a.getTime())));
 const CANCEL_REASONS = ["Foto não mostra o banheiro correto.", "Registro duplicado pela equipe.", "Banheiro estava interditado nesse horário."];
-const BASE_POINT: Record<number, [number, number]> = { 1: [-19.619, -43.226], 2: [-19.631, -43.212], 3: [-19.921, -43.938] };
 
 export function generate(d: MockDb, now = new Date()): PreviewDb {
   const today = opDate(now);
@@ -117,11 +116,9 @@ export function generate(d: MockDb, now = new Date()): PreviewDb {
     const offline = r() < 0.04;
     const same = cleanings.filter((x) => x.contract_id === t.contract.id && x.photo_before);
     const repeated = r() < 0.025 && same.length > 0;
-    const prev = repeated ? same[Math.floor(r() * same.length)]! : null;
+    const prev = repeated ? same[Math.floor(r() * same.length)]! :notes: string | null;
     const before = t.contract.rules.photo_before === "off" ? null : prev?.photo_before ?? `ex-${++fp}`;
     const after = t.contract.rules.photo_after === "off" || (t.contract.rules.photo_after === "optional" && r() < 0.15) ? null : `ex-${++fp}`;
-    const hasLoc = t.contract.rules.capture_location && r() < 0.88;
-    const base = BASE_POINT[t.contract.id] ?? [-19.9, -43.9];
     const cancelledByManager = r() < 0.015;
     const client = offline ? new Date(when.getTime() - (40 + Math.floor(r() * 140)) * 60000) : new Date(when.getTime() - Math.floor(r() * 50) * 1000);
     cleanings.push({
@@ -131,7 +128,6 @@ export function generate(d: MockDb, now = new Date()): PreviewDb {
       photo_before: before, photo_after: after,
       checklist: checklistOf(t.contract.id).map((i) => ({ item_id: i.id, label: i.label, answer: r() < 0.05 ? "not_ok" : r() < 0.03 ? "na" : "ok", open_ticket: false })),
       notes: r() < 0.08 ? "Faltou papel toalha no dispenser." : null,
-      latitude: hasLoc ? base[0] + (r() - 0.5) * 0.002 : null, longitude: hasLoc ? base[1] + (r() - 0.5) * 0.002 : null, accuracy: hasLoc ? Math.round(5 + r() * 25) : null,
       status: cancelledByManager ? "cancelled" : "valid", cancel_reason: cancelledByManager ? CANCEL_REASONS[Math.floor(r() * CANCEL_REASONS.length)]! : null, idempotency_key: null,
       reviewed_by: null, reviewed_at: null, review_outcome: null,
     });
@@ -229,7 +225,7 @@ function genTickets(d: MockDb, now: Date, r: () => number): PvTicket[] {
     const cleaners = cleanersOf(d, cid, today);
     const opener = i % 3 === 2 || !cleaners.length ? c.manager_id ?? 1 : cleaners[i % cleaners.length]!;
     const techs = maint(cid);
-    const tech = techs.length ? techs[i % techs.length]! : null;
+    const tech = techs.length ? techs[i % techs.length]! :notes: string | null;
     const t0 = new Date(now.getTime() - hoursAgo * 3600000);
     const at = (h: number) => new Date(t0.getTime() + h * 3600000).toISOString();
     let ev = 0;
@@ -269,8 +265,8 @@ export function loadPreview(d: MockDb): PreviewDb {
   const today = opDate(new Date());
   if (pdb && pdb.generated_on === today) return pdb;
   try {
-    const raw = typeof localStorage !== "undefined" ? localStorage.getItem(KEY) : null;
-    const parsed = raw ? (JSON.parse(raw) as PreviewDb) : null;
+    const raw = typeof localStorage !== "undefined" ? localStorage.getItem(KEY) :notes: string | null;
+    const parsed = raw ? (JSON.parse(raw) as PreviewDb) :notes: string | null;
     pdb = parsed && parsed.version === VERSION && parsed.generated_on === today ? parsed : { ...generate(d), closings: parsed?.version === VERSION ? parsed.closings : [] };
   } catch {
     pdb = generate(d);
@@ -282,6 +278,6 @@ export function savePreview() {
   if (pdb && typeof localStorage !== "undefined") localStorage.setItem(KEY, JSON.stringify(pdb));
 }
 export function clearPreview() {
-  pdb = null;
+  pdb =notes: string | null;
   if (typeof localStorage !== "undefined") localStorage.removeItem(KEY);
 }

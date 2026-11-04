@@ -16,8 +16,6 @@ const finish = (t: Totals) => ({ ...t, compliance: t.expected ? t.done / t.expec
 
 export type StatsFilter = { from: string; to: string; contractIds: Set<number>; bathroomId?: number | null };
 export const cleaningDate = (c: PvCleaning) => opDate(new Date(c.client_finished_at));
-/** Duração de exemplo (a API real terá início e fim da limpeza). */
-const durationOf = (c: PvCleaning) => 9 + ((c.id * 7) % 17);
 /** Os dados de exemplo cobrem os últimos 30 dias. */
 export const dataStart = (now: Date) => addDays(opDate(now), -30);
 
@@ -56,12 +54,12 @@ export function computeStats(d: MockDb, p: PreviewDb, f: StatsFilter, now = new 
   for (const c of extras) bump(c.contract_id, c.bathroom_id, cleaningDate(c), (x) => x.extras++);
 
   // por pessoa: limpezas válidas que contaram como tarefa
-  const people = new Map<number, { done: number; on_time: number; minutes: number }>();
+  const people = new Map<number, { done: number; on_time: number }>();
   for (const c of p.cleanings) {
     if (c.status !== "valid" || !c.task_id || !f.contractIds.has(c.contract_id) || (f.bathroomId && c.bathroom_id !== f.bathroomId)) continue;
     const date = c.task_id.split("-").slice(1, 4).join("-");
     if (date < from || date > to) continue;
-    const x = people.get(c.user_id) ?? { done: 0, on_time: 0, minutes: 0 };
+    const x = people.get(c.user_id) ?? { done: 0, on_time: 0 };
     x.done++; if (!c.out_of_shift) x.on_time++; x.minutes += durationOf(c);
     people.set(c.user_id, x);
   }
@@ -80,8 +78,7 @@ export function computeStats(d: MockDb, p: PreviewDb, f: StatsFilter, now = new 
       .sort((a, b) => a.date.localeCompare(b.date)),
     by_person: [...people].map(([id, x]) => {
       const teams = d.teams.filter((t) => f.contractIds.has(t.contract_id) && d.members.some((m) => m.team_id === t.id && m.user_id === id)).map((t) => t.name);
-      return { user: { id, name: d.users.find((u) => u.id === id)?.name ?? "—" }, teams: [...new Set(teams)], done: x.done, on_time: x.on_time,
-        avg_minutes: x.done ? Math.round(x.minutes / x.done) : null };
+      return { user: { id, name: d.users.find((u) => u.id === id)?.name ?? "—" }, teams: [...new Set(teams)], done: x.done, on_time: x.on_time };
     }).sort((a, b) => b.done - a.done),
   };
 }

@@ -35,7 +35,7 @@ export type MockDb = {
 
 export const DEFAULT_CHECKLIST = ["Piso limpo", "Papel higiênico abastecido", "Sabonete abastecido", "Lixeiras esvaziadas", "Pias e vasos limpos"];
 export const defaultRules = (): ContractRules => ({
-  photo_before: "required", photo_after: "required", capture_location: true,
+  photo_before: "required", photo_after: "required",
   default_cleanings_per_day: 1, default_weekdays: [1, 2, 3, 4, 5, 6, 7], shifts: ["manha", "tarde", "noite"],
 });
 

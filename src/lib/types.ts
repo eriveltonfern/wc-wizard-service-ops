@@ -39,7 +39,7 @@ export type CompanyDetail = Company & {
 export type CompanyInput = { name: string; document?: string | undefined; contact_name?: string | undefined; contact_phone?: string | undefined; notes?: string | undefined };
 
 export type ContractRules = {
-  photo_before: PhotoRule; photo_after: PhotoRule; capture_location: boolean;
+  photo_before: PhotoRule; photo_after: PhotoRule;
   default_cleanings_per_day: number;
   default_weekdays: number[]; // 1 = segunda ... 7 = domingo
   shifts: Shift[];
@@ -110,7 +110,7 @@ export type MeToday = {
   next: Task | null; tasks: Task[];
 };
 export type ChecklistAnswer = "ok" | "not_ok" | "na";
-export type CleaningMark = "repeated_photo" | "offline" | "out_of_shift" | "no_location";
+export type CleaningMark = "repeated_photo" | "offline" | "out_of_shift";
 export type Cleaning = {
   id: number;
   bathroom: { id: number; name: string }; location?: string | undefined;
@@ -122,7 +122,6 @@ export type Cleaning = {
   photo_before_url?: string | undefined; photo_after_url?: string | undefined;
   checklist: { item_id: number; label: string; answer: ChecklistAnswer; open_ticket: boolean }[];
   notes?: string | undefined;
-  position?: { latitude: number; longitude: number; accuracy?: number | undefined } | undefined;
   ticket_suggestions?: { item_id: number; label: string; category: TicketCategory; description: string }[] | undefined;
   review?: { by: { id: number; name: string }; at: string; outcome: "ok" | "cancelled" } | undefined;
   repeated_with?: number | undefined;
@@ -131,7 +130,7 @@ export type Cleaning = {
 export type CleaningForm = {
   bathroom: { id: number; name: string; location?: string | undefined; status: string };
   contract: { id: number; code: string; name: string };
-  rules: { photo_before: PhotoRule; photo_after: PhotoRule; capture_location: boolean };
+  rules: { photo_before: PhotoRule; photo_after: PhotoRule };
   checklist: { id: number; label: string }[];
   pending_task: Task | null;
 };
@@ -140,7 +139,6 @@ export type CleaningInput = {
   photo_before?: Blob | null | undefined; photo_after?: Blob | null | undefined;
   checklist: { item_id: number; answer: ChecklistAnswer; open_ticket?: boolean | undefined }[];
   notes?: string | undefined;
-  latitude?: number | undefined; longitude?: number | undefined; accuracy?: number | undefined;
   client_finished_at: string; idempotency_key: string; queued?: boolean | undefined;
 };
 
@@ -187,7 +185,7 @@ export type Stats = {
   by_contract: (StatTotals & { contract: Ref })[];
   by_bathroom: (StatTotals & { bathroom: { id: number; name: string }; location?: string | undefined; contract: Ref; company: { id: number; name: string } })[];
   by_day: { date: ISODate; expected: number; done: number; not_done: number; extras: number }[];
-  by_person: { user: { id: number; name: string }; teams: string[]; done: number; on_time: number; avg_minutes: number | null }[];
+  by_person: { user: { id: number; name: string }; teams: string[]; done: number; on_time: number }[];
 };
 export type StatsFilter = { from?: ISODate | undefined; to?: ISODate | undefined; month?: string | undefined; contract_id?: number | undefined; bathroom_id?: number | undefined };
 export type PendingTask = {
