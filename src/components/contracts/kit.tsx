@@ -83,7 +83,7 @@ export function StatusBadge({ status }: { status: string }) {
 export function LoadingBlock({ label = "Carregando…" }: { label?: string }) {
   return <div className="flex items-center justify-center gap-2 rounded-xl border bg-card py-12 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />{label}</div>;
 }
-export function ErrorBlock({ message, onRetry }: { message: string; onRetry?: () => void | undefined }) {
+export function ErrorBlock({ message, onRetry }: { message: string; onRetry?: (() => void) | undefined }) {
   return (
     <div role="alert" className="flex flex-col items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/5 px-6 py-10 text-center">
       <AlertTriangle className="h-6 w-6 text-destructive" />
