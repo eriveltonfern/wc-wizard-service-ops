@@ -15,13 +15,11 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppBuscarRouteImport } from './routes/_app.buscar'
 import { Route as AppChamadosRouteImport } from './routes/_app.chamados'
 import { Route as AppConferenciaRouteImport } from './routes/_app.conferencia'
-import { Route as AppEmpresasRouteImport } from './routes/_app.empresas'
 import { Route as AppEtiquetasRouteImport } from './routes/_app.etiquetas'
 import { Route as AppHojeRouteImport } from './routes/_app.hoje'
 import { Route as AppLerQrRouteImport } from './routes/_app.ler-qr'
 import { Route as AppMinhasLimpezasRouteImport } from './routes/_app.minhas-limpezas'
 import { Route as AppPainelRouteImport } from './routes/_app.painel'
-import { Route as AppPessoasRouteImport } from './routes/_app.pessoas'
 import { Route as AppContratosIndexRouteImport } from './routes/_app.contratos.index'
 import { Route as AppContratosIdRouteImport } from './routes/_app.contratos.$id'
 
@@ -54,11 +52,6 @@ const AppConferenciaRoute = AppConferenciaRouteImport.update({
   path: '/conferencia',
   getParentRoute: () => AppRoute,
 } as any)
-const AppEmpresasRoute = AppEmpresasRouteImport.update({
-  id: '/empresas',
-  path: '/empresas',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppEtiquetasRoute = AppEtiquetasRouteImport.update({
   id: '/etiquetas',
   path: '/etiquetas',
@@ -84,11 +77,6 @@ const AppPainelRoute = AppPainelRouteImport.update({
   path: '/painel',
   getParentRoute: () => AppRoute,
 } as any)
-const AppPessoasRoute = AppPessoasRouteImport.update({
-  id: '/pessoas',
-  path: '/pessoas',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppContratosIndexRoute = AppContratosIndexRouteImport.update({
   id: '/contratos/',
   path: '/contratos/',
@@ -106,13 +94,11 @@ export interface FileRoutesByFullPath {
   '/buscar': typeof AppBuscarRoute
   '/chamados': typeof AppChamadosRoute
   '/conferencia': typeof AppConferenciaRoute
-  '/empresas': typeof AppEmpresasRoute
   '/etiquetas': typeof AppEtiquetasRoute
   '/hoje': typeof AppHojeRoute
   '/ler-qr': typeof AppLerQrRoute
   '/minhas-limpezas': typeof AppMinhasLimpezasRoute
   '/painel': typeof AppPainelRoute
-  '/pessoas': typeof AppPessoasRoute
   '/contratos/$id': typeof AppContratosIdRoute
   '/contratos/': typeof AppContratosIndexRoute
 }
@@ -122,13 +108,11 @@ export interface FileRoutesByTo {
   '/buscar': typeof AppBuscarRoute
   '/chamados': typeof AppChamadosRoute
   '/conferencia': typeof AppConferenciaRoute
-  '/empresas': typeof AppEmpresasRoute
   '/etiquetas': typeof AppEtiquetasRoute
   '/hoje': typeof AppHojeRoute
   '/ler-qr': typeof AppLerQrRoute
   '/minhas-limpezas': typeof AppMinhasLimpezasRoute
   '/painel': typeof AppPainelRoute
-  '/pessoas': typeof AppPessoasRoute
   '/contratos/$id': typeof AppContratosIdRoute
   '/contratos': typeof AppContratosIndexRoute
 }
@@ -140,13 +124,11 @@ export interface FileRoutesById {
   '/_app/buscar': typeof AppBuscarRoute
   '/_app/chamados': typeof AppChamadosRoute
   '/_app/conferencia': typeof AppConferenciaRoute
-  '/_app/empresas': typeof AppEmpresasRoute
   '/_app/etiquetas': typeof AppEtiquetasRoute
   '/_app/hoje': typeof AppHojeRoute
   '/_app/ler-qr': typeof AppLerQrRoute
   '/_app/minhas-limpezas': typeof AppMinhasLimpezasRoute
   '/_app/painel': typeof AppPainelRoute
-  '/_app/pessoas': typeof AppPessoasRoute
   '/_app/contratos/$id': typeof AppContratosIdRoute
   '/_app/contratos/': typeof AppContratosIndexRoute
 }
@@ -158,13 +140,11 @@ export interface FileRouteTypes {
     | '/buscar'
     | '/chamados'
     | '/conferencia'
-    | '/empresas'
     | '/etiquetas'
     | '/hoje'
     | '/ler-qr'
     | '/minhas-limpezas'
     | '/painel'
-    | '/pessoas'
     | '/contratos/$id'
     | '/contratos/'
   fileRoutesByTo: FileRoutesByTo
@@ -174,13 +154,11 @@ export interface FileRouteTypes {
     | '/buscar'
     | '/chamados'
     | '/conferencia'
-    | '/empresas'
     | '/etiquetas'
     | '/hoje'
     | '/ler-qr'
     | '/minhas-limpezas'
     | '/painel'
-    | '/pessoas'
     | '/contratos/$id'
     | '/contratos'
   id:
@@ -191,13 +169,11 @@ export interface FileRouteTypes {
     | '/_app/buscar'
     | '/_app/chamados'
     | '/_app/conferencia'
-    | '/_app/empresas'
     | '/_app/etiquetas'
     | '/_app/hoje'
     | '/_app/ler-qr'
     | '/_app/minhas-limpezas'
     | '/_app/painel'
-    | '/_app/pessoas'
     | '/_app/contratos/$id'
     | '/_app/contratos/'
   fileRoutesById: FileRoutesById
@@ -252,13 +228,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppConferenciaRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/empresas': {
-      id: '/_app/empresas'
-      path: '/empresas'
-      fullPath: '/empresas'
-      preLoaderRoute: typeof AppEmpresasRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/etiquetas': {
       id: '/_app/etiquetas'
       path: '/etiquetas'
@@ -294,13 +263,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPainelRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/pessoas': {
-      id: '/_app/pessoas'
-      path: '/pessoas'
-      fullPath: '/pessoas'
-      preLoaderRoute: typeof AppPessoasRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/contratos/': {
       id: '/_app/contratos/'
       path: '/contratos'
@@ -322,13 +284,11 @@ interface AppRouteChildren {
   AppBuscarRoute: typeof AppBuscarRoute
   AppChamadosRoute: typeof AppChamadosRoute
   AppConferenciaRoute: typeof AppConferenciaRoute
-  AppEmpresasRoute: typeof AppEmpresasRoute
   AppEtiquetasRoute: typeof AppEtiquetasRoute
   AppHojeRoute: typeof AppHojeRoute
   AppLerQrRoute: typeof AppLerQrRoute
   AppMinhasLimpezasRoute: typeof AppMinhasLimpezasRoute
   AppPainelRoute: typeof AppPainelRoute
-  AppPessoasRoute: typeof AppPessoasRoute
   AppContratosIdRoute: typeof AppContratosIdRoute
   AppContratosIndexRoute: typeof AppContratosIndexRoute
 }
@@ -337,13 +297,11 @@ const AppRouteChildren: AppRouteChildren = {
   AppBuscarRoute: AppBuscarRoute,
   AppChamadosRoute: AppChamadosRoute,
   AppConferenciaRoute: AppConferenciaRoute,
-  AppEmpresasRoute: AppEmpresasRoute,
   AppEtiquetasRoute: AppEtiquetasRoute,
   AppHojeRoute: AppHojeRoute,
   AppLerQrRoute: AppLerQrRoute,
   AppMinhasLimpezasRoute: AppMinhasLimpezasRoute,
   AppPainelRoute: AppPainelRoute,
-  AppPessoasRoute: AppPessoasRoute,
   AppContratosIdRoute: AppContratosIdRoute,
   AppContratosIndexRoute: AppContratosIndexRoute,
 }
