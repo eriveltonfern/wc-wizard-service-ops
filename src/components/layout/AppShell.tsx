@@ -44,7 +44,8 @@ function SidebarBody({ user, groups, onLogout, onNavigate }: { user: User; group
             <p className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-sidebar-group">{g.label}</p>
             <ul className="space-y-0.5">
               {g.items.map((i) => {
-                const active = path === i.to || path.startsWith(i.to + "/");
+                const all = groups.flatMap((x) => x.items).filter((x) => path === x.to || path.startsWith(x.to + "/"));
+                const active = all.sort((a, b) => b.to.length - a.to.length)[0]?.to === i.to;
                 return (
                   <li key={i.to}>
                     <Link to={i.to} onClick={onNavigate} aria-current={active ? "page" : undefined}

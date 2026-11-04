@@ -57,8 +57,8 @@ export const navGroupsByRole: Record<Role, NavGroup[]> = {
     { label: "Ajustes", items: [I.ajuda] },
   ],
   fiscal: [
-    { label: "Gestão", items: [I.contratos, I.banheiros] },
     { label: "Dia a dia", items: [I.chamados] },
+    { label: "Gestão", items: [I.contratos, I.banheiros] },
     { label: "Ajustes", items: [I.ajuda] },
   ],
   limpeza: [{ label: "Dia a dia", items: [I.hoje, I.buscar, I.lerQr, I.minhas] }],
@@ -80,7 +80,8 @@ export const canManageUser = (me: { id: number; role: Role }, target: { role: Ro
   me.role === "admin" || (me.role === "gestor" && (target.role === "limpeza" || target.role === "manutencao"));
 
 export const isFieldRole = (r: Role) => r === "limpeza" || r === "manutencao";
-export const homeFor = (r: Role) => navByRole[r][0]?.to ?? "/login";
+const homeOverride: Partial<Record<Role, string>> = { fiscal: "/contratos" };
+export const homeFor = (r: Role) => homeOverride[r] ?? navByRole[r][0]?.to ?? "/login";
 /** Telas fora do menu que o perfil também pode abrir. */
 export const hiddenRoutesByRole: Record<Role, string[]> = {
   admin: [], gestor: [], fiscal: [], limpeza: ["/registrar", "/relatar"], manutencao: [],

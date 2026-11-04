@@ -54,9 +54,10 @@ function AppLayout() {
     const onOnline = () => void flushOutbox();
     window.addEventListener("online", onOnline);
     const off = onFlushed((r) => {
-      if (r.sent) toast.success(r.sent === 1 ? "Limpeza guardada no celular foi enviada." : `${r.sent} limpezas guardadas no celular foram enviadas.`);
-      r.failed.forEach((f) => toast.error(`Não foi possível enviar a limpeza de ${f.name}: ${f.message}`));
+      if (r.sent) toast.success(r.sent === 1 ? "O que estava guardado no celular foi enviado." : `${r.sent} envios guardados no celular foram feitos.`);
+      r.failed.forEach((f) => toast.error(`Não foi possível enviar (${f.name}): ${f.message}`));
       void qc.invalidateQueries({ queryKey: ["field"] });
+      void qc.invalidateQueries({ queryKey: ["tickets"] });
     });
     return () => { window.clearInterval(t); window.removeEventListener("online", onOnline); off(); };
   }, [qc]);
@@ -70,7 +71,8 @@ function AppLayout() {
     <nav aria-label="Menu inferior" className="fixed inset-x-0 bottom-0 z-20 grid border-t bg-card lg:hidden print:hidden"
       style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
       {items.map((i) => {
-        const active = path.startsWith(i.to);
+        const best = items.filter((x) => path === x.to || path.startsWith(x.to + "/")).sort((a, b) => b.to.length - a.to.length)[0];
+        const active = best?.to === i.to;
         const center = i.to === "/ler-qr";
         return (
           <Link key={i.to} to={i.to} aria-current={active ? "page" : undefined}

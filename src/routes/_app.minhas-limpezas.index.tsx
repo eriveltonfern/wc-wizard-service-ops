@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { CloudOff, ListChecks } from "lucide-react";
 import { listMyCleanings } from "@/lib/endpoints";
-import { useOutbox } from "@/lib/outbox";
+import { isQueuedCleaning, useOutbox } from "@/lib/outbox";
 import { fmtDate, todayIso } from "@/lib/format";
 import type { Cleaning } from "@/lib/types";
 import { PageHeader, PageHelp } from "@/components/layout/PageHeader";
@@ -33,7 +33,7 @@ function dayTitle(day: string) {
 
 function MyCleaningsPage() {
   const q = useQuery({ queryKey: ["field", "mine"], queryFn: listMyCleanings });
-  const { items: queued } = useOutbox();
+  const queued = useOutbox().items.filter(isQueuedCleaning);
   const groups = new Map<string, Cleaning[]>();
   for (const c of q.data ?? []) {
     const k = isoDay(c.registered_at);
