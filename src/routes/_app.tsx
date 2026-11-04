@@ -147,13 +147,13 @@ function AppLayout() {
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-background">
-        <AppSidebar />
+        <div className="contents print:hidden"><AppSidebar /></div>
         <div className="flex flex-1 flex-col">
-          <header className="sticky top-0 z-10 flex h-16 items-center gap-3 border-b bg-card px-4">
+          <header className="sticky top-0 z-10 flex print:hidden h-16 items-center gap-3 border-b bg-card px-4">
             <SidebarTrigger className="h-10 w-10" />
             <UserBox onLogout={logout} />
           </header>
-          <main className="flex-1 p-4 md:p-8"><Outlet /></main>
+          <main className="flex-1 p-4 md:p-8 print:p-0"><Outlet /></main>
         </div>
       </div>
     </SidebarProvider>
