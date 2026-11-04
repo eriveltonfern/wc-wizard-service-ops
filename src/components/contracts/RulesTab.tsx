@@ -6,7 +6,6 @@ import { photoRuleLabel, shiftLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import type { ContractCtx } from "./ctx";
 import { ConfirmDialog, Field, FormDialog, FormError, PendingButton, WeekdayChips, useAction } from "./kit";
 
