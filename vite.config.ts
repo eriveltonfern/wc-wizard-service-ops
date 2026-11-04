@@ -6,15 +6,25 @@
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
-export default defineConfig({
-  // Hostinger (Apache) serve somente arquivos estáticos: sem servidor Node.
-  nitro: false,
-  tanstackStart: {
-    server: { entry: "server" },
-    // Modo SPA: gera a página-casca index.html; todas as rotas rodam no navegador.
-    spa: {
-      enabled: true,
-      prerender: { outputPath: "/index.html", crawlLinks: false },
-    },
-  },
-});
+// Prévia e Publicar do Lovable: configuração padrão (com nitro).
+// Hostinger (Apache, sem Node): BUILD_TARGET=hostinger npx vite build → SPA estático em dist/client/.
+const hostinger = process.env.BUILD_TARGET === "hostinger";
+
+export default defineConfig(
+  hostinger
+    ? {
+        nitro: false,
+        tanstackStart: {
+          server: { entry: "server" },
+          spa: {
+            enabled: true,
+            prerender: { outputPath: "/index.html", crawlLinks: false },
+          },
+        },
+      }
+    : {
+        tanstackStart: {
+          server: { entry: "server" },
+        },
+      },
+);
