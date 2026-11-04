@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQueries, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { meQuery } from "@/lib/auth";
 import { CheckCircle2 } from "lucide-react";
-import { getContractActivation, listBathrooms, listCompanies, listContracts } from "@/lib/endpoints";
+import { getContractActivation, listBathrooms, listCompanies, listContracts, listTickets } from "@/lib/endpoints";
 import type { ActivationMissing } from "@/lib/types";
 import { PageHeader, PageHelp } from "@/components/layout/PageHeader";
 import { AttentionList, AttentionRow, ErrorState, KpiCard, KpiGrid, Pill, SkeletonBlock } from "@/components/ui-kit";
@@ -38,6 +38,8 @@ function PainelPage() {
   const active = useQuery({ queryKey: ["bathrooms", "active-count"], queryFn: () => listBathrooms({ status: "active" }) });
   const inactive = useQuery({ queryKey: ["bathrooms", "inactive-count"], queryFn: () => listBathrooms({ status: "inactive" }) });
 
+  const urgent = useQuery({ queryKey: ["tickets", "urgent"], queryFn: () => listTickets({ status: "active", priority: "urgente" }) });
+  const urgentRows = urgent.data ?? [];
   const all = contracts.data ?? [];
   const drafts = all.filter((c) => c.status === "draft");
   const suspended = all.filter((c) => c.status === "suspended");
@@ -48,7 +50,7 @@ function PainelPage() {
   const num = (loading: boolean, error: boolean, v: number | undefined) => (loading ? "…" : error ? "—" : v ?? "—");
   const teams = all.reduce((n, c) => n + c.counts.teams, 0);
   const inactiveN = inactive.data?.total ?? 0;
-  const attentionCount = noFiscal.length + drafts.length + suspended.length;
+  const attentionCount = urgentRows.length + noFiscal.length + drafts.length + suspended.length;
 
   return (
     <div className="space-y-6">
@@ -73,6 +75,11 @@ function PainelPage() {
         : (
           <AttentionList title="Precisa de atenção" count={attentionCount}
             empty={<p className="flex items-center justify-center gap-2 text-sm font-semibold text-success"><CheckCircle2 className="h-5 w-5" />Tudo em dia.</p>}>
+            {urgentRows.map((t) => (
+              <AttentionRow key={`tk-${t.id}`} to="/chamados" search={{ chamado: t.id }} name={`Chamado urgente · ${t.bathroom.name}`}
+                detail={`${t.description} · ${t.company.name} · ${t.contract.code}`}
+                pills={<><Pill tone="danger">Urgente</Pill><Pill tone={t.status === "open" ? "info" : "warning"}>{t.status === "open" ? "Aberto" : "Em andamento"}</Pill></>} />
+            ))}
             {noFiscal.map((co) => (
               <AttentionRow key={`co-${co.id}`} to="/empresas/$id" params={{ id: String(co.id) }} name={co.name}
                 detail={`Empresa · ${co.contracts_count} contrato${co.contracts_count === 1 ? "" : "s"}`}
