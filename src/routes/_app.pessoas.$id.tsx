@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { PageHelp } from "@/components/layout/PageHeader";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
@@ -64,10 +65,10 @@ function PersonPage() {
   const del = useAction(() => deleteUser(uid), { success: "Pessoa excluída.", onSuccess: () => { setDeleting(false); void navigate({ to: "/pessoas" }); } });
 
   const back = <Link to="/pessoas" className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-primary hover:underline"><ArrowLeft className="h-4 w-4" />Voltar para pessoas</Link>;
-  if (q.isLoading) return <div className="mx-auto max-w-5xl space-y-4">{back}<LoadingBlock label="Carregando…" /></div>;
+  if (q.isLoading) return <div className="space-y-4">{back}<LoadingBlock label="Carregando…" /></div>;
   if (q.isError || !q.data) {
     const nf = q.error instanceof ApiError && q.error.status === 404;
-    return <div className="mx-auto max-w-5xl space-y-4">{back}<ErrorBlock message={nf ? "Pessoa não encontrada." : "Não foi possível carregar a pessoa."} onRetry={nf ? undefined : () => void q.refetch()} /></div>;
+    return <div className="space-y-4">{back}<ErrorBlock message={nf ? "Pessoa não encontrada." : "Não foi possível carregar a pessoa."} onRetry={nf ? undefined : () => void q.refetch()} /></div>;
   }
   const u = q.data;
   const manage = canManageUser(me, u);
@@ -76,10 +77,11 @@ function PersonPage() {
   const past = u.memberships.filter((m) => m.ends_on && m.ends_on <= today);
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
+    <div className="space-y-6">
       {back}
-      <header className="rounded-xl border bg-card p-5">
-        <div className="flex flex-wrap items-center gap-2"><h1 className="text-2xl font-bold tracking-tight text-foreground">{u.name}</h1><StatusBadge status={u.status} /></div>
+      <PageHelp>Dados da pessoa, equipes atuais e antigas e a linha do tempo com tudo o que mudou.</PageHelp>
+      <header className="rounded-[10px] border bg-card p-5">
+        <div className="flex flex-wrap items-center gap-2"><h1 className="text-2xl font-extrabold tracking-tight text-ink">{u.name}</h1><StatusBadge status={u.status} /></div>
         <dl className="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
           <div><dt className="text-muted-foreground">E-mail</dt><dd className="break-all font-medium text-foreground">{u.email}</dd></div>
           <div><dt className="text-muted-foreground">Telefone</dt><dd className="font-medium text-foreground">{u.phone ?? "—"}</dd></div>
@@ -93,13 +95,13 @@ function PersonPage() {
             {u.id !== me.id && (u.status === "active"
               ? <Button variant="outline" className="min-h-11" onClick={() => { inact.reset(); setInactivating(true); }}>Inativar</Button>
               : <PendingButton variant="outline" pending={react.pending} onClick={() => void react.run()}>Reativar</PendingButton>)}
-            {u.id !== me.id && <Button variant="outline" className="min-h-11 text-destructive" onClick={() => { del.reset(); setDeleting(true); }}><Trash2 className="h-4 w-4" />Excluir</Button>}
+            {u.id !== me.id && <Button variant="outline" className="min-h-11 text-danger" onClick={() => { del.reset(); setDeleting(true); }}><Trash2 className="h-4 w-4" />Excluir</Button>}
           </div>
         )}
         <div className="mt-3"><FormError error={react.error} /></div>
       </header>
 
-      <section className="rounded-xl border bg-card p-5">
+      <section className="rounded-[10px] border bg-card p-5">
         <h2 className="text-lg font-semibold text-foreground">Equipes</h2>
         {u.memberships.length === 0 ? <div className="mt-3"><EmptyBlock title="Nunca fez parte de uma equipe." /></div> : (
           <div className="mt-3 space-y-4">
@@ -129,7 +131,7 @@ function PersonPage() {
         )}
       </section>
 
-      <section className="rounded-xl border bg-card p-5">
+      <section className="rounded-[10px] border bg-card p-5">
         <h2 className="text-lg font-semibold text-foreground">Linha do tempo</h2>
         {history.isLoading ? <div className="mt-3"><LoadingBlock /></div>
           : history.isError ? <div className="mt-3"><ErrorBlock message="Não foi possível carregar a linha do tempo." onRetry={() => void history.refetch()} /></div>

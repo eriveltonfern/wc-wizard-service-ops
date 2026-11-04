@@ -24,7 +24,7 @@ function PainelPage() {
   return (
     <div className="space-y-6">
       <div className="mx-auto max-w-4xl">
-        <Link to="/banheiros" className="flex min-h-20 items-center gap-4 rounded-xl border bg-card p-5 transition-colors hover:border-primary">
+        <Link to="/banheiros" className="flex min-h-20 items-center gap-4 rounded-[10px] border bg-card p-5 transition-colors hover:border-primary">
           <span className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-primary"><Toilet className="h-6 w-6" /></span>
           <span className="flex-1">
             <span className="block text-sm font-medium text-muted-foreground">Banheiros ativos</span>

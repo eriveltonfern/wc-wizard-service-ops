@@ -60,7 +60,7 @@ export function BathroomsTab({ contract: c, ctx }: { contract: ContractDetail; c
             {ctx.canManage && !dq && !status && <Button className="min-h-11" onClick={() => setDlg({ kind: "form" })}>Cadastrar banheiro</Button>}
           </EmptyBlock>
         ) : (
-          <div className="overflow-x-auto rounded-xl border bg-card">
+          <div className="overflow-x-auto rounded-[10px] border bg-card">
             <table className="w-full min-w-[720px] text-sm">
               <thead className="border-b bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
                 <tr><th className="px-4 py-3">Nome</th><th className="px-4 py-3">Local</th><th className="px-4 py-3">Tipo</th><th className="px-4 py-3">Andar</th><th className="px-4 py-3">Plano</th><th className="px-4 py-3">Situação</th>{ctx.canManage && <th className="px-4 py-3"><span className="sr-only">Ações</span></th>}</tr>
@@ -84,7 +84,7 @@ export function BathroomsTab({ contract: c, ctx }: { contract: ContractDetail; c
                             <DropdownMenuItem className="min-h-11" onSelect={() => setDlg({ kind: "qr", b })}>Gerar novo QR</DropdownMenuItem>
                             {b.status === "active" && <DropdownMenuItem asChild className="min-h-11"><Link to="/etiquetas" search={{ contrato: c.id, banheiro: b.id }}>Imprimir etiqueta</Link></DropdownMenuItem>}
                             <DropdownMenuItem className="min-h-11" onSelect={() => setDlg({ kind: "periods", b })}>Interdições</DropdownMenuItem>
-                            <DropdownMenuItem className="min-h-11 text-destructive" onSelect={() => setDlg({ kind: "delete", b })}>Excluir</DropdownMenuItem>
+                            <DropdownMenuItem className="min-h-11 text-danger" onSelect={() => setDlg({ kind: "delete", b })}>Excluir</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </td>
@@ -220,7 +220,7 @@ export function PeriodsDialog({ b, onClose }: { b: Bathroom; onClose: () => void
             {periods.map((p) => (
               <li key={p.id} className="flex items-center justify-between gap-2 px-3 py-2">
                 <div><p className="text-sm font-medium text-foreground">{fmtPeriod(p.starts_on, p.ends_on)}</p><p className="text-xs text-muted-foreground">{p.reason}</p></div>
-                <Button size="icon" variant="ghost" className="h-11 w-11 text-destructive" aria-label="Remover interdição" disabled={del.pending} onClick={() => void del.run(p.id)}><Trash2 className="h-4 w-4" /></Button>
+                <Button size="icon" variant="ghost" className="h-11 w-11 text-danger" aria-label="Remover interdição" disabled={del.pending} onClick={() => void del.run(p.id)}><Trash2 className="h-4 w-4" /></Button>
               </li>
             ))}
           </ul>
@@ -260,7 +260,7 @@ function LocationsDialog({ contractId, onClose }: { contractId: number; onClose:
         <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); void create.run(); }}>
           <div className="flex-1">
             <Input aria-label="Nome do novo local" placeholder="Novo local" autoFocus className="h-11" value={newName} onChange={(e) => setNewName(e.target.value)} />
-            {create.fields["name"] && <p className="mt-1 text-sm font-medium text-destructive">{create.fields["name"]}</p>}
+            {create.fields["name"] && <p className="mt-1 text-sm font-medium text-danger">{create.fields["name"]}</p>}
           </div>
           <PendingButton type="submit" pending={create.pending}>Criar</PendingButton>
         </form>
@@ -283,7 +283,7 @@ function LocationsDialog({ contractId, onClose }: { contractId: number; onClose:
                     <div className="flex gap-1">
                       <Button variant="ghost" className="min-h-11" onClick={() => { update.reset(); setEdit({ id: l.id, name: l.name }); }}>Editar</Button>
                       <Button variant="ghost" className="min-h-11" disabled={update.pending} onClick={() => void update.run(l, { status: l.status === "active" ? "inactive" : "active" })}>{l.status === "active" ? "Inativar" : "Reativar"}</Button>
-                      <Button variant="ghost" className="min-h-11 text-destructive" disabled={del.pending} onClick={() => void del.run(l.id)}>Excluir</Button>
+                      <Button variant="ghost" className="min-h-11 text-danger" disabled={del.pending} onClick={() => void del.run(l.id)}>Excluir</Button>
                     </div>
                   </div>
                 )}
@@ -291,7 +291,7 @@ function LocationsDialog({ contractId, onClose }: { contractId: number; onClose:
             ))}
           </ul>
         )}
-        {update.fields["name"] && <p className="text-sm font-medium text-destructive">{update.fields["name"]}</p>}
+        {update.fields["name"] && <p className="text-sm font-medium text-danger">{update.fields["name"]}</p>}
         <FormError error={del.error} />
         <div className="flex justify-end"><Button variant="outline" className="min-h-11" onClick={onClose}>Fechar</Button></div>
       </DialogContent>

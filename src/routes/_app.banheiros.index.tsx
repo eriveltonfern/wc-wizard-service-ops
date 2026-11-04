@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { PageHelp, PageHeader } from "@/components/layout/PageHeader";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { Plus, Search } from "lucide-react";
@@ -64,16 +65,11 @@ function BathroomsPage() {
   const limit = query.data?.limit ?? 50;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Banheiros</h1>
-          <p className="text-muted-foreground">Encontre qualquer banheiro de todos os contratos.</p>
-        </div>
-        {canManage && <Button className="min-h-11" onClick={() => setCreating(true)}><Plus className="h-4 w-4" />Novo banheiro</Button>}
-      </header>
+    <div className="space-y-5">
+      <PageHelp>Encontre qualquer banheiro digitando o nome, o local ou o contrato (não precisa de acento). Filtre por contrato ou situação e clique no banheiro para ver o QR, as interdições e as ações.</PageHelp>
+      <PageHeader title="Banheiros" subtitle="Encontre qualquer banheiro de todos os contratos." actions={canManage && <Button className="min-h-11" onClick={() => setCreating(true)}><Plus className="h-4 w-4" />Novo banheiro</Button>} />
 
-      <div className="space-y-3 rounded-xl border bg-card p-4">
+      <div className="space-y-3 rounded-[10px] border bg-card p-4">
         <div className="relative">
           <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
           <Input autoFocus aria-label="Buscar banheiro, local ou contrato" placeholder="Buscar banheiro, local ou contrato"
@@ -101,7 +97,7 @@ function BathroomsPage() {
         ) : (
           <>
             {total > limit && <p role="status" className="rounded-md border border-pending/30 bg-pending-soft px-3 py-2 text-sm font-medium text-foreground">Mostrando {limit} de {total}. Refine a busca.</p>}
-            <div className="hidden overflow-x-auto rounded-xl border bg-card md:block">
+            <div className="hidden overflow-x-auto rounded-[10px] border bg-card md:block">
               <table className="w-full text-sm">
                 <thead className="border-b bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
                   <tr><th className="px-4 py-3">Banheiro</th><th className="px-4 py-3">Local</th><th className="px-4 py-3">Contrato</th><th className="px-4 py-3">Tipo</th><th className="px-4 py-3">Andar</th><th className="px-4 py-3">Plano</th><th className="px-4 py-3">Situação</th></tr>
@@ -123,7 +119,7 @@ function BathroomsPage() {
             </div>
             <ul className="space-y-3 md:hidden">
               {rows.map((b) => (
-                <li key={b.id} className="rounded-xl border bg-card p-4">
+                <li key={b.id} className="rounded-[10px] border bg-card p-4">
                   <div className="flex items-start justify-between gap-2">
                     <Link to="/banheiros/$id" params={{ id: String(b.id) }} className="flex min-h-11 items-center text-lg font-semibold text-primary">{b.name}</Link>
                     <StatusBadge status={b.status} />

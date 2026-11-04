@@ -41,7 +41,7 @@ export function OverviewTab({ contract: c, ctx }: { contract: ContractDetail; ct
   return (
     <div className="space-y-6">
       {c.status === "draft" && (
-        <section className="rounded-xl border bg-card p-5">
+        <section className="rounded-[10px] border bg-card p-5">
           <h2 className="text-lg font-semibold text-foreground">Para ativar este contrato</h2>
           <ul className="mt-3 space-y-2">
             {ALL_MISSING.map((m) => {
@@ -49,7 +49,7 @@ export function OverviewTab({ contract: c, ctx }: { contract: ContractDetail; ct
               const tab = missingTab[m];
               return (
                 <li key={m} className="flex min-h-11 flex-wrap items-center gap-3">
-                  <span className={pending ? "flex h-7 w-7 items-center justify-center rounded-full bg-destructive/10 text-destructive" : "flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary"}>
+                  <span className={pending ? "flex h-7 w-7 items-center justify-center rounded-full bg-destructive/10 text-danger" : "flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary"}>
                     {pending ? <X className="h-4 w-4" aria-label="Pendente" /> : <Check className="h-4 w-4" aria-label="Feito" />}
                   </span>
                   <span className={pending ? "font-medium text-foreground" : "text-muted-foreground"}>{missingLabel[m]}</span>
@@ -78,7 +78,7 @@ export function OverviewTab({ contract: c, ctx }: { contract: ContractDetail; ct
           {c.status === "active" && <Button variant="outline" className="min-h-11" onClick={() => setReasonFor("suspend")}>Suspender</Button>}
           {c.status === "suspended" && <Button variant="outline" className="min-h-11" onClick={() => setReasonFor("reactivate")}>Reativar</Button>}
           {ctx.isAdmin && c.status !== "ended" && <Button variant="outline" className="min-h-11" onClick={() => setReasonFor("end")}>Encerrar</Button>}
-          {ctx.isAdmin && <Button variant="outline" className="min-h-11 text-destructive" onClick={() => { del.reset(); setDeleting(true); }}><Trash2 className="h-4 w-4" />Excluir</Button>}
+          {ctx.isAdmin && <Button variant="outline" className="min-h-11 text-danger" onClick={() => { del.reset(); setDeleting(true); }}><Trash2 className="h-4 w-4" />Excluir</Button>}
         </section>
       )}
 
@@ -119,7 +119,7 @@ function FiscalsSection({ contract: c, ctx }: { contract: ContractDetail; ctx: C
   const end = useAction((l: FiscalLink) => endContractFiscal(c.id, l.id, { ends_on: endDate }), { success: "Vínculo encerrado.", onSuccess: () => setEnding(null) });
 
   return (
-    <section className="rounded-xl border bg-card p-5">
+    <section className="rounded-[10px] border bg-card p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg font-semibold text-foreground">Fiscais do contrato</h2>
         {ctx.canManage && (

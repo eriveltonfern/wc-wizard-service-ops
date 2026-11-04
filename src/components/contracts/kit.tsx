@@ -44,7 +44,7 @@ export function Field({ label, id, error, hint, children }: { label: string; id:
       <Label htmlFor={id}>{label}</Label>
       {children}
       {hint && !error && <p className="text-xs text-muted-foreground">{hint}</p>}
-      {error && <p id={`${id}-error`} className="text-sm font-medium text-destructive">{error}</p>}
+      {error && <p id={`${id}-error`} className="text-sm font-medium text-danger">{error}</p>}
     </div>
   );
 }
