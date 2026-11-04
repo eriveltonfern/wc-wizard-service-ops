@@ -5,7 +5,6 @@ import { ArrowLeft, Camera, Check, CloudOff, Loader2, MapPin, MapPinOff, RotateC
 import { ApiError } from "@/lib/api";
 import { createCleaning, getCleaningForm } from "@/lib/endpoints";
 import { enqueueCleaning, isOffline, toInput, type QueuedCleaning } from "@/lib/outbox";
-import { shiftLabel } from "@/lib/format";
 import type { ChecklistAnswer, Cleaning, CleaningForm, PhotoRule, Task } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { PageHelp } from "@/components/layout/PageHeader";
@@ -345,4 +344,3 @@ function ChecklistStep({ items, answers, onChange, onNext, setError }: {
   );
 }
 
-export { shiftLabel };

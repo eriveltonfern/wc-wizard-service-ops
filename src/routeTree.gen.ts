@@ -20,14 +20,18 @@ import { Route as AppEtiquetasRouteImport } from './routes/_app.etiquetas'
 import { Route as AppHojeRouteImport } from './routes/_app.hoje'
 import { Route as AppLerQrRouteImport } from './routes/_app.ler-qr'
 import { Route as AppPainelRouteImport } from './routes/_app.painel'
+import { Route as QTokenRouteImport } from './routes/q.$token'
 import { Route as AppBanheirosIndexRouteImport } from './routes/_app.banheiros.index'
 import { Route as AppBanheirosIdRouteImport } from './routes/_app.banheiros.$id'
 import { Route as AppContratosIndexRouteImport } from './routes/_app.contratos.index'
 import { Route as AppContratosIdRouteImport } from './routes/_app.contratos.$id'
 import { Route as AppEmpresasIndexRouteImport } from './routes/_app.empresas.index'
 import { Route as AppEmpresasIdRouteImport } from './routes/_app.empresas.$id'
+import { Route as AppMinhasLimpezasIndexRouteImport } from './routes/_app.minhas-limpezas.index'
+import { Route as AppMinhasLimpezasIdRouteImport } from './routes/_app.minhas-limpezas.$id'
 import { Route as AppPessoasIndexRouteImport } from './routes/_app.pessoas.index'
 import { Route as AppPessoasIdRouteImport } from './routes/_app.pessoas.$id'
+import { Route as AppRegistrarIdRouteImport } from './routes/_app.registrar.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -83,6 +87,11 @@ const AppPainelRoute = AppPainelRouteImport.update({
   path: '/painel',
   getParentRoute: () => AppRoute,
 } as any)
+const QTokenRoute = QTokenRouteImport.update({
+  id: '/q/$token',
+  path: '/q/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppBanheirosIndexRoute = AppBanheirosIndexRouteImport.update({
   id: '/banheiros/',
   path: '/banheiros/',
@@ -113,6 +122,16 @@ const AppEmpresasIdRoute = AppEmpresasIdRouteImport.update({
   path: '/empresas/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppMinhasLimpezasIndexRoute = AppMinhasLimpezasIndexRouteImport.update({
+  id: '/minhas-limpezas/',
+  path: '/minhas-limpezas/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMinhasLimpezasIdRoute = AppMinhasLimpezasIdRouteImport.update({
+  id: '/minhas-limpezas/$id',
+  path: '/minhas-limpezas/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppPessoasIndexRoute = AppPessoasIndexRouteImport.update({
   id: '/pessoas/',
   path: '/pessoas/',
@@ -121,6 +140,11 @@ const AppPessoasIndexRoute = AppPessoasIndexRouteImport.update({
 const AppPessoasIdRoute = AppPessoasIdRouteImport.update({
   id: '/pessoas/$id',
   path: '/pessoas/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRegistrarIdRoute = AppRegistrarIdRouteImport.update({
+  id: '/registrar/$id',
+  path: '/registrar/$id',
   getParentRoute: () => AppRoute,
 } as any)
 
@@ -135,13 +159,17 @@ export interface FileRoutesByFullPath {
   '/hoje': typeof AppHojeRoute
   '/ler-qr': typeof AppLerQrRoute
   '/painel': typeof AppPainelRoute
+  '/q/$token': typeof QTokenRoute
   '/banheiros/$id': typeof AppBanheirosIdRoute
   '/contratos/$id': typeof AppContratosIdRoute
   '/empresas/$id': typeof AppEmpresasIdRoute
+  '/minhas-limpezas/$id': typeof AppMinhasLimpezasIdRoute
   '/pessoas/$id': typeof AppPessoasIdRoute
+  '/registrar/$id': typeof AppRegistrarIdRoute
   '/banheiros/': typeof AppBanheirosIndexRoute
   '/contratos/': typeof AppContratosIndexRoute
   '/empresas/': typeof AppEmpresasIndexRoute
+  '/minhas-limpezas/': typeof AppMinhasLimpezasIndexRoute
   '/pessoas/': typeof AppPessoasIndexRoute
 }
 export interface FileRoutesByTo {
@@ -155,13 +183,17 @@ export interface FileRoutesByTo {
   '/hoje': typeof AppHojeRoute
   '/ler-qr': typeof AppLerQrRoute
   '/painel': typeof AppPainelRoute
+  '/q/$token': typeof QTokenRoute
   '/banheiros/$id': typeof AppBanheirosIdRoute
   '/contratos/$id': typeof AppContratosIdRoute
   '/empresas/$id': typeof AppEmpresasIdRoute
+  '/minhas-limpezas/$id': typeof AppMinhasLimpezasIdRoute
   '/pessoas/$id': typeof AppPessoasIdRoute
+  '/registrar/$id': typeof AppRegistrarIdRoute
   '/banheiros': typeof AppBanheirosIndexRoute
   '/contratos': typeof AppContratosIndexRoute
   '/empresas': typeof AppEmpresasIndexRoute
+  '/minhas-limpezas': typeof AppMinhasLimpezasIndexRoute
   '/pessoas': typeof AppPessoasIndexRoute
 }
 export interface FileRoutesById {
@@ -177,13 +209,17 @@ export interface FileRoutesById {
   '/_app/hoje': typeof AppHojeRoute
   '/_app/ler-qr': typeof AppLerQrRoute
   '/_app/painel': typeof AppPainelRoute
+  '/q/$token': typeof QTokenRoute
   '/_app/banheiros/$id': typeof AppBanheirosIdRoute
   '/_app/contratos/$id': typeof AppContratosIdRoute
   '/_app/empresas/$id': typeof AppEmpresasIdRoute
+  '/_app/minhas-limpezas/$id': typeof AppMinhasLimpezasIdRoute
   '/_app/pessoas/$id': typeof AppPessoasIdRoute
+  '/_app/registrar/$id': typeof AppRegistrarIdRoute
   '/_app/banheiros/': typeof AppBanheirosIndexRoute
   '/_app/contratos/': typeof AppContratosIndexRoute
   '/_app/empresas/': typeof AppEmpresasIndexRoute
+  '/_app/minhas-limpezas/': typeof AppMinhasLimpezasIndexRoute
   '/_app/pessoas/': typeof AppPessoasIndexRoute
 }
 export interface FileRouteTypes {
@@ -199,13 +235,17 @@ export interface FileRouteTypes {
     | '/hoje'
     | '/ler-qr'
     | '/painel'
+    | '/q/$token'
     | '/banheiros/$id'
     | '/contratos/$id'
     | '/empresas/$id'
+    | '/minhas-limpezas/$id'
     | '/pessoas/$id'
+    | '/registrar/$id'
     | '/banheiros/'
     | '/contratos/'
     | '/empresas/'
+    | '/minhas-limpezas/'
     | '/pessoas/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -219,13 +259,17 @@ export interface FileRouteTypes {
     | '/hoje'
     | '/ler-qr'
     | '/painel'
+    | '/q/$token'
     | '/banheiros/$id'
     | '/contratos/$id'
     | '/empresas/$id'
+    | '/minhas-limpezas/$id'
     | '/pessoas/$id'
+    | '/registrar/$id'
     | '/banheiros'
     | '/contratos'
     | '/empresas'
+    | '/minhas-limpezas'
     | '/pessoas'
   id:
     | '__root__'
@@ -240,13 +284,17 @@ export interface FileRouteTypes {
     | '/_app/hoje'
     | '/_app/ler-qr'
     | '/_app/painel'
+    | '/q/$token'
     | '/_app/banheiros/$id'
     | '/_app/contratos/$id'
     | '/_app/empresas/$id'
+    | '/_app/minhas-limpezas/$id'
     | '/_app/pessoas/$id'
+    | '/_app/registrar/$id'
     | '/_app/banheiros/'
     | '/_app/contratos/'
     | '/_app/empresas/'
+    | '/_app/minhas-limpezas/'
     | '/_app/pessoas/'
   fileRoutesById: FileRoutesById
 }
@@ -254,6 +302,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
+  QTokenRoute: typeof QTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -335,6 +384,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPainelRouteImport
       parentRoute: typeof AppRoute
     }
+    '/q/$token': {
+      id: '/q/$token'
+      path: '/q/$token'
+      fullPath: '/q/$token'
+      preLoaderRoute: typeof QTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app/banheiros/': {
       id: '/_app/banheiros/'
       path: '/banheiros'
@@ -377,6 +433,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppEmpresasIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/minhas-limpezas/': {
+      id: '/_app/minhas-limpezas/'
+      path: '/minhas-limpezas'
+      fullPath: '/minhas-limpezas/'
+      preLoaderRoute: typeof AppMinhasLimpezasIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/minhas-limpezas/$id': {
+      id: '/_app/minhas-limpezas/$id'
+      path: '/minhas-limpezas/$id'
+      fullPath: '/minhas-limpezas/$id'
+      preLoaderRoute: typeof AppMinhasLimpezasIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/pessoas/': {
       id: '/_app/pessoas/'
       path: '/pessoas'
@@ -389,6 +459,13 @@ declare module '@tanstack/react-router' {
       path: '/pessoas/$id'
       fullPath: '/pessoas/$id'
       preLoaderRoute: typeof AppPessoasIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/registrar/$id': {
+      id: '/_app/registrar/$id'
+      path: '/registrar/$id'
+      fullPath: '/registrar/$id'
+      preLoaderRoute: typeof AppRegistrarIdRouteImport
       parentRoute: typeof AppRoute
     }
   }
@@ -406,10 +483,13 @@ interface AppRouteChildren {
   AppBanheirosIdRoute: typeof AppBanheirosIdRoute
   AppContratosIdRoute: typeof AppContratosIdRoute
   AppEmpresasIdRoute: typeof AppEmpresasIdRoute
+  AppMinhasLimpezasIdRoute: typeof AppMinhasLimpezasIdRoute
   AppPessoasIdRoute: typeof AppPessoasIdRoute
+  AppRegistrarIdRoute: typeof AppRegistrarIdRoute
   AppBanheirosIndexRoute: typeof AppBanheirosIndexRoute
   AppContratosIndexRoute: typeof AppContratosIndexRoute
   AppEmpresasIndexRoute: typeof AppEmpresasIndexRoute
+  AppMinhasLimpezasIndexRoute: typeof AppMinhasLimpezasIndexRoute
   AppPessoasIndexRoute: typeof AppPessoasIndexRoute
 }
 
@@ -425,10 +505,13 @@ const AppRouteChildren: AppRouteChildren = {
   AppBanheirosIdRoute: AppBanheirosIdRoute,
   AppContratosIdRoute: AppContratosIdRoute,
   AppEmpresasIdRoute: AppEmpresasIdRoute,
+  AppMinhasLimpezasIdRoute: AppMinhasLimpezasIdRoute,
   AppPessoasIdRoute: AppPessoasIdRoute,
+  AppRegistrarIdRoute: AppRegistrarIdRoute,
   AppBanheirosIndexRoute: AppBanheirosIndexRoute,
   AppContratosIndexRoute: AppContratosIndexRoute,
   AppEmpresasIndexRoute: AppEmpresasIndexRoute,
+  AppMinhasLimpezasIndexRoute: AppMinhasLimpezasIndexRoute,
   AppPessoasIndexRoute: AppPessoasIndexRoute,
 }
 
@@ -438,6 +521,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
+  QTokenRoute: QTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
