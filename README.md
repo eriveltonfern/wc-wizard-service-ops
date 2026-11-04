@@ -21,6 +21,15 @@ npm i
 npm run dev
 ```
 
+## Build para a Hostinger (SPA estático)
+
+```sh
+BUILD_TARGET=hostinger npx vite build
+```
+
+Envie para o Apache somente o conteúdo de `dist/client/` (index.html, assets/, .htaccess, favicon.ico, robots.txt).
+Sem a variável, o build usa a configuração padrão do Lovable (prévia e Publicar).
+
 ## Built with
 
 - TanStack Start
