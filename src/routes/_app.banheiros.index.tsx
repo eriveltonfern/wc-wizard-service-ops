@@ -66,7 +66,7 @@ function BathroomsPage() {
 
   return (
     <div className="space-y-5">
-      <PageHelp>Encontre qualquer banheiro digitando o nome, o local ou o contrato (não precisa de acento). Filtre por contrato ou situação e clique no banheiro para ver o QR, as interdições e as ações.</PageHelp>
+      <PageHelp>Encontre qualquer banheiro digitando o nome, o local, o contrato ou a empresa (não precisa de acento). Filtre por contrato ou situação e clique no banheiro para ver o QR, as interdições e as ações.</PageHelp>
       <PageHeader title="Banheiros" subtitle="Encontre qualquer banheiro de todos os contratos." actions={canManage && <Button className="min-h-11" onClick={() => setCreating(true)}><Plus className="h-4 w-4" />Novo banheiro</Button>} />
 
       <div className="space-y-3 rounded-[10px] border bg-card p-4">
