@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { EmptyBlock, ErrorBlock, LoadingBlock, NativeSelect, StatusBadge } from "@/components/contracts/kit";
 import { NewBathroomDialog } from "@/components/contracts/NewBathroomDialog";
 
-type Search = { q?: string; contrato?: number; status?: "active" | "inactive" | "todos" };
+type Search = { q?: string | undefined; contrato?: number | undefined; status?: "active" | "inactive" | "todos" | undefined };
 
 export const Route = createFileRoute("/_app/banheiros/")({
   validateSearch: (s: Record<string, unknown>): Search => {
