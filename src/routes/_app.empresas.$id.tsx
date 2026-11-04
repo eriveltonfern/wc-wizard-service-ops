@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { PageHelp } from "@/components/layout/PageHeader";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowLeft, Pencil, Trash2, UserPlus } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Pencil, Trash2, UserPlus } from "lucide-react";
 import { deleteCompany, getCompany, inactivateCompany, reactivateCompany } from "@/lib/endpoints";
 import { ApiError } from "@/lib/api";
 import { fmtPeriod } from "@/lib/format";
@@ -50,7 +50,13 @@ function CompanyPage() {
   return (
     <div className="space-y-6">
       {back}
-      <PageHelp>Dados da empresa, seus contratos e fiscais. Inativar a empresa suspende os contratos ativos dela.</PageHelp>
+      <PageHelp>Dados da empresa, seus contratos e fiscais. Toda empresa precisa de um fiscal para que os contratos dela possam ser ativados. Inativar a empresa suspende os contratos ativos dela.</PageHelp>
+      {c.fiscals_count === 0 && (
+        <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-[10px] border border-danger/30 bg-danger-soft px-4 py-3">
+          <p className="flex items-center gap-2 text-sm font-semibold text-danger"><AlertTriangle className="h-5 w-5 shrink-0" />Esta empresa ainda não tem fiscal. Os contratos dela não podem ser ativados.</p>
+          <Button className="min-h-11" onClick={() => setNewFiscal(true)}><UserPlus className="h-4 w-4" />Cadastrar fiscal</Button>
+        </div>
+      )}
       <header className="rounded-[10px] border bg-card p-5">
         <div className="flex flex-wrap items-center gap-2"><h1 className="text-2xl font-extrabold tracking-tight text-ink">{c.name}</h1><StatusBadge status={c.status} /></div>
         <dl className="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
@@ -104,7 +110,7 @@ function CompanyPage() {
       </section>
 
       <CompanyForm open={editing} onOpenChange={setEditing} company={c} />
-      <UserForm open={newFiscal} onOpenChange={setNewFiscal} roles={["fiscal"]} preset={{ role: "fiscal", company_id: c.id }}
+      <UserForm open={newFiscal} onOpenChange={setNewFiscal} roles={["fiscal"]} preset={{ role: "fiscal", company_id: c.id, company_name: c.name }}
         onCreated={(user, password) => setTemp({ user, password })} />
       <TempPasswordDialog data={temp} onClose={() => setTemp(null)} />
       <ReasonDialog open={inactivating} onOpenChange={setInactivating} title="Inativar empresa" submitLabel="Inativar" destructive

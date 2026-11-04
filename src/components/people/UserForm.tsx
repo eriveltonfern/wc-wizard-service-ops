@@ -34,7 +34,7 @@ export function UserForm({ open, onOpenChange, roles, user, preset, onCreated, t
     return createUser({ ...base, role: f.role, ...(f.role === "fiscal" && f.company_id ? { company_id: Number(f.company_id) } : {}) });
   }, {
     success: editing ? "Dados atualizados." : "Pessoa cadastrada.",
-    onSuccess: (r) => { onOpenChange(false); if (!editing) onCreated?.(r.user, r.temporary_password); },
+    onSuccess: (r) => { if (!editing) onCreated?.(r.user, r.temporary_password); onOpenChange(false); },
   });
   const e = save.fields;
 
