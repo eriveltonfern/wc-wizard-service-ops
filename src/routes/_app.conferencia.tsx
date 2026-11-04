@@ -156,7 +156,7 @@ function Photo({ src, label }: { src?: string | undefined; label: string }) {
 
 function ReviewDetail({ id, onClose }: { id: number; onClose: () => void }) {
   const q = useQuery({ queryKey: ["review", "one", id], queryFn: () => getCleaning(id) });
-  const other = useQuery({ queryKey: ["review", "one", q.data?.repeated_with], queryFn: () => getCleaning(q.data!.repeated_with!), enabled: !!q.data?.repeated_with });
+  const other = useQuery({ queryKey: ["review", "one", q.data?.repeated_with], queryFn: () => getCleaning(q.data!.repeated_with!), enabled: !!q.data?.repeated_with, retry: false });
   const [cancelOpen, setCancelOpen] = useState(false);
   const approve = useAction(() => approveCleaning(id), { success: "Limpeza conferida.", onSuccess: onClose });
   const cancel = useAction((reason: string) => cancelCleaning(id, reason), {

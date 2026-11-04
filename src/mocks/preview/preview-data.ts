@@ -111,8 +111,9 @@ export function generate(d: MockDb, now = new Date()): PreviewDb {
   let fp = 0;
   const add = (t: { bathroom: DbBathroom; contract: DbContract }, user: number, when: Date, task: string | null, outOfShift: boolean) => {
     const offline = r() < 0.04;
-    const repeated = r() < 0.025 && cleanings.length > 0;
-    const prev = repeated ? cleanings[Math.floor(r() * cleanings.length)]! : null;
+    const same = cleanings.filter((x) => x.contract_id === t.contract.id && x.photo_before);
+    const repeated = r() < 0.025 && same.length > 0;
+    const prev = repeated ? same[Math.floor(r() * same.length)]! : null;
     const before = t.contract.rules.photo_before === "off" ? null : prev?.photo_before ?? `ex-${++fp}`;
     const after = t.contract.rules.photo_after === "off" || (t.contract.rules.photo_after === "optional" && r() < 0.15) ? null : `ex-${++fp}`;
     const hasLoc = t.contract.rules.capture_location && r() < 0.88;
