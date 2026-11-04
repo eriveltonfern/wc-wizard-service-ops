@@ -17,8 +17,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { toast } from "sonner";
 
 type Search = {
-  f?: "abertos" | "comigo" | "todos"; banheiro?: number; contrato?: number;
-  categoria?: TicketCategory; prioridade?: TicketPriority; chamado?: number; coluna?: "open" | "in_progress" | "done";
+  f?: "abertos" | "comigo" | "todos" | undefined; banheiro?: number | undefined; contrato?: number | undefined;
+  categoria?: TicketCategory | undefined; prioridade?: TicketPriority | undefined; chamado?: number | undefined; coluna?: "open" | "in_progress" | "done" | undefined;
 };
 
 export const Route = createFileRoute("/_app/chamados/")({
