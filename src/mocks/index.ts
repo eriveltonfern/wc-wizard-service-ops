@@ -776,8 +776,10 @@ on("DELETE", "/users/{id}", ({ d, me, p }) => {
 });
 on("POST", "/users/{id}/inactivate", ({ d, me, p, body }) => {
   const u = getUserFor(d, me, p[0]!, true);
-  if (u.id === me.id) throw forbidden();
+  if (u.id === me.id) throw conflict("Você não pode inativar a sua própria conta.");
   const v = new V(body); const reason = v.str("reason", true); v.done();
+  const managed = d.contracts.filter((c) => c.manager_id === u.id && (c.status === "active" || c.status === "suspended"));
+  if (managed.length) throw conflict("Esta pessoa é gestora de contratos ativos. Troque o gestor antes de inativar.", { contracts: managed.map((c) => ({ id: c.id, code: c.code, name: c.name, status: c.status })) });
   u.status = "inactive";
   d.revoked_tokens.push(`mock-token-${u.id}`);
   for (const m of d.members.filter((x) => x.user_id === u.id && (x.ends_on === null || x.ends_on > today()))) {
@@ -804,6 +806,14 @@ on("PATCH", "/users/{id}/role", ({ d, me, p, body }) => {
     else if (!d.companies.some((c) => c.id === company_id)) v.fail("company_id", MSG.option);
   } else company_id = null;
   v.done();
+  const managed = d.contracts.filter((c) => c.manager_id === u.id && ["draft", "active", "suspended"].includes(c.status));
+  if (managed.length) throw conflict("Esta pessoa é gestora de contratos em andamento. Troque o gestor antes.", { contracts: managed.map((c) => ({ id: c.id, code: c.code, name: c.name, status: c.status })) });
+  const t = today();
+  for (const m of d.members.filter((x) => x.user_id === u.id && (x.ends_on === null || x.ends_on > t))) {
+    m.ends_on = t; m.removal_reason = `Mudança de função: ${reason}`;
+  }
+  for (const f of d.fiscal_links.filter((x) => x.user_id === u.id && (x.ends_on === null || x.ends_on > t))) f.ends_on = t;
+  if (!d.revoked_tokens.includes(`mock-token-${u.id}`)) d.revoked_tokens.push(`mock-token-${u.id}`);
   const before = { role: u.role, company_id: u.company_id };
   u.role = role!; u.company_id = company_id;
   audit(d, me, "user.role_changed", "user", u.id, before, { role, company_id }, reason);
