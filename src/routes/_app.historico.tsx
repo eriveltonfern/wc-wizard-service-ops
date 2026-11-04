@@ -95,7 +95,7 @@ function CleaningsTab({ search, set }: { search: Search; set: (p: Partial<Search
   const params = { ...f, contract_id: search.contrato, bathroom_id: search.banheiro, user_id: search.pessoa, situation: search.situacao };
   const q = useQuery({ queryKey: ["history", params], queryFn: () => listCleaningHistory(params) });
   const contracts = useQuery({ queryKey: ["contracts", { status: "" }], queryFn: () => listContracts() });
-  const baths = useQuery({ queryKey: ["bathrooms", { contract_id: search.contrato }], queryFn: () => listBathrooms({ contract_id: search.contrato }) });
+  const baths = useQuery({ queryKey: ["bathrooms", { contract_id: search.contrato }], queryFn: () => listBathrooms(search.contrato ? { contract_id: search.contrato } : {}) });
   const people = useQuery({ queryKey: ["users", "limpeza"], queryFn: () => listUsers({ role: "limpeza" }), retry: false });
   const t = q.data?.totals;
   const n = (v: React.ReactNode) => (q.isPending ? "…" : q.isError ? "—" : v);
