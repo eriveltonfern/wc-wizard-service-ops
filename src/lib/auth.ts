@@ -51,6 +51,12 @@ export const navByRole: Record<Role, NavItem[]> = {
 export const canManageContracts = (r: Role) => r === "admin" || r === "gestor";
 export const isAdminRole = (r: Role) => r === "admin";
 
+// Pessoas: quais perfis cada um pode cadastrar e quem pode editar quem.
+export const creatableRoles = (r: Role): Role[] =>
+  r === "admin" ? ["admin", "gestor", "fiscal", "limpeza", "manutencao"] : r === "gestor" ? ["limpeza", "manutencao"] : [];
+export const canManageUser = (me: { id: number; role: Role }, target: { role: Role }) =>
+  me.role === "admin" || (me.role === "gestor" && (target.role === "limpeza" || target.role === "manutencao"));
+
 export const isFieldRole = (r: Role) => r === "limpeza" || r === "manutencao";
 export const homeFor = (r: Role) => navByRole[r][0]?.to ?? "/login";
 export const canAccess = (r: Role, path: string) =>

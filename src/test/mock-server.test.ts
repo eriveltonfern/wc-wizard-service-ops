@@ -24,3 +24,10 @@ it("contract", () => {
   expect(l.url).toMatch(/^https:\/\/wccheck\.com\.br\/q\/[A-HJ-NP-Z2-9]{12}$/);
   expect(r("POST","/contracts/1/bathrooms",{name:"vestiario portaria",kind:"unissex"},1).body.error.fields.name).toBe("Já existe um banheiro com este nome no contrato.");
 });
+
+it("nova senha precisa de pelo menos 10 caracteres", () => {
+  resetMockDb();
+  const r = (b: unknown) => handleMock("POST", "/me/password", b, "mock-token-4") as any;
+  expect(r({ current: "wccheck123", new: "123456789" }).body.error.fields.new).toBe("A senha deve ter pelo menos 10 caracteres.");
+  expect(r({ current: "wccheck123", new: "1234567890" }).body.data).toEqual({ changed: true });
+});
