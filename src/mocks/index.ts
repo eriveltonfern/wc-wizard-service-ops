@@ -275,7 +275,7 @@ on("POST", "/me/password", ({ me, body }) => {
   const cur = v.str("current", true);
   const nw = v.str("new", true);
   if (cur && cur !== me.password) v.fail("current", "Senha atual incorreta.");
-  if (nw && nw.length < 8) v.fail("new", "A senha deve ter pelo menos 8 caracteres.");
+  if (nw && nw.length < 10) v.fail("new", "A senha deve ter pelo menos 10 caracteres.");
   v.done();
   me.password = nw!;
   me.must_change_password = false;

@@ -1,6 +1,8 @@
 import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { LogOut } from "lucide-react";
+import { KeyRound, LogOut } from "lucide-react";
+import { useState } from "react";
+import { ChangePasswordDialog, ForcePasswordScreen } from "@/components/people/ChangePassword";
 import { getToken, setToken } from "@/lib/api";
 import { logout } from "@/lib/endpoints";
 import { meQuery, navByRole, roleLabel, canAccess, homeFor, isFieldRole } from "@/lib/auth";
@@ -72,12 +74,19 @@ function AppSidebar() {
 
 function UserBox({ onLogout }: { onLogout: () => void }) {
   const { data: user } = useSuspenseQuery(meQuery);
+  const [pw, setPw] = useState(false);
   return (
-    <div className="ml-auto flex items-center gap-3">
+    <div className="ml-auto flex items-center gap-2 sm:gap-3">
       <div className="text-right leading-tight">
         <div className="text-sm font-semibold text-foreground">{user.name}</div>
         <div className="text-xs text-muted-foreground">{roleLabel[user.role]}</div>
       </div>
+      <Button variant="ghost" size="sm" onClick={() => setPw(true)} className="min-h-11 gap-2">
+        <KeyRound className="h-4 w-4" />
+        <span className="hidden sm:inline">Trocar senha</span>
+        <span className="sr-only sm:hidden">Trocar senha</span>
+      </Button>
+      <ChangePasswordDialog open={pw} onOpenChange={setPw} />
       <Button variant="outline" size="sm" onClick={onLogout} className="min-h-11 gap-2">
         <LogOut className="h-4 w-4" />
         <span className="hidden sm:inline">Sair</span>
@@ -91,6 +100,11 @@ function AppLayout() {
   const logout = useLogout();
   const path = useRouterState({ select: (s) => s.location.pathname });
   const field = isFieldRole(user.role);
+  const navigate = useNavigate();
+
+  if (user.must_change_password) {
+    return <ForcePasswordScreen onDone={() => void navigate({ to: homeFor(user.role), replace: true })} />;
+  }
 
   if (field) {
     const items = navByRole[user.role];
