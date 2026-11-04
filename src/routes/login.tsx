@@ -20,11 +20,16 @@ export const Route = createFileRoute("/login")({
       { property: "og:description", content: "Acesse o WCCheck 2.0 com seu e-mail e senha." },
     ],
   }),
-  beforeLoad: () => {
-    if (getToken()) throw redirect({ to: "/" });
+  validateSearch: (s: Record<string, unknown>): { redirect?: string | undefined } =>
+    safeRedirect(s["redirect"]) ? { redirect: s["redirect"] as string } : {},
+  beforeLoad: ({ search }) => {
+    if (getToken()) throw search.redirect ? redirect({ href: search.redirect }) : redirect({ to: "/" });
   },
   component: LoginPage,
 });
+
+/** Só aceita voltar para um caminho deste próprio site (ex.: /q/CODIGO). */
+const safeRedirect = (v: unknown): v is string => typeof v === "string" && v.startsWith("/") && !v.startsWith("//");
 
 const TEST_USERS: [string, string][] = [
   ["admin@wccheck.test", "Diretoria"],
@@ -43,6 +48,7 @@ function LoginPage() {
   const [resetDone, setResetDone] = useState(false);
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const { redirect: back } = Route.useSearch();
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -52,7 +58,8 @@ function LoginPage() {
       const res = await login({ email, password });
       setToken(res.token);
       qc.setQueryData(meQuery.queryKey, res.user);
-      navigate({ to: homeFor(res.user.role), replace: true });
+      if (back) navigate({ href: back, replace: true });
+      else navigate({ to: homeFor(res.user.role), replace: true });
     } catch (err) {
       setError(err instanceof ApiError && err.status === 401 ? "E-mail ou senha incorretos." : err instanceof ApiError ? err.message : "Não foi possível entrar. Tente novamente.");
     } finally {

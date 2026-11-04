@@ -25,7 +25,7 @@ export type DbAudit = {
   after: Record<string, unknown> | null; reason: string | null; created_at: string; actor_id: number | null;
 };
 
-export const SEED_VERSION = 2;
+export const SEED_VERSION = 3;
 export type MockDb = {
   version?: number;
   users: DbUser[]; companies: DbCompany[]; contracts: DbContract[]; fiscal_links: DbFiscalLink[];
@@ -68,10 +68,16 @@ export function seed(): MockDb {
   const c = (id: number, company_id: number, code: string, name: string, starts_on: string): DbContract => ({
     id, company_id, code, name, manager_id: 2, starts_on, ends_on: null, status: "active", timezone: "America/Sao_Paulo", rules: defaultRules(),
   });
+  const c1 = c(1, 1, "CT-2026-001", "Serra Azul – Mina Norte", "2026-01-10");
+  c1.rules = { ...c1.rules, default_cleanings_per_day: 3, photo_after: "optional" };
+  const c2 = c(2, 1, "CT-2026-002", "Serra Azul – Planta de Beneficiamento", "2026-03-01");
+  c2.rules = { ...c2.rules, default_cleanings_per_day: 2, shifts: ["manha", "tarde"] };
+  const c3 = { ...c(3, 2, "CT-2026-003", "Parque Central – Áreas comuns", "2026-05-15"), manager_id: 12 };
+  c3.rules = { ...c3.rules, default_cleanings_per_day: 2 };
   const contracts = [
-    c(1, 1, "CT-2026-001", "Serra Azul – Mina Norte", "2026-01-10"),
-    c(2, 1, "CT-2026-002", "Serra Azul – Planta de Beneficiamento", "2026-03-01"),
-    { ...c(3, 2, "CT-2026-003", "Parque Central – Áreas comuns", "2026-05-15"), manager_id: 12 },
+    c1,
+    c2,
+    c3,
     { ...c(4, 3, "CT-2026-004", "Horizonte – Canteiro Contagem", "2026-12-01"), status: "draft" as const },
   ];
   let ck = 0;

@@ -7,6 +7,7 @@ import type {
 import {
   seed, SEED_VERSION, defaultRules, DEFAULT_CHECKLIST, type DbBathroom, type DbContract, type DbMember, type DbTeam, type DbUser, type MockDb,
 } from "./data";
+import { handlePreview, resetPreviewDb } from "./preview/preview-handlers";
 
 const DB_KEY = "wccheck.mockdb";
 type MockResponse = { status: number; body: unknown };
@@ -32,6 +33,7 @@ function save() {
 export function resetMockDb() {
   db = seed();
   save();
+  resetPreviewDb();
 }
 
 // ---------- respostas ----------
@@ -841,7 +843,9 @@ export function handleMock(method: string, rawPath: string, body: unknown, token
   const d = load();
   const [path, search] = rawPath.replace(/^\/api(?=\/)/, "").split("?");
   const query = new URLSearchParams(search ?? "");
-  const b = (body && typeof body === "object" ? body : {}) as Body;
+  const b = (typeof FormData !== "undefined" && body instanceof FormData
+    ? Object.fromEntries(body.entries())
+    : body && typeof body === "object" ? body : {}) as Body;
   try {
     if (method === "GET" && path === "/health") return ok({ db: "ok", disk_free_mb: 10240 });
     if (method === "POST" && path === "/auth/login") {
@@ -866,6 +870,8 @@ export function handleMock(method: string, rawPath: string, body: unknown, token
         return ok({ bathroom_id: bt.id, contract_id: bt.contract_id, name: bt.name, status: bt.status });
       }
     }
+    const preview = handlePreview(method, path!, query, b, me, d);
+    if (preview) return preview;
     for (const [m, re, h] of routes) {
       if (m !== method) continue;
       const match = path!.match(re);

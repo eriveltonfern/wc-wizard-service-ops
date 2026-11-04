@@ -1,12 +1,15 @@
 import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChangePasswordDialog, ForcePasswordScreen } from "@/components/people/ChangePassword";
 import { getToken, setToken } from "@/lib/api";
 import { logout } from "@/lib/endpoints";
 import { meQuery, navByRole, navGroupsByRole, canAccess, homeFor, isFieldRole } from "@/lib/auth";
 import { AppShell } from "@/components/layout/AppShell";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { OutboxBar } from "@/components/field/kit";
+import { flushOutbox, onFlushed } from "@/lib/outbox";
 
 export const Route = createFileRoute("/_app")({
   ssr: false,
@@ -42,6 +45,21 @@ function AppLayout() {
   const field = isFieldRole(user.role);
   const navigate = useNavigate();
   const [pw, setPw] = useState(false);
+  const qc = useQueryClient();
+
+  // Envia a fila de limpezas guardadas quando a internet volta.
+  useEffect(() => {
+    void flushOutbox();
+    const t = window.setInterval(() => void flushOutbox(), 15000);
+    const onOnline = () => void flushOutbox();
+    window.addEventListener("online", onOnline);
+    const off = onFlushed((r) => {
+      if (r.sent) toast.success(r.sent === 1 ? "Limpeza guardada no celular foi enviada." : `${r.sent} limpezas guardadas no celular foram enviadas.`);
+      r.failed.forEach((f) => toast.error(`Não foi possível enviar a limpeza de ${f.name}: ${f.message}`));
+      void qc.invalidateQueries({ queryKey: ["field"] });
+    });
+    return () => { window.clearInterval(t); window.removeEventListener("online", onOnline); off(); };
+  }, [qc]);
 
   if (user.must_change_password) {
     return <ForcePasswordScreen onDone={() => void navigate({ to: homeFor(user.role), replace: true })} />;
@@ -53,12 +71,17 @@ function AppLayout() {
       style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
       {items.map((i) => {
         const active = path.startsWith(i.to);
+        const center = i.to === "/ler-qr";
         return (
           <Link key={i.to} to={i.to} aria-current={active ? "page" : undefined}
             className={cn("flex min-h-16 flex-col items-center justify-center gap-1 text-xs font-semibold text-muted-foreground",
               active && "text-primary")}>
-            <i.icon className="h-6 w-6" />
-            <span className="text-center leading-tight">{i.title}</span>
+            {center ? (
+              <span className="-mt-7 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg ring-4 ring-card">
+                <i.icon className="h-7 w-7" />
+              </span>
+            ) : <i.icon className="h-6 w-6" />}
+            <span className="text-center leading-tight">{i.short ?? i.title}</span>
           </Link>
         );
       })}
@@ -67,6 +90,7 @@ function AppLayout() {
 
   return (
     <AppShell user={user} groups={navGroupsByRole[user.role]} onLogout={() => void logout()} onChangePassword={() => setPw(true)} bottomNav={bottomNav}>
+      <OutboxBar />
       <Outlet />
       <ChangePasswordDialog open={pw} onOpenChange={setPw} />
     </AppShell>
