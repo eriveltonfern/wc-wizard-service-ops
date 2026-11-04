@@ -15,3 +15,4 @@
 - No Lovable Cloud/Supabase/server functions; auth is a bearer token in localStorage and authenticated routes (`_app`) use `ssr: false`. Why: app must run as a client-side app against the external API.
 - Role menus and route access are defined only in `src/lib/auth.ts` (`navByRole`). Why: single source for profile permissions.
 - Build is a static SPA (`nitro: false`, `tanstackStart.spa` with shell at `/index.html`); deploy only `dist/client/` (includes `public/.htaccess`) to Apache. Why: Hostinger shared hosting has no Node runtime.
+- Every screen follows `docs/design/layout-padrao.md`: shell/headers from `src/components/layout/`, shared visuals from `src/components/ui-kit/`, colors only via tokens in `src/styles.css`. Why: one consistent visual standard across the app.
