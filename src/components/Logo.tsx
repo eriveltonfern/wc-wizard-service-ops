@@ -1,16 +1,15 @@
-import { Droplets } from "lucide-react";
+import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-export function Logo({ compact = false }: { compact?: boolean }) {
+/** Marca "WC Check": ✓ branco em quadrado azul. */
+export function Logo({ compact = false, onDark = false }: { compact?: boolean; onDark?: boolean }) {
   return (
     <div className="flex items-center gap-2">
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-        <Droplets className="h-5 w-5" />
+        <Check className="h-5 w-5" strokeWidth={3} />
       </div>
       {!compact && (
-        <span className="text-lg font-bold tracking-tight text-foreground">
-          WC<span className="text-primary">Check</span>
-          <span className="ml-1 text-xs font-semibold text-muted-foreground">2.0</span>
-        </span>
+        <span className={cn("text-xl font-extrabold tracking-tight", onDark ? "text-sidebar-primary-foreground" : "text-ink")}>WC Check</span>
       )}
     </div>
   );

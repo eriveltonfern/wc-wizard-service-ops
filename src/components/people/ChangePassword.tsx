@@ -44,12 +44,12 @@ function usePasswordForm(onDone: () => void) {
 export function ForcePasswordScreen({ onDone }: { onDone: () => void }) {
   const { fields, submit, pending } = usePasswordForm(onDone);
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
+    <div className="flex min-h-screen items-center justify-center bg-sidebar px-4 py-10">
       <div className="w-full max-w-sm">
-        <div className="mb-6 flex justify-center"><Logo /></div>
-        <form onSubmit={(e) => { e.preventDefault(); submit(); }} className="space-y-4 rounded-xl border bg-card p-6 shadow-sm">
+        <form onSubmit={(e) => { e.preventDefault(); submit(); }} className="space-y-4 rounded-[10px] bg-card p-6 shadow-lg sm:p-8">
+          <div className="flex justify-center"><Logo /></div>
           <div>
-            <h1 className="text-xl font-semibold text-foreground">Crie sua senha</h1>
+            <h1 className="text-2xl font-extrabold text-ink">Crie sua senha</h1>
             <p className="mt-1 text-sm text-muted-foreground">No primeiro acesso, troque a senha temporária por uma só sua.</p>
           </div>
           {fields}

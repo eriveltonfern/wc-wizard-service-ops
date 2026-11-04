@@ -61,14 +61,14 @@ function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
+    <div className="flex min-h-screen items-center justify-center bg-sidebar px-4 py-10">
       <div className="w-full max-w-sm">
-        <div className="mb-8 flex flex-col items-center text-center">
-          <Logo />
-          <p className="mt-3 text-sm text-muted-foreground">Gestão de limpeza e manutenção de banheiros</p>
-        </div>
-        <form onSubmit={onSubmit} className="rounded-xl border bg-card p-6 shadow-sm">
-          <h1 className="text-xl font-semibold text-foreground">Entrar</h1>
+        <form onSubmit={onSubmit} className="rounded-[10px] bg-card p-6 shadow-lg sm:p-8">
+          <div className="mb-6 flex flex-col items-center text-center">
+            <Logo />
+            <p className="mt-2 text-sm text-muted-foreground">Gestão de limpeza e manutenção de banheiros</p>
+          </div>
+          <h1 className="text-2xl font-extrabold text-ink">Entrar</h1>
           <div className="mt-5 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">E-mail</Label>
@@ -85,7 +85,7 @@ function LoginPage() {
               Entrar
             </Button>
             {error && (
-              <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">
+              <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm font-medium text-danger">
                 {error}
               </p>
             )}
@@ -93,7 +93,7 @@ function LoginPage() {
         </form>
 
         {USE_MOCKS && (
-          <div className="mt-6 rounded-xl border border-dashed bg-card/60 p-4">
+          <div className="mt-4 rounded-[10px] bg-card p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Acessos de teste</p>
             <p className="mt-1 text-xs text-muted-foreground">Senha: wccheck123</p>
             <ul className="mt-3 space-y-1">
