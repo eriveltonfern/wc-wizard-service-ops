@@ -1,13 +1,12 @@
 import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChangePasswordDialog, ForcePasswordScreen } from "@/components/people/ChangePassword";
 import { getToken, setToken } from "@/lib/api";
 import { logout } from "@/lib/endpoints";
 import { meQuery, navByRole, navGroupsByRole, canAccess, homeFor, isFieldRole } from "@/lib/auth";
 import { AppShell } from "@/components/layout/AppShell";
 import { cn } from "@/lib/utils";
-import { useEffect } from "react";
 import { toast } from "sonner";
 import { OutboxBar } from "@/components/field/kit";
 import { flushOutbox, onFlushed } from "@/lib/outbox";
