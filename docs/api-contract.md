@@ -32,7 +32,7 @@ GET /contracts/{id}/locations — Locais do contrato. → 200 Location[]
 POST /contracts/{id}/locations — Criar local. body {name: string} → 201 Location
 PATCH /locations/{id} — Editar ou inativar local. body {name: string, status: string} → 200 Location
 DELETE /locations/{id} — Excluir local sem banheiros. → 204
-GET /bathrooms — Buscar banheiros (contract_id, q, status; sem acento; até 50). → 200 Bathroom[]
+GET /bathrooms — Buscar banheiros (contract_id, q, status; sem acento; até 50). → 200 Bathroom[] (meta {total, limit})
 POST /contracts/{id}/bathrooms — Cadastrar banheiro (gera o QR). body BathroomInput → 201 BathroomDetail
 GET /bathrooms/{id} — Ver banheiro com períodos de interdição. → 200 BathroomDetail
 PATCH /bathrooms/{id} — Editar banheiro (null em plano = herda do contrato). body BathroomInput → 200 BathroomDetail

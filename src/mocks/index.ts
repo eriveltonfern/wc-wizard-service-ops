@@ -540,7 +540,7 @@ function bathroomInput(d: MockDb, contractId: number, body: Body, existing?: DbB
 on("GET", "/bathrooms", ({ d, me, query }) => {
   const ids = scopeIds(d, me);
   const cid = query.get("contract_id"); const q = norm(query.get("q") ?? "").trim(); const status = query.get("status");
-  const rows = d.bathrooms.filter((b) => {
+  const all = d.bathrooms.filter((b) => {
     if (!ids.has(b.contract_id)) return false;
     if (cid && b.contract_id !== Number(cid)) return false;
     if (status && b.status !== status) return false;
@@ -550,8 +550,9 @@ on("GET", "/bathrooms", ({ d, me, query }) => {
       if (!norm(`${b.name} ${loc} ${b.floor ?? ""} ${b.qr_token} ${ct?.code ?? ""} ${ct?.name ?? ""}`).includes(q)) return false;
     }
     return true;
-  }).slice(0, 50);
-  return list(rows.map((b) => bathroom(d, b)));
+  });
+  const rows = all.slice(0, 50);
+  return ok(rows.map((b) => bathroom(d, b)), 200, { total: all.length, limit: 50 });
 });
 on("POST", "/contracts/{id}/bathrooms", ({ d, me, p, body }) => {
   const c = getContractFor(d, me, p[0]!, true);
