@@ -57,8 +57,8 @@ export type FiscalLink = { id: number; user_id: number; name: string; email: str
 export type ChecklistItem = { id: number; label: string; position: number; active: boolean };
 export type ContractDetail = Contract & { fiscals: FiscalLink[]; checklist: ChecklistItem[]; activation: Activation };
 export type ContractInput = {
-  company_id: number; code: string; name: string; starts_on: ISODate; ends_on?: ISODate | undefined;
-  manager_id?: number | undefined; timezone: string;
+  company_id: number; code: string; name: string; starts_on: ISODate; ends_on?: ISODate | null | undefined;
+  manager_id?: number | null | undefined; timezone: string;
 } & ContractRules;
 
 export type Location = { id: number; contract_id: number; name: string; status: string; bathrooms_count: number };
