@@ -65,13 +65,14 @@ async function requestRaw(method: string, path: string, body?: unknown): Promise
     status = res.status;
     json = res.body as Envelope;
   } else {
+    const isForm = typeof FormData !== "undefined" && body instanceof FormData;
     const res = await fetch(BASE_URL + path, {
       method,
       headers: {
-        "Content-Type": "application/json",
+        ...(isForm ? {} : { "Content-Type": "application/json" }),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-      body: body !== undefined ? JSON.stringify(body) : null,
+      body: isForm ? body : body !== undefined ? JSON.stringify(body) : null,
     });
     status = res.status;
     json = status === 204 ? null : ((await res.json().catch(() => ({}))) as Envelope);
