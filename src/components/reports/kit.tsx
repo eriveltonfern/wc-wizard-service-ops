@@ -63,7 +63,7 @@ function ClosingCard({ c, onChange }: { c: Closing; onChange: () => void }) {
   const t = c.totals;
   return (
     <DataCard
-      title={<span className="capitalize">{monthLabel(c.month)}</span>}
+      title={monthLabel(c.month).replace(/^./, (x) => x.toUpperCase())}
       actions={
         <div className="flex flex-wrap items-center gap-2">
           {c.status === "closed" && c.closed_at && c.closed_by
