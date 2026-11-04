@@ -14,7 +14,6 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppAjudaRouteImport } from './routes/_app.ajuda'
 import { Route as AppBuscarRouteImport } from './routes/_app.buscar'
-import { Route as AppChamadosRouteImport } from './routes/_app.chamados'
 import { Route as AppConferenciaRouteImport } from './routes/_app.conferencia'
 import { Route as AppEtiquetasRouteImport } from './routes/_app.etiquetas'
 import { Route as AppHojeRouteImport } from './routes/_app.hoje'
@@ -55,11 +54,6 @@ const AppAjudaRoute = AppAjudaRouteImport.update({
 const AppBuscarRoute = AppBuscarRouteImport.update({
   id: '/buscar',
   path: '/buscar',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppChamadosRoute = AppChamadosRouteImport.update({
-  id: '/chamados',
-  path: '/chamados',
   getParentRoute: () => AppRoute,
 } as any)
 const AppConferenciaRoute = AppConferenciaRouteImport.update({
@@ -153,7 +147,6 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/ajuda': typeof AppAjudaRoute
   '/buscar': typeof AppBuscarRoute
-  '/chamados': typeof AppChamadosRoute
   '/conferencia': typeof AppConferenciaRoute
   '/etiquetas': typeof AppEtiquetasRoute
   '/hoje': typeof AppHojeRoute
@@ -177,7 +170,6 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/ajuda': typeof AppAjudaRoute
   '/buscar': typeof AppBuscarRoute
-  '/chamados': typeof AppChamadosRoute
   '/conferencia': typeof AppConferenciaRoute
   '/etiquetas': typeof AppEtiquetasRoute
   '/hoje': typeof AppHojeRoute
@@ -203,7 +195,6 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_app/ajuda': typeof AppAjudaRoute
   '/_app/buscar': typeof AppBuscarRoute
-  '/_app/chamados': typeof AppChamadosRoute
   '/_app/conferencia': typeof AppConferenciaRoute
   '/_app/etiquetas': typeof AppEtiquetasRoute
   '/_app/hoje': typeof AppHojeRoute
@@ -229,7 +220,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/ajuda'
     | '/buscar'
-    | '/chamados'
     | '/conferencia'
     | '/etiquetas'
     | '/hoje'
@@ -253,7 +243,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/ajuda'
     | '/buscar'
-    | '/chamados'
     | '/conferencia'
     | '/etiquetas'
     | '/hoje'
@@ -278,7 +267,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/_app/ajuda'
     | '/_app/buscar'
-    | '/_app/chamados'
     | '/_app/conferencia'
     | '/_app/etiquetas'
     | '/_app/hoje'
@@ -340,13 +328,6 @@ declare module '@tanstack/react-router' {
       path: '/buscar'
       fullPath: '/buscar'
       preLoaderRoute: typeof AppBuscarRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/chamados': {
-      id: '/_app/chamados'
-      path: '/chamados'
-      fullPath: '/chamados'
-      preLoaderRoute: typeof AppChamadosRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/conferencia': {
@@ -474,7 +455,6 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppAjudaRoute: typeof AppAjudaRoute
   AppBuscarRoute: typeof AppBuscarRoute
-  AppChamadosRoute: typeof AppChamadosRoute
   AppConferenciaRoute: typeof AppConferenciaRoute
   AppEtiquetasRoute: typeof AppEtiquetasRoute
   AppHojeRoute: typeof AppHojeRoute
@@ -496,7 +476,6 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAjudaRoute: AppAjudaRoute,
   AppBuscarRoute: AppBuscarRoute,
-  AppChamadosRoute: AppChamadosRoute,
   AppConferenciaRoute: AppConferenciaRoute,
   AppEtiquetasRoute: AppEtiquetasRoute,
   AppHojeRoute: AppHojeRoute,
