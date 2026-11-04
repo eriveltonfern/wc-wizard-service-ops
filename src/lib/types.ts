@@ -94,3 +94,48 @@ export type AuditEvent = {
   reason?: string | undefined; created_at: string; actor?: { id: number; name: string } | undefined;
 };
 export type UserHistory = { events: AuditEvent[]; memberships: Membership[] };
+
+// ---------- Protótipo (docs/api-contrato-proposta.md) ----------
+export type TaskStatus = "pending" | "done" | "not_done" | "cancelled";
+export type Task = {
+  id: string; date: ISODate; shift: Shift; shift_ends_at: string; status: TaskStatus; late: boolean;
+  bathroom: { id: number; name: string }; location?: string | undefined;
+  contract: { id: number; code: string; name: string };
+  done_at?: string | undefined; cleaning_id?: number | undefined;
+};
+export type MeToday = {
+  date: ISODate; now: string; first_name: string;
+  contracts: { id: number; code: string; name: string }[];
+  summary: { done: number; total: number };
+  next: Task | null; tasks: Task[];
+};
+export type ChecklistAnswer = "ok" | "not_ok" | "na";
+export type CleaningMark = "repeated_photo" | "offline" | "out_of_shift" | "no_location";
+export type Cleaning = {
+  id: number;
+  bathroom: { id: number; name: string }; location?: string | undefined;
+  contract: { id: number; code: string; name: string };
+  user: { id: number; name: string };
+  link: { kind: "task"; task_id: string; shift?: Shift | undefined } | { kind: "extra" };
+  registered_at: string; client_finished_at: string;
+  marks: CleaningMark[]; status: "valid" | "cancelled"; cancel_reason?: string | undefined;
+  photo_before_url?: string | undefined; photo_after_url?: string | undefined;
+  checklist: { item_id: number; label: string; answer: ChecklistAnswer; open_ticket: boolean }[];
+  notes?: string | undefined;
+  position?: { latitude: number; longitude: number; accuracy?: number | undefined } | undefined;
+};
+export type CleaningForm = {
+  bathroom: { id: number; name: string; location?: string | undefined; status: string };
+  contract: { id: number; code: string; name: string };
+  rules: { photo_before: PhotoRule; photo_after: PhotoRule; capture_location: boolean };
+  checklist: { id: number; label: string }[];
+  pending_task: Task | null;
+};
+export type CleaningInput = {
+  bathroom_id: number;
+  photo_before?: Blob | null | undefined; photo_after?: Blob | null | undefined;
+  checklist: { item_id: number; answer: ChecklistAnswer; open_ticket?: boolean | undefined }[];
+  notes?: string | undefined;
+  latitude?: number | undefined; longitude?: number | undefined; accuracy?: number | undefined;
+  client_finished_at: string; idempotency_key: string; queued?: boolean | undefined;
+};

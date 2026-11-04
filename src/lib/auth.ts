@@ -23,7 +23,7 @@ export const roleLabel: Record<Role, string> = {
   manutencao: "Manutenção",
 };
 
-export type NavItem = { title: string; to: string; icon: LucideIcon };
+export type NavItem = { title: string; to: string; icon: LucideIcon; short?: string };
 
 const I = {
   painel: { title: "Painel", to: "/painel", icon: LayoutDashboard },
@@ -35,9 +35,9 @@ const I = {
   conferencia: { title: "Conferência", to: "/conferencia", icon: ClipboardCheck },
   etiquetas: { title: "Etiquetas", to: "/etiquetas", icon: QrCode },
   hoje: { title: "Hoje", to: "/hoje", icon: CalendarCheck },
-  buscar: { title: "Buscar banheiro", to: "/buscar", icon: Search },
+  buscar: { title: "Buscar banheiro", short: "Buscar", to: "/buscar", icon: Search },
   lerQr: { title: "Ler QR", to: "/ler-qr", icon: ScanLine },
-  minhas: { title: "Minhas limpezas", to: "/minhas-limpezas", icon: ListChecks },
+  minhas: { title: "Minhas limpezas", short: "Minhas", to: "/minhas-limpezas", icon: ListChecks },
   ajuda: { title: "Ajuda", to: "/ajuda", icon: HelpCircle },
 } satisfies Record<string, NavItem>;
 
@@ -79,5 +79,9 @@ export const canManageUser = (me: { id: number; role: Role }, target: { role: Ro
 
 export const isFieldRole = (r: Role) => r === "limpeza" || r === "manutencao";
 export const homeFor = (r: Role) => navByRole[r][0]?.to ?? "/login";
+/** Telas fora do menu que o perfil também pode abrir. */
+export const hiddenRoutesByRole: Record<Role, string[]> = {
+  admin: [], gestor: [], fiscal: [], limpeza: ["/registrar"], manutencao: [],
+};
 export const canAccess = (r: Role, path: string) =>
-  navByRole[r].some((i) => path === i.to || path.startsWith(i.to + "/"));
+  [...navByRole[r].map((i) => i.to), ...hiddenRoutesByRole[r]].some((to) => path === to || path.startsWith(to + "/"));

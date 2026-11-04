@@ -1,7 +1,7 @@
 // Uma função por operação de docs/api-contract.md. Todas passam por api.ts.
 import { api } from "./api";
 import type {
-  Activation, AuditEvent, Bathroom, BathroomDetail, BathroomInput, ChecklistItem, Company, CompanyDetail,
+  Activation, AuditEvent, Bathroom, Cleaning, CleaningForm, CleaningInput, MeToday, Task, BathroomDetail, BathroomInput, ChecklistItem, Company, CompanyDetail,
   CompanyInput, Contract, ContractDetail, ContractInput, FiscalLink, Health, ISODate, Label, Location,
   LoginInput, Member, Membership, QrLookup, StatusPeriod, Team, User, UserDetail, UserInput,
 } from "./types";
@@ -100,3 +100,27 @@ export const inactivateUser = (id: number, input: Reason) => api.post<User>(`/us
 export const reactivateUser = (id: number) => api.post<User>(`/users/${id}/reactivate`);
 export const changeUserRole = (id: number, input: { role: string; reason: string; company_id?: number }) => api.patch<User>(`/users/${id}/role`, input);
 export const getUserHistory = (id: number) => api.get<{ events: AuditEvent[]; memberships: Membership[] }>(`/users/${id}/history`);
+
+// ---------- Protótipo: rotas propostas (docs/api-contrato-proposta.md) ----------
+export const getMyToday = () => api.get<MeToday>("/me/today");
+export const listTasks = (params?: { date?: ISODate; contract_id?: number }) => api.get<Task[]>(`/tasks${qs(params)}`);
+export const getCleaningForm = (bathroomId: number) => api.get<CleaningForm>(`/bathrooms/${bathroomId}/cleaning-form`);
+export function createCleaning(input: CleaningInput) {
+  const f = new FormData();
+  f.set("bathroom_id", String(input.bathroom_id));
+  if (input.photo_before) f.set("photo_before", input.photo_before, "antes.jpg");
+  if (input.photo_after) f.set("photo_after", input.photo_after, "depois.jpg");
+  f.set("checklist", JSON.stringify(input.checklist));
+  if (input.notes) f.set("notes", input.notes);
+  if (input.latitude !== undefined && input.longitude !== undefined) {
+    f.set("latitude", String(input.latitude));
+    f.set("longitude", String(input.longitude));
+    if (input.accuracy !== undefined) f.set("accuracy", String(input.accuracy));
+  }
+  f.set("client_finished_at", input.client_finished_at);
+  f.set("idempotency_key", input.idempotency_key);
+  if (input.queued) f.set("queued", "1");
+  return api.post<{ cleaning: Cleaning; next: Task | null }>("/cleanings", f);
+}
+export const listMyCleanings = () => api.get<Cleaning[]>("/me/cleanings");
+export const getCleaning = (id: number) => api.get<Cleaning>(`/cleanings/${id}`);
