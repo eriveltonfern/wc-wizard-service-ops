@@ -15,7 +15,6 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppBuscarRouteImport } from './routes/_app.buscar'
 import { Route as AppChamadosRouteImport } from './routes/_app.chamados'
 import { Route as AppConferenciaRouteImport } from './routes/_app.conferencia'
-import { Route as AppContratosRouteImport } from './routes/_app.contratos'
 import { Route as AppEmpresasRouteImport } from './routes/_app.empresas'
 import { Route as AppEtiquetasRouteImport } from './routes/_app.etiquetas'
 import { Route as AppHojeRouteImport } from './routes/_app.hoje'
@@ -51,11 +50,6 @@ const AppChamadosRoute = AppChamadosRouteImport.update({
 const AppConferenciaRoute = AppConferenciaRouteImport.update({
   id: '/conferencia',
   path: '/conferencia',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppContratosRoute = AppContratosRouteImport.update({
-  id: '/contratos',
-  path: '/contratos',
   getParentRoute: () => AppRoute,
 } as any)
 const AppEmpresasRoute = AppEmpresasRouteImport.update({
@@ -100,7 +94,6 @@ export interface FileRoutesByFullPath {
   '/buscar': typeof AppBuscarRoute
   '/chamados': typeof AppChamadosRoute
   '/conferencia': typeof AppConferenciaRoute
-  '/contratos': typeof AppContratosRoute
   '/empresas': typeof AppEmpresasRoute
   '/etiquetas': typeof AppEtiquetasRoute
   '/hoje': typeof AppHojeRoute
@@ -115,7 +108,6 @@ export interface FileRoutesByTo {
   '/buscar': typeof AppBuscarRoute
   '/chamados': typeof AppChamadosRoute
   '/conferencia': typeof AppConferenciaRoute
-  '/contratos': typeof AppContratosRoute
   '/empresas': typeof AppEmpresasRoute
   '/etiquetas': typeof AppEtiquetasRoute
   '/hoje': typeof AppHojeRoute
@@ -132,7 +124,6 @@ export interface FileRoutesById {
   '/_app/buscar': typeof AppBuscarRoute
   '/_app/chamados': typeof AppChamadosRoute
   '/_app/conferencia': typeof AppConferenciaRoute
-  '/_app/contratos': typeof AppContratosRoute
   '/_app/empresas': typeof AppEmpresasRoute
   '/_app/etiquetas': typeof AppEtiquetasRoute
   '/_app/hoje': typeof AppHojeRoute
@@ -149,7 +140,6 @@ export interface FileRouteTypes {
     | '/buscar'
     | '/chamados'
     | '/conferencia'
-    | '/contratos'
     | '/empresas'
     | '/etiquetas'
     | '/hoje'
@@ -164,7 +154,6 @@ export interface FileRouteTypes {
     | '/buscar'
     | '/chamados'
     | '/conferencia'
-    | '/contratos'
     | '/empresas'
     | '/etiquetas'
     | '/hoje'
@@ -180,7 +169,6 @@ export interface FileRouteTypes {
     | '/_app/buscar'
     | '/_app/chamados'
     | '/_app/conferencia'
-    | '/_app/contratos'
     | '/_app/empresas'
     | '/_app/etiquetas'
     | '/_app/hoje'
@@ -240,13 +228,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppConferenciaRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/contratos': {
-      id: '/_app/contratos'
-      path: '/contratos'
-      fullPath: '/contratos'
-      preLoaderRoute: typeof AppContratosRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/empresas': {
       id: '/_app/empresas'
       path: '/empresas'
@@ -303,7 +284,6 @@ interface AppRouteChildren {
   AppBuscarRoute: typeof AppBuscarRoute
   AppChamadosRoute: typeof AppChamadosRoute
   AppConferenciaRoute: typeof AppConferenciaRoute
-  AppContratosRoute: typeof AppContratosRoute
   AppEmpresasRoute: typeof AppEmpresasRoute
   AppEtiquetasRoute: typeof AppEtiquetasRoute
   AppHojeRoute: typeof AppHojeRoute
@@ -317,7 +297,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppBuscarRoute: AppBuscarRoute,
   AppChamadosRoute: AppChamadosRoute,
   AppConferenciaRoute: AppConferenciaRoute,
-  AppContratosRoute: AppContratosRoute,
   AppEmpresasRoute: AppEmpresasRoute,
   AppEtiquetasRoute: AppEtiquetasRoute,
   AppHojeRoute: AppHojeRoute,

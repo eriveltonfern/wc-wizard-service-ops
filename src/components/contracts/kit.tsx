@@ -17,7 +17,7 @@ export function useAction<A extends unknown[], R>(fn: (...a: A) => Promise<R>, o
   const qc = useQueryClient();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
-  async function run(...a: A): Promise<R | undefined> {
+  async function run(...a: A): Promise<boolean> {
     setPending(true);
     setError(null);
     try {
@@ -25,10 +25,10 @@ export function useAction<A extends unknown[], R>(fn: (...a: A) => Promise<R>, o
       if (opts.success) toast.success(opts.success);
       opts.onSuccess?.(r);
       void qc.invalidateQueries({ predicate: (q) => q.queryKey[0] !== "me" });
-      return r;
+      return true;
     } catch (e) {
       setError(e instanceof ApiError ? e : new ApiError("unknown", "Não foi possível concluir. Tente novamente.", 0));
-      return undefined;
+      return false;
     } finally {
       setPending(false);
     }
@@ -135,19 +135,20 @@ export function FormDialog({ open, onOpenChange, title, description, children, o
 }
 
 /** Pede um motivo antes de executar a ação. */
-export function ReasonDialog({ open, onOpenChange, title, description, submitLabel, onConfirm, destructive }: {
+export function ReasonDialog({ open, onOpenChange, title, description, submitLabel, onConfirm, destructive, error }: {
   open: boolean; onOpenChange: (o: boolean) => void; title: string; description?: string; submitLabel: string;
-  onConfirm: (reason: string) => Promise<unknown>; destructive?: boolean;
+  onConfirm: (reason: string) => Promise<boolean>; destructive?: boolean; error?: ApiError | null;
 }) {
   const [reason, setReason] = useState("");
   const [pending, setPending] = useState(false);
   return (
     <FormDialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) setReason(""); }} title={title} description={description}
       submitLabel={submitLabel} pending={pending} destructive={destructive}
-      onSubmit={async () => { setPending(true); const ok = await onConfirm(reason); setPending(false); if (ok !== undefined) { setReason(""); onOpenChange(false); } }}>
-      <Field label="Motivo" id="reason">
+      onSubmit={async () => { setPending(true); const ok = await onConfirm(reason); setPending(false); if (ok) { setReason(""); onOpenChange(false); } }}>
+      <Field label="Motivo" id="reason" error={error?.fields?.["reason"]}>
         <Textarea id="reason" autoFocus required value={reason} onChange={(e) => setReason(e.target.value)} rows={3} />
       </Field>
+      <FormError error={error ?? null} />
     </FormDialog>
   );
 }
