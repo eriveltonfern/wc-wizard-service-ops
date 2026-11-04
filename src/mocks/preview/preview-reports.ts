@@ -60,7 +60,7 @@ export function computeStats(d: MockDb, p: PreviewDb, f: StatsFilter, now = new 
     const date = c.task_id.split("-").slice(1, 4).join("-");
     if (date < from || date > to) continue;
     const x = people.get(c.user_id) ?? { done: 0, on_time: 0 };
-    x.done++; if (!c.out_of_shift) x.on_time++; x.minutes += durationOf(c);
+    x.done++; if (!c.out_of_shift) x.on_time++;
     people.set(c.user_id, x);
   }
   const contractRef = (id: number) => { const c = d.contracts.find((x) => x.id === id)!; return { id, code: c.code, name: c.name }; };
