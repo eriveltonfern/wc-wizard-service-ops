@@ -16,9 +16,11 @@ import { Route as AppAjudaRouteImport } from './routes/_app.ajuda'
 import { Route as AppBuscarRouteImport } from './routes/_app.buscar'
 import { Route as AppConferenciaRouteImport } from './routes/_app.conferencia'
 import { Route as AppEtiquetasRouteImport } from './routes/_app.etiquetas'
+import { Route as AppHistoricoRouteImport } from './routes/_app.historico'
 import { Route as AppHojeRouteImport } from './routes/_app.hoje'
 import { Route as AppLerQrRouteImport } from './routes/_app.ler-qr'
 import { Route as AppPainelRouteImport } from './routes/_app.painel'
+import { Route as AppPendenciasRouteImport } from './routes/_app.pendencias'
 import { Route as QTokenRouteImport } from './routes/q.$token'
 import { Route as AppBanheirosIndexRouteImport } from './routes/_app.banheiros.index'
 import { Route as AppBanheirosIdRouteImport } from './routes/_app.banheiros.$id'
@@ -70,6 +72,11 @@ const AppEtiquetasRoute = AppEtiquetasRouteImport.update({
   path: '/etiquetas',
   getParentRoute: () => AppRoute,
 } as any)
+const AppHistoricoRoute = AppHistoricoRouteImport.update({
+  id: '/historico',
+  path: '/historico',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppHojeRoute = AppHojeRouteImport.update({
   id: '/hoje',
   path: '/hoje',
@@ -83,6 +90,11 @@ const AppLerQrRoute = AppLerQrRouteImport.update({
 const AppPainelRoute = AppPainelRouteImport.update({
   id: '/painel',
   path: '/painel',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPendenciasRoute = AppPendenciasRouteImport.update({
+  id: '/pendencias',
+  path: '/pendencias',
   getParentRoute: () => AppRoute,
 } as any)
 const QTokenRoute = QTokenRouteImport.update({
@@ -173,9 +185,11 @@ export interface FileRoutesByFullPath {
   '/buscar': typeof AppBuscarRoute
   '/conferencia': typeof AppConferenciaRoute
   '/etiquetas': typeof AppEtiquetasRoute
+  '/historico': typeof AppHistoricoRoute
   '/hoje': typeof AppHojeRoute
   '/ler-qr': typeof AppLerQrRoute
   '/painel': typeof AppPainelRoute
+  '/pendencias': typeof AppPendenciasRoute
   '/q/$token': typeof QTokenRoute
   '/banheiros/$id': typeof AppBanheirosIdRoute
   '/chamados/$id': typeof AppChamadosIdRoute
@@ -200,9 +214,11 @@ export interface FileRoutesByTo {
   '/buscar': typeof AppBuscarRoute
   '/conferencia': typeof AppConferenciaRoute
   '/etiquetas': typeof AppEtiquetasRoute
+  '/historico': typeof AppHistoricoRoute
   '/hoje': typeof AppHojeRoute
   '/ler-qr': typeof AppLerQrRoute
   '/painel': typeof AppPainelRoute
+  '/pendencias': typeof AppPendenciasRoute
   '/q/$token': typeof QTokenRoute
   '/banheiros/$id': typeof AppBanheirosIdRoute
   '/chamados/$id': typeof AppChamadosIdRoute
@@ -229,9 +245,11 @@ export interface FileRoutesById {
   '/_app/buscar': typeof AppBuscarRoute
   '/_app/conferencia': typeof AppConferenciaRoute
   '/_app/etiquetas': typeof AppEtiquetasRoute
+  '/_app/historico': typeof AppHistoricoRoute
   '/_app/hoje': typeof AppHojeRoute
   '/_app/ler-qr': typeof AppLerQrRoute
   '/_app/painel': typeof AppPainelRoute
+  '/_app/pendencias': typeof AppPendenciasRoute
   '/q/$token': typeof QTokenRoute
   '/_app/banheiros/$id': typeof AppBanheirosIdRoute
   '/_app/chamados/$id': typeof AppChamadosIdRoute
@@ -258,9 +276,11 @@ export interface FileRouteTypes {
     | '/buscar'
     | '/conferencia'
     | '/etiquetas'
+    | '/historico'
     | '/hoje'
     | '/ler-qr'
     | '/painel'
+    | '/pendencias'
     | '/q/$token'
     | '/banheiros/$id'
     | '/chamados/$id'
@@ -285,9 +305,11 @@ export interface FileRouteTypes {
     | '/buscar'
     | '/conferencia'
     | '/etiquetas'
+    | '/historico'
     | '/hoje'
     | '/ler-qr'
     | '/painel'
+    | '/pendencias'
     | '/q/$token'
     | '/banheiros/$id'
     | '/chamados/$id'
@@ -313,9 +335,11 @@ export interface FileRouteTypes {
     | '/_app/buscar'
     | '/_app/conferencia'
     | '/_app/etiquetas'
+    | '/_app/historico'
     | '/_app/hoje'
     | '/_app/ler-qr'
     | '/_app/painel'
+    | '/_app/pendencias'
     | '/q/$token'
     | '/_app/banheiros/$id'
     | '/_app/chamados/$id'
@@ -392,6 +416,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppEtiquetasRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/historico': {
+      id: '/_app/historico'
+      path: '/historico'
+      fullPath: '/historico'
+      preLoaderRoute: typeof AppHistoricoRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/hoje': {
       id: '/_app/hoje'
       path: '/hoje'
@@ -411,6 +442,13 @@ declare module '@tanstack/react-router' {
       path: '/painel'
       fullPath: '/painel'
       preLoaderRoute: typeof AppPainelRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/pendencias': {
+      id: '/_app/pendencias'
+      path: '/pendencias'
+      fullPath: '/pendencias'
+      preLoaderRoute: typeof AppPendenciasRouteImport
       parentRoute: typeof AppRoute
     }
     '/q/$token': {
@@ -533,9 +571,11 @@ interface AppRouteChildren {
   AppBuscarRoute: typeof AppBuscarRoute
   AppConferenciaRoute: typeof AppConferenciaRoute
   AppEtiquetasRoute: typeof AppEtiquetasRoute
+  AppHistoricoRoute: typeof AppHistoricoRoute
   AppHojeRoute: typeof AppHojeRoute
   AppLerQrRoute: typeof AppLerQrRoute
   AppPainelRoute: typeof AppPainelRoute
+  AppPendenciasRoute: typeof AppPendenciasRoute
   AppBanheirosIdRoute: typeof AppBanheirosIdRoute
   AppChamadosIdRoute: typeof AppChamadosIdRoute
   AppChamadosConcluidosRoute: typeof AppChamadosConcluidosRoute
@@ -558,9 +598,11 @@ const AppRouteChildren: AppRouteChildren = {
   AppBuscarRoute: AppBuscarRoute,
   AppConferenciaRoute: AppConferenciaRoute,
   AppEtiquetasRoute: AppEtiquetasRoute,
+  AppHistoricoRoute: AppHistoricoRoute,
   AppHojeRoute: AppHojeRoute,
   AppLerQrRoute: AppLerQrRoute,
   AppPainelRoute: AppPainelRoute,
+  AppPendenciasRoute: AppPendenciasRoute,
   AppBanheirosIdRoute: AppBanheirosIdRoute,
   AppChamadosIdRoute: AppChamadosIdRoute,
   AppChamadosConcluidosRoute: AppChamadosConcluidosRoute,
