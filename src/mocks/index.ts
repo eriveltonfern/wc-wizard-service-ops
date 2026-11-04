@@ -613,10 +613,7 @@ on("DELETE", "/status-periods/{id}", ({ d, me, p }) => {
   d.status_periods = d.status_periods.filter((x) => x.id !== s.id);
   return noContent();
 });
-on("GET", "/q/{token}", ({ d, me, query: _q, ...rest }) => {
-  void rest;
-  return ok(null);
-});
+// GET /q/{token} é tratado em handleMock (o token não é numérico).
 on("GET", "/contracts/{id}/labels", ({ d, me, p }) => {
   requireStaff(me);
   const c = getContractFor(d, me, p[0]!);

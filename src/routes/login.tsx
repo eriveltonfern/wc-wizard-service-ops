@@ -2,8 +2,9 @@ import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { Loader2 } from "lucide-react";
-import { api, ApiError, getToken, setToken, USE_MOCKS } from "@/lib/api";
-import { homeFor, meQuery, type User } from "@/lib/auth";
+import { ApiError, getToken, resetMockData, setToken, USE_MOCKS } from "@/lib/api";
+import { login } from "@/lib/endpoints";
+import { homeFor, meQuery } from "@/lib/auth";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +39,8 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [resetDone, setResetDone] = useState(false);
   const qc = useQueryClient();
   const navigate = useNavigate();
 
@@ -46,7 +49,7 @@ function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      const res = await api.post<{ token: string; user: User }>("/auth/login", { email, password });
+      const res = await login({ email, password });
       setToken(res.token);
       qc.setQueryData(meQuery.queryKey, res.user);
       navigate({ to: homeFor(res.user.role), replace: true });
@@ -104,6 +107,20 @@ function LoginPage() {
                 </li>
               ))}
             </ul>
+            <Button type="button" variant="outline" className="mt-3 h-11 w-full" disabled={resetting}
+              onClick={async () => {
+                if (!window.confirm("Apagar as alterações feitas no modo de teste e voltar aos dados iniciais?")) return;
+                setResetting(true);
+                await resetMockData();
+                qc.clear();
+                setResetting(false);
+                setError(null);
+                setResetDone(true);
+              }}>
+              {resetting && <Loader2 className="h-4 w-4 animate-spin" />}
+              Restaurar dados de teste
+            </Button>
+            {resetDone && <p className="mt-2 text-xs text-muted-foreground">Dados de teste restaurados.</p>}
           </div>
         )}
       </div>

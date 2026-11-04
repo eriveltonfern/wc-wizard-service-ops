@@ -1,7 +1,8 @@
 import { createFileRoute, Outlet, redirect, Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { LogOut } from "lucide-react";
-import { api, getToken, setToken } from "@/lib/api";
+import { getToken, setToken } from "@/lib/api";
+import { logout } from "@/lib/endpoints";
 import { meQuery, navByRole, roleLabel, canAccess, homeFor, isFieldRole } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
@@ -31,7 +32,7 @@ function useLogout() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   return async () => {
-    try { await api.post("/auth/logout"); } catch { /* ignora */ }
+    try { await logout(); } catch { /* ignora */ }
     setToken(null);
     qc.clear();
     navigate({ to: "/login", replace: true });
