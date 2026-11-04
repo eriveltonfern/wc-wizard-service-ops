@@ -1,7 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import {
   LayoutDashboard, FileText, Building2, Users, Wrench, ClipboardCheck, QrCode,
-  CalendarCheck, Search, Toilet, ScanLine, ListChecks, HelpCircle, type LucideIcon,
+  CalendarCheck, Search, Toilet, ScanLine, ListChecks, HelpCircle, CheckCheck, type LucideIcon,
 } from "lucide-react";
 import { getMe } from "./endpoints";
 import type { Role } from "./types";
@@ -39,6 +39,7 @@ const I = {
   lerQr: { title: "Ler QR", to: "/ler-qr", icon: ScanLine },
   minhas: { title: "Minhas limpezas", short: "Minhas", to: "/minhas-limpezas", icon: ListChecks },
   ajuda: { title: "Ajuda", to: "/ajuda", icon: HelpCircle },
+  concluidos: { title: "Concluídos", to: "/chamados/concluidos", icon: CheckCheck },
 } satisfies Record<string, NavItem>;
 
 export type NavGroup = { label: string; items: NavItem[] };
@@ -46,21 +47,22 @@ export type NavGroup = { label: string; items: NavItem[] };
 /** Menu agrupado por perfil (DIA A DIA, GESTÃO, AJUSTES). Também define o acesso às rotas. */
 export const navGroupsByRole: Record<Role, NavGroup[]> = {
   admin: [
-    { label: "Dia a dia", items: [I.painel] },
+    { label: "Dia a dia", items: [I.painel, I.chamados, I.conferencia] },
     { label: "Gestão", items: [I.contratos, I.banheiros, I.empresas, I.pessoas, I.etiquetas] },
     { label: "Ajustes", items: [I.ajuda] },
   ],
   gestor: [
-    { label: "Dia a dia", items: [I.painel] },
+    { label: "Dia a dia", items: [I.painel, I.chamados, I.conferencia] },
     { label: "Gestão", items: [I.contratos, I.banheiros, I.pessoas, I.etiquetas] },
     { label: "Ajustes", items: [I.ajuda] },
   ],
   fiscal: [
     { label: "Gestão", items: [I.contratos, I.banheiros] },
+    { label: "Dia a dia", items: [I.chamados] },
     { label: "Ajustes", items: [I.ajuda] },
   ],
   limpeza: [{ label: "Dia a dia", items: [I.hoje, I.buscar, I.lerQr, I.minhas] }],
-  manutencao: [{ label: "Dia a dia", items: [I.chamados] }],
+  manutencao: [{ label: "Dia a dia", items: [I.chamados, I.lerQr, I.concluidos] }],
 };
 
 export const navByRole: Record<Role, NavItem[]> = Object.fromEntries(
@@ -81,7 +83,7 @@ export const isFieldRole = (r: Role) => r === "limpeza" || r === "manutencao";
 export const homeFor = (r: Role) => navByRole[r][0]?.to ?? "/login";
 /** Telas fora do menu que o perfil também pode abrir. */
 export const hiddenRoutesByRole: Record<Role, string[]> = {
-  admin: [], gestor: [], fiscal: [], limpeza: ["/registrar"], manutencao: [],
+  admin: [], gestor: [], fiscal: [], limpeza: ["/registrar", "/relatar"], manutencao: [],
 };
 export const canAccess = (r: Role, path: string) =>
   [...navByRole[r].map((i) => i.to), ...hiddenRoutesByRole[r]].some((to) => path === to || path.startsWith(to + "/"));
