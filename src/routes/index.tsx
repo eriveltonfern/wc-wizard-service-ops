@@ -1,24 +1,27 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { getToken } from "@/lib/api";
+import { meQuery, homeFor } from "@/lib/auth";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
-  component: Index,
+  ssr: false,
+  head: () => ({
+    meta: [
+      { title: "WCCheck 2.0" },
+      { name: "description", content: "Gestão operacional de limpeza e manutenção de banheiros." },
+      { property: "og:title", content: "WCCheck 2.0" },
+      { property: "og:description", content: "Gestão operacional de limpeza e manutenção de banheiros." },
+    ],
+  }),
+  beforeLoad: async ({ context }) => {
+    if (!getToken()) throw redirect({ to: "/login" });
+    try {
+      const u = await context.queryClient.ensureQueryData(meQuery);
+      throw redirect({ to: homeFor(u.role) });
+    } catch (e) {
+      if (e && typeof e === "object" && "isRedirect" in e) throw e;
+      if (e instanceof Response) throw e;
+      throw redirect({ to: "/login" });
+    }
+  },
+  component: () => null,
 });
-
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
-  return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
-  );
-}
