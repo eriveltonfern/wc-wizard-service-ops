@@ -175,3 +175,31 @@ export type TicketInput = {
 export type ReviewFlag = "repeated_photo" | "offline" | "out_of_shift";
 export type ReviewList = { rows: Cleaning[]; counts: { total: number; repeated_photo: number; offline: number; out_of_shift: number } };
 export type CancelEffect = { kind: "pending" | "not_done"; task_date: ISODate } | { kind: "extra" };
+
+// ---------- Protótipo Partes 3/4: cálculo único, pendências, histórico, relatórios, fechamento ----------
+export type StatTotals = {
+  expected: number; done: number; not_done: number; pending: number; late_pending: number; cancelled: number;
+  extras: number; on_time: number; late_done: number; compliance: number | null;
+};
+type Ref = { id: number; code: string; name: string };
+export type Stats = {
+  from: ISODate; to: ISODate; totals: StatTotals;
+  by_contract: (StatTotals & { contract: Ref })[];
+  by_bathroom: (StatTotals & { bathroom: { id: number; name: string }; location?: string | undefined; contract: Ref; company: { id: number; name: string } })[];
+  by_day: { date: ISODate; expected: number; done: number; not_done: number; extras: number }[];
+  by_person: { user: { id: number; name: string }; teams: string[]; done: number; on_time: number; avg_minutes: number | null }[];
+};
+export type StatsFilter = { from?: ISODate | undefined; to?: ISODate | undefined; month?: string | undefined; contract_id?: number | undefined; bathroom_id?: number | undefined };
+export type PendingTask = {
+  id: string; date: ISODate; shift: Shift; shift_ends_at: string; kind: "pending" | "late" | "not_done"; overdue_since: string | null;
+  bathroom: { id: number; name: string }; location?: string | undefined; contract: Ref;
+};
+export type HistorySituation = "on_time" | "late" | "extra" | "cancelled";
+export type CleaningHistory = { totals: StatTotals; rows: Cleaning[]; total: number; limit: number };
+export type AuditEntry = AuditEvent & { entity_label: string; entity_name?: string | undefined };
+export type Closing = {
+  id: number | null; contract_id: number; month: string; status: "open" | "closed"; ended: boolean; totals: StatTotals;
+  closed_at?: string | undefined; closed_by?: { id: number; name: string } | undefined;
+  reopenings: { at: string; by: { id: number; name: string }; reason: string }[];
+  can: { close: boolean; reopen: boolean };
+};

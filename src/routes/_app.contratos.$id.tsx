@@ -13,8 +13,10 @@ import { BathroomsTab } from "@/components/contracts/BathroomsTab";
 import { TeamsTab } from "@/components/contracts/TeamsTab";
 import { RulesTab } from "@/components/contracts/RulesTab";
 import type { ContractCtx, ContractTab } from "@/components/contracts/ctx";
+import { PreviewBanner } from "@/components/field/kit";
+import { ClosingPanel, PrintButton } from "@/components/reports/kit";
 
-const TABS: ContractTab[] = ["geral", "banheiros", "equipes", "regras"];
+const TABS: ContractTab[] = ["geral", "banheiros", "equipes", "regras", "relatorio"];
 
 export const Route = createFileRoute("/_app/contratos/$id")({
   validateSearch: (s: Record<string, unknown>): { tab?: ContractTab } =>
@@ -80,16 +82,22 @@ function ContractPage() {
       </header>
 
       <Tabs value={tab} onValueChange={(v) => ctx.goTab(v as ContractTab)}>
-        <TabsList className="grid h-auto w-full grid-cols-4 sm:inline-grid sm:w-auto">
+        <TabsList className="grid h-auto w-full grid-cols-3 sm:inline-grid sm:grid-cols-5 sm:w-auto">
           <TabsTrigger value="geral" className="min-h-10">Visão geral</TabsTrigger>
           <TabsTrigger value="banheiros" className="min-h-10">Banheiros</TabsTrigger>
           <TabsTrigger value="equipes" className="min-h-10">Equipes</TabsTrigger>
           <TabsTrigger value="regras" className="min-h-10">Regras</TabsTrigger>
+          <TabsTrigger value="relatorio" className="min-h-10">Relatório</TabsTrigger>
         </TabsList>
         <TabsContent value="geral" className="mt-4"><OverviewTab contract={c} ctx={ctx} /></TabsContent>
         <TabsContent value="banheiros" className="mt-4"><BathroomsTab contract={c} ctx={ctx} /></TabsContent>
         <TabsContent value="equipes" className="mt-4"><TeamsTab contract={c} ctx={ctx} /></TabsContent>
         <TabsContent value="regras" className="mt-4"><RulesTab contract={c} ctx={ctx} /></TabsContent>
+        <TabsContent value="relatorio" className="mt-4 space-y-4">
+          <PreviewBanner />
+          <div className="flex justify-end"><PrintButton /></div>
+          <ClosingPanel contractId={c.id} />
+        </TabsContent>
       </Tabs>
     </div>
   );

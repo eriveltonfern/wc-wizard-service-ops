@@ -100,3 +100,40 @@ Cleaning (acréscimos) { ticket_suggestions?: [{item_id,label,category,descripti
 
 ### Fila sem internet (manutenção)
 "Iniciar" e "Concluir" feitos sem internet ficam na mesma fila do aparelho (`wccheck.outbox`) e são reenviados com a mesma `idempotency_key`.
+
+---
+
+## Partes 3 e 4 — Painel, Pendências, Histórico, Relatórios e Fechamento
+
+### Regra única de cálculo (servidor)
+Para um filtro (período + contrato [+ banheiro]):
+- **Previsto** (`expected`) = tarefas do período que não foram canceladas (cancelada = removida pelo gestor ou banheiro interditado).
+- **Realizado** (`done`) = tarefas feitas (com limpeza válida). `on_time` + `late_done` (feita fora do turno) = `done`.
+- **Não feitas** (`not_done`) = tarefas de dia já encerrado sem limpeza. `pending` = tarefas de hoje ainda abertas; `late_pending` = dessas, as de turno já passado.
+- **Extras** (`extras`) = limpezas válidas sem tarefa. Nunca entram no %.
+- **Cumprimento** (`compliance`) = `done ÷ expected` (0..1, `null` sem previsto).
+Painel, Histórico, Relatórios e Fechamento usam este mesmo cálculo; para o mesmo filtro os números são idênticos. Escopo por perfil igual às outras rotas (fiscal só os contratos dele; limpeza/manutenção 403).
+
+Schema `StatTotals`: `{ expected, done, not_done, pending, late_pending, cancelled, extras, on_time, late_done, compliance }`.
+
+### GET /stats?month=AAAA-MM | from=&to= &contract_id=&bathroom_id=
+200 → `{ from, to, totals: StatTotals, by_contract: [StatTotals + contract{id,code,name}], by_bathroom: [StatTotals + bathroom{id,name}, location, contract, company{id,name}] (pior cumprimento primeiro), by_day: [{date, expected, done, not_done, extras}], by_person: [{user{id,name}, teams[], done, on_time, avg_minutes}] }`. Datas futuras são cortadas em hoje. 422 em datas inválidas.
+
+### GET /pending-tasks?contract_id=&shift=
+Pendentes/atrasadas de hoje e não feitas dos últimos 7 dias. 200 → `[{ id, date, shift, shift_ends_at, kind: "pending"|"late"|"not_done", overdue_since (ISO do fim do turno ou null), bathroom, location, contract }]`.
+
+### GET /history/cleanings?month=|from=&to= &contract_id=&bathroom_id=&user_id=&situation=on_time|late|extra|cancelled
+200 → `{ totals: StatTotals (período+contrato+banheiro; pessoa e situação só filtram a lista), rows: Cleaning[] (até 300, mais recentes primeiro), total, limit }`.
+
+### GET /audit?entity=contract|bathroom|team|user|company
+Linha do tempo de alterações nos cadastros (até 200, mais recentes primeiro). 200 → `[AuditEvent + entity_label, entity_name]`. Diretoria vê tudo; gestor/fiscal veem o que é dos seus contratos.
+
+### GET /contracts/{id}/closings
+Mês atual e anterior. 200 → `[{ id|null, contract_id, month, status: "open"|"closed", ended, totals (congelados se fechado), closed_at?, closed_by?{id,name}, reopenings: [{at, by, reason}], can: {close, reopen} }]`.
+
+### POST /contracts/{id}/closings  `{ month: "AAAA-MM" }`
+Gestor do contrato ou diretoria. Congela os totais. 201 → Closing. 409 "Só dá para fechar um mês que já terminou." / "Este mês já está fechado."; 403 outros perfis.
+Com o mês fechado, `POST /cleanings` e `POST /cleanings/{id}/cancel` daquele mês respondem 409 conflict.
+
+### POST /closings/{id}/reopen  `{ reason }`
+Só diretoria. 422 sem motivo (`fields.reason`). 200 → Closing (status "open", motivo em `reopenings`).

@@ -1,7 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import {
   LayoutDashboard, FileText, Building2, Users, Wrench, ClipboardCheck, QrCode,
-  CalendarCheck, Search, Toilet, ScanLine, ListChecks, HelpCircle, CheckCheck, type LucideIcon,
+  CalendarCheck, Search, ListTodo, History, BarChart3, Toilet, ScanLine, ListChecks, HelpCircle, CheckCheck, type LucideIcon,
 } from "lucide-react";
 import { getMe } from "./endpoints";
 import type { Role } from "./types";
@@ -39,6 +39,9 @@ const I = {
   lerQr: { title: "Ler QR", to: "/ler-qr", icon: ScanLine },
   minhas: { title: "Minhas limpezas", short: "Minhas", to: "/minhas-limpezas", icon: ListChecks },
   ajuda: { title: "Ajuda", to: "/ajuda", icon: HelpCircle },
+  pendencias: { title: "Pendências", to: "/pendencias", icon: ListTodo },
+  historico: { title: "Histórico", to: "/historico", icon: History },
+  relatorios: { title: "Relatórios", to: "/relatorios", icon: BarChart3 },
   concluidos: { title: "Concluídos", to: "/chamados/concluidos", icon: CheckCheck },
 } satisfies Record<string, NavItem>;
 
@@ -47,18 +50,18 @@ export type NavGroup = { label: string; items: NavItem[] };
 /** Menu agrupado por perfil (DIA A DIA, GESTÃO, AJUSTES). Também define o acesso às rotas. */
 export const navGroupsByRole: Record<Role, NavGroup[]> = {
   admin: [
-    { label: "Dia a dia", items: [I.painel, I.chamados, I.conferencia] },
-    { label: "Gestão", items: [I.contratos, I.banheiros, I.empresas, I.pessoas, I.etiquetas] },
+    { label: "Dia a dia", items: [I.painel, I.pendencias, I.historico, I.chamados, I.conferencia] },
+    { label: "Gestão", items: [I.contratos, I.banheiros, I.empresas, I.pessoas, I.etiquetas, I.relatorios] },
     { label: "Ajustes", items: [I.ajuda] },
   ],
   gestor: [
-    { label: "Dia a dia", items: [I.painel, I.chamados, I.conferencia] },
-    { label: "Gestão", items: [I.contratos, I.banheiros, I.pessoas, I.etiquetas] },
+    { label: "Dia a dia", items: [I.painel, I.pendencias, I.historico, I.chamados, I.conferencia] },
+    { label: "Gestão", items: [I.contratos, I.banheiros, I.pessoas, I.etiquetas, I.relatorios] },
     { label: "Ajustes", items: [I.ajuda] },
   ],
   fiscal: [
-    { label: "Dia a dia", items: [I.chamados] },
-    { label: "Gestão", items: [I.contratos, I.banheiros] },
+    { label: "Dia a dia", items: [I.painel, I.historico, I.chamados] },
+    { label: "Gestão", items: [I.contratos, I.banheiros, I.relatorios] },
     { label: "Ajustes", items: [I.ajuda] },
   ],
   limpeza: [{ label: "Dia a dia", items: [I.hoje, I.buscar, I.lerQr, I.minhas] }],
@@ -80,7 +83,7 @@ export const canManageUser = (me: { id: number; role: Role }, target: { role: Ro
   me.role === "admin" || (me.role === "gestor" && (target.role === "limpeza" || target.role === "manutencao"));
 
 export const isFieldRole = (r: Role) => r === "limpeza" || r === "manutencao";
-const homeOverride: Partial<Record<Role, string>> = { fiscal: "/contratos" };
+const homeOverride: Partial<Record<Role, string>> = {};
 export const homeFor = (r: Role) => homeOverride[r] ?? navByRole[r][0]?.to ?? "/login";
 /** Telas fora do menu que o perfil também pode abrir. */
 export const hiddenRoutesByRole: Record<Role, string[]> = {
