@@ -21,6 +21,7 @@ import { Route as AppHojeRouteImport } from './routes/_app.hoje'
 import { Route as AppLerQrRouteImport } from './routes/_app.ler-qr'
 import { Route as AppPainelRouteImport } from './routes/_app.painel'
 import { Route as AppPendenciasRouteImport } from './routes/_app.pendencias'
+import { Route as AppRelatoriosRouteImport } from './routes/_app.relatorios'
 import { Route as QTokenRouteImport } from './routes/q.$token'
 import { Route as AppBanheirosIndexRouteImport } from './routes/_app.banheiros.index'
 import { Route as AppBanheirosIdRouteImport } from './routes/_app.banheiros.$id'
@@ -95,6 +96,11 @@ const AppPainelRoute = AppPainelRouteImport.update({
 const AppPendenciasRoute = AppPendenciasRouteImport.update({
   id: '/pendencias',
   path: '/pendencias',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRelatoriosRoute = AppRelatoriosRouteImport.update({
+  id: '/relatorios',
+  path: '/relatorios',
   getParentRoute: () => AppRoute,
 } as any)
 const QTokenRoute = QTokenRouteImport.update({
@@ -190,6 +196,7 @@ export interface FileRoutesByFullPath {
   '/ler-qr': typeof AppLerQrRoute
   '/painel': typeof AppPainelRoute
   '/pendencias': typeof AppPendenciasRoute
+  '/relatorios': typeof AppRelatoriosRoute
   '/q/$token': typeof QTokenRoute
   '/banheiros/$id': typeof AppBanheirosIdRoute
   '/chamados/$id': typeof AppChamadosIdRoute
@@ -219,6 +226,7 @@ export interface FileRoutesByTo {
   '/ler-qr': typeof AppLerQrRoute
   '/painel': typeof AppPainelRoute
   '/pendencias': typeof AppPendenciasRoute
+  '/relatorios': typeof AppRelatoriosRoute
   '/q/$token': typeof QTokenRoute
   '/banheiros/$id': typeof AppBanheirosIdRoute
   '/chamados/$id': typeof AppChamadosIdRoute
@@ -250,6 +258,7 @@ export interface FileRoutesById {
   '/_app/ler-qr': typeof AppLerQrRoute
   '/_app/painel': typeof AppPainelRoute
   '/_app/pendencias': typeof AppPendenciasRoute
+  '/_app/relatorios': typeof AppRelatoriosRoute
   '/q/$token': typeof QTokenRoute
   '/_app/banheiros/$id': typeof AppBanheirosIdRoute
   '/_app/chamados/$id': typeof AppChamadosIdRoute
@@ -281,6 +290,7 @@ export interface FileRouteTypes {
     | '/ler-qr'
     | '/painel'
     | '/pendencias'
+    | '/relatorios'
     | '/q/$token'
     | '/banheiros/$id'
     | '/chamados/$id'
@@ -310,6 +320,7 @@ export interface FileRouteTypes {
     | '/ler-qr'
     | '/painel'
     | '/pendencias'
+    | '/relatorios'
     | '/q/$token'
     | '/banheiros/$id'
     | '/chamados/$id'
@@ -340,6 +351,7 @@ export interface FileRouteTypes {
     | '/_app/ler-qr'
     | '/_app/painel'
     | '/_app/pendencias'
+    | '/_app/relatorios'
     | '/q/$token'
     | '/_app/banheiros/$id'
     | '/_app/chamados/$id'
@@ -449,6 +461,13 @@ declare module '@tanstack/react-router' {
       path: '/pendencias'
       fullPath: '/pendencias'
       preLoaderRoute: typeof AppPendenciasRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/relatorios': {
+      id: '/_app/relatorios'
+      path: '/relatorios'
+      fullPath: '/relatorios'
+      preLoaderRoute: typeof AppRelatoriosRouteImport
       parentRoute: typeof AppRoute
     }
     '/q/$token': {
@@ -576,6 +595,7 @@ interface AppRouteChildren {
   AppLerQrRoute: typeof AppLerQrRoute
   AppPainelRoute: typeof AppPainelRoute
   AppPendenciasRoute: typeof AppPendenciasRoute
+  AppRelatoriosRoute: typeof AppRelatoriosRoute
   AppBanheirosIdRoute: typeof AppBanheirosIdRoute
   AppChamadosIdRoute: typeof AppChamadosIdRoute
   AppChamadosConcluidosRoute: typeof AppChamadosConcluidosRoute
@@ -603,6 +623,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppLerQrRoute: AppLerQrRoute,
   AppPainelRoute: AppPainelRoute,
   AppPendenciasRoute: AppPendenciasRoute,
+  AppRelatoriosRoute: AppRelatoriosRoute,
   AppBanheirosIdRoute: AppBanheirosIdRoute,
   AppChamadosIdRoute: AppChamadosIdRoute,
   AppChamadosConcluidosRoute: AppChamadosConcluidosRoute,
