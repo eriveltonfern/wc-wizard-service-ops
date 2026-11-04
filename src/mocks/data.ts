@@ -55,6 +55,7 @@ export function seed(): MockDb {
     u(9, "Igor Martins", "igor.martins@wccheck.test", "limpeza", "(31) 99999-0006"),
     u(10, "Júlia Pereira", "julia.pereira@wccheck.test", "limpeza", "(31) 99999-0007"),
     u(11, "Kleber Alves", "kleber.alves@wccheck.test", "manutencao", "(31) 99999-0008"),
+    u(12, "Paula Gestora", "paula.gestora@wccheck.test", "gestor", null),
   ];
   const companies: DbCompany[] = [
     { id: 1, name: "Mineração Serra Azul", document: null, contact_name: null, contact_phone: null, notes: "Mineradora – Itabira/MG", status: "active" },
@@ -66,7 +67,7 @@ export function seed(): MockDb {
   const contracts = [
     c(1, 1, "CT-2026-001", "Serra Azul – Mina Norte", "2026-01-10"),
     c(2, 1, "CT-2026-002", "Serra Azul – Planta de Beneficiamento", "2026-03-01"),
-    c(3, 2, "CT-2026-003", "Parque Central – Áreas comuns", "2026-05-15"),
+    { ...c(3, 2, "CT-2026-003", "Parque Central – Áreas comuns", "2026-05-15"), manager_id: 12 },
   ];
   let ck = 0;
   const checklist: DbChecklist[] = contracts.flatMap((ct) =>

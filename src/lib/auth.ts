@@ -47,6 +47,10 @@ export const navByRole: Record<Role, NavItem[]> = {
   manutencao: [I.chamados],
 };
 
+// Quais botões de contrato aparecem para cada perfil (a API continua sendo quem decide).
+export const canManageContracts = (r: Role) => r === "admin" || r === "gestor";
+export const isAdminRole = (r: Role) => r === "admin";
+
 export const isFieldRole = (r: Role) => r === "limpeza" || r === "manutencao";
 export const homeFor = (r: Role) => navByRole[r][0]?.to ?? "/login";
 export const canAccess = (r: Role, path: string) =>
