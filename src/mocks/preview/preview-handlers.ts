@@ -1,20 +1,21 @@
 // Rotas propostas (docs/api-contrato-proposta.md) simuladas com dados de exemplo. Só chamado por src/mocks/index.ts.
 import type { DbUser, MockDb } from "../data";
+import { handleTicketsAndReview, suggestCategory } from "./preview-tickets";
 import {
   type Answer, type PvCleaning, type RawTask, SHIFT_END_LABEL, SHIFT_ORDER, clearPreview, cleanersOf, dayClose, interdicted,
-  iso, loadPreview, opDate, photoSvg, savePreview, shiftAt, shiftWindow, tasksFor,
+  iso, loadPreview, loadedPreview, opDate, photoSvg, savePreview, shiftAt, shiftWindow, tasksFor,
 } from "./preview-data";
 
-type Body = Record<string, unknown>;
-type Res = { status: number; body: unknown };
-const ok = (data: unknown, status = 200, meta: unknown = null): Res => ({ status, body: { data, meta } });
-const err = (status: number, code: string, message: string, fields: Record<string, string> = {}): Res =>
+export type Body = Record<string, unknown>;
+export type Res = { status: number; body: unknown };
+export const ok = (data: unknown, status = 200, meta: unknown = null): Res => ({ status, body: { data, meta } });
+export const err = (status: number, code: string, message: string, fields: Record<string, string> = {}): Res =>
   ({ status, body: { error: { code, message, fields } } });
 
 export function resetPreviewDb() { clearPreview(); }
 
 const isCur = (r: { starts_on: string; ends_on: string | null }, on: string) => r.starts_on <= on && (r.ends_on === null || r.ends_on >= on);
-function scope(d: MockDb, me: DbUser): Set<number> {
+export function scope(d: MockDb, me: DbUser): Set<number> {
   const day = iso(new Date());
   if (me.role === "admin") return new Set(d.contracts.map((c) => c.id));
   if (me.role === "gestor") return new Set(d.contracts.filter((c) => c.manager_id === me.id).map((c) => c.id));
@@ -23,7 +24,7 @@ function scope(d: MockDb, me: DbUser): Set<number> {
   return new Set(d.teams.filter((t) => teams.includes(t.id) && t.status === "active").map((t) => t.contract_id));
 }
 /** Contratos em que a pessoa é membro atual de uma equipe de LIMPEZA. */
-function cleaningContracts(d: MockDb, me: DbUser) {
+export function cleaningContracts(d: MockDb, me: DbUser) {
   const day = opDate(new Date());
   return new Set(d.contracts.filter((c) => cleanersOf(d, c.id, day).includes(me.id)).map((c) => c.id));
 }
@@ -52,7 +53,7 @@ function nextTask(tasks: TaskView[], now: Date) {
 }
 
 // ---------- limpezas ----------
-function cleaningView(d: MockDb, c: PvCleaning) {
+export function cleaningView(d: MockDb, c: PvCleaning) {
   const b = d.bathrooms.find((x) => x.id === c.bathroom_id);
   const ct = d.contracts.find((x) => x.id === c.contract_id);
   const u = d.users.find((x) => x.id === c.user_id);
@@ -75,15 +76,19 @@ function cleaningView(d: MockDb, c: PvCleaning) {
     photo_after_url: c.photo_after ? photoSvg("Foto depois") : undefined,
     checklist: c.checklist, notes: c.notes ?? undefined,
     position: c.latitude !== null && c.longitude !== null ? { latitude: c.latitude, longitude: c.longitude, accuracy: c.accuracy ?? undefined } : undefined,
+    ticket_suggestions: c.checklist.filter((i) => i.open_ticket).map((i) => ({ item_id: i.item_id, label: i.label, category: suggestCategory(i.label), description: `Checklist: ${i.label} não OK` })),
+    review: c.reviewed_by ? { by: { id: c.reviewed_by, name: d.users.find((x) => x.id === c.reviewed_by)?.name ?? "—" }, at: c.reviewed_at ?? "", outcome: c.review_outcome ?? "ok" } : undefined,
+    repeated_with: c.repeated_photo ? pvRepeatedWith(c) : undefined,
+    cancel_effect: c.status === "valid" ? cancelEffect(c) : undefined,
   };
 }
 
-function fingerprint(v: unknown): string | null {
+export function fingerprint(v: unknown): string | null {
   if (typeof Blob !== "undefined" && v instanceof Blob) return v.size > 0 ? `${v.type}:${v.size}` : null;
   if (typeof v === "string" && v.length > 0) return `s:${v.length}:${v.slice(-40)}`;
   return null;
 }
-const num = (v: unknown) => (v === undefined || v === null || v === "" ? null : Number.isFinite(Number(v)) ? Number(v) : null);
+export const num = (v: unknown) => (v === undefined || v === null || v === "" ? null : Number.isFinite(Number(v)) ? Number(v) : null);
 
 function bathroomForCleaning(d: MockDb, me: DbUser, id: number): Res | { b: MockDb["bathrooms"][number]; c: MockDb["contracts"][number] } {
   const b = d.bathrooms.find((x) => x.id === id);
@@ -195,7 +200,7 @@ export function handlePreview(method: string, path: string, query: URLSearchPara
       notes: typeof body["notes"] === "string" && body["notes"].trim() ? body["notes"].trim() : null,
       latitude: lat !== null && lng !== null ? lat : null, longitude: lat !== null && lng !== null ? lng : null,
       accuracy: lat !== null && lng !== null ? num(body["accuracy"]) : null,
-      status: "valid", cancel_reason: null, idempotency_key: key,
+      status: "valid", cancel_reason: null, idempotency_key: key, reviewed_by: null, reviewed_at: null, review_outcome: null,
     };
     p.cleanings.push(row);
     savePreview();
@@ -217,5 +222,21 @@ export function handlePreview(method: string, path: string, query: URLSearchPara
     if (!c || !visible) return err(404, "not_found", "Cadastro não encontrado.");
     return ok(cleaningView(d, c));
   }
-  return null;
+  return handleTicketsAndReview(method, path, query, body, me, d);
+}
+
+/** Outra limpeza com a mesma foto (para "Foto repetida"). */
+function pvRepeatedWith(c: PvCleaning) {
+  const p = loadedPreview();
+  if (!p) return undefined;
+  const prints = [c.photo_before, c.photo_after].filter(Boolean);
+  return p.cleanings.find((x) => x.id !== c.id && [x.photo_before, x.photo_after].some((f) => f && prints.includes(f)))?.id;
+}
+/** O que acontece com a tarefa se a limpeza for cancelada. */
+function cancelEffect(c: PvCleaning) {
+  if (!c.task_id) return { kind: "extra" as const };
+  const date = c.task_id.split("-").slice(1, 4).join("-");
+  const shift = SHIFT_ORDER[(() => { const p = loadedPreview(); return p ? 0 : 0; })()];
+  void shift;
+  return { kind: new Date() >= dayClose(date) ? ("not_done" as const) : ("pending" as const), task_date: date };
 }
