@@ -258,8 +258,7 @@ function genTickets(d: MockDb, now: Date, r: () => number): PvTicket[] {
   return out;
 }
 
-let loadedRef: PreviewDb | null = null;
-export const loadedPreview = () => loadedRef ?? pdb;
+export const loadedPreview = () => pdb;
 
 export function loadPreview(d: MockDb): PreviewDb {
   const today = opDate(new Date());
@@ -272,7 +271,6 @@ export function loadPreview(d: MockDb): PreviewDb {
     pdb = generate(d);
   }
   savePreview();
-  loadedRef = pdb;
   return pdb;
 }
 export function savePreview() {
