@@ -45,7 +45,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
         "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: body !== undefined ? JSON.stringify(body) : null,
     });
     status = res.status;
     json = (await res.json().catch(() => ({}))) as Envelope;
