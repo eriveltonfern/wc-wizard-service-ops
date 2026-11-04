@@ -11,9 +11,9 @@ import { OverviewTab } from "@/components/contracts/OverviewTab";
 import { BathroomsTab } from "@/components/contracts/BathroomsTab";
 import { TeamsTab } from "@/components/contracts/TeamsTab";
 import { RulesTab } from "@/components/contracts/RulesTab";
+import type { ContractCtx, ContractTab } from "@/components/contracts/ctx";
 
-const TABS = ["geral", "banheiros", "equipes", "regras"] as const;
-export type ContractTab = (typeof TABS)[number];
+const TABS: ContractTab[] = ["geral", "banheiros", "equipes", "regras"];
 
 export const Route = createFileRoute("/_app/contratos/$id")({
   validateSearch: (s: Record<string, unknown>): { tab?: ContractTab } =>
@@ -31,7 +31,6 @@ export const Route = createFileRoute("/_app/contratos/$id")({
   component: ContractPage,
 });
 
-export type ContractCtx = { canManage: boolean; isAdmin: boolean; goTab: (t: ContractTab) => void };
 
 function ContractPage() {
   const { id } = Route.useParams();

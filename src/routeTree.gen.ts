@@ -23,6 +23,7 @@ import { Route as AppMinhasLimpezasRouteImport } from './routes/_app.minhas-limp
 import { Route as AppPainelRouteImport } from './routes/_app.painel'
 import { Route as AppPessoasRouteImport } from './routes/_app.pessoas'
 import { Route as AppContratosIndexRouteImport } from './routes/_app.contratos.index'
+import { Route as AppContratosIdRouteImport } from './routes/_app.contratos.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -93,6 +94,11 @@ const AppContratosIndexRoute = AppContratosIndexRouteImport.update({
   path: '/contratos/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppContratosIdRoute = AppContratosIdRouteImport.update({
+  id: '/contratos/$id',
+  path: '/contratos/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -107,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/minhas-limpezas': typeof AppMinhasLimpezasRoute
   '/painel': typeof AppPainelRoute
   '/pessoas': typeof AppPessoasRoute
+  '/contratos/$id': typeof AppContratosIdRoute
   '/contratos/': typeof AppContratosIndexRoute
 }
 export interface FileRoutesByTo {
@@ -122,6 +129,7 @@ export interface FileRoutesByTo {
   '/minhas-limpezas': typeof AppMinhasLimpezasRoute
   '/painel': typeof AppPainelRoute
   '/pessoas': typeof AppPessoasRoute
+  '/contratos/$id': typeof AppContratosIdRoute
   '/contratos': typeof AppContratosIndexRoute
 }
 export interface FileRoutesById {
@@ -139,6 +147,7 @@ export interface FileRoutesById {
   '/_app/minhas-limpezas': typeof AppMinhasLimpezasRoute
   '/_app/painel': typeof AppPainelRoute
   '/_app/pessoas': typeof AppPessoasRoute
+  '/_app/contratos/$id': typeof AppContratosIdRoute
   '/_app/contratos/': typeof AppContratosIndexRoute
 }
 export interface FileRouteTypes {
@@ -156,6 +165,7 @@ export interface FileRouteTypes {
     | '/minhas-limpezas'
     | '/painel'
     | '/pessoas'
+    | '/contratos/$id'
     | '/contratos/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -171,6 +181,7 @@ export interface FileRouteTypes {
     | '/minhas-limpezas'
     | '/painel'
     | '/pessoas'
+    | '/contratos/$id'
     | '/contratos'
   id:
     | '__root__'
@@ -187,6 +198,7 @@ export interface FileRouteTypes {
     | '/_app/minhas-limpezas'
     | '/_app/painel'
     | '/_app/pessoas'
+    | '/_app/contratos/$id'
     | '/_app/contratos/'
   fileRoutesById: FileRoutesById
 }
@@ -296,6 +308,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppContratosIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/contratos/$id': {
+      id: '/_app/contratos/$id'
+      path: '/contratos/$id'
+      fullPath: '/contratos/$id'
+      preLoaderRoute: typeof AppContratosIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -310,6 +329,7 @@ interface AppRouteChildren {
   AppMinhasLimpezasRoute: typeof AppMinhasLimpezasRoute
   AppPainelRoute: typeof AppPainelRoute
   AppPessoasRoute: typeof AppPessoasRoute
+  AppContratosIdRoute: typeof AppContratosIdRoute
   AppContratosIndexRoute: typeof AppContratosIndexRoute
 }
 
@@ -324,6 +344,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppMinhasLimpezasRoute: AppMinhasLimpezasRoute,
   AppPainelRoute: AppPainelRoute,
   AppPessoasRoute: AppPessoasRoute,
+  AppContratosIdRoute: AppContratosIdRoute,
   AppContratosIndexRoute: AppContratosIndexRoute,
 }
 
