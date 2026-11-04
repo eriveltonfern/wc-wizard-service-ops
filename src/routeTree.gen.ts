@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as AppAjudaRouteImport } from './routes/_app.ajuda'
 import { Route as AppBuscarRouteImport } from './routes/_app.buscar'
 import { Route as AppChamadosRouteImport } from './routes/_app.chamados'
 import { Route as AppConferenciaRouteImport } from './routes/_app.conferencia'
@@ -42,6 +43,11 @@ const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppAjudaRoute = AppAjudaRouteImport.update({
+  id: '/ajuda',
+  path: '/ajuda',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppBuscarRoute = AppBuscarRouteImport.update({
   id: '/buscar',
@@ -127,6 +133,7 @@ const AppPessoasIdRoute = AppPessoasIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/ajuda': typeof AppAjudaRoute
   '/buscar': typeof AppBuscarRoute
   '/chamados': typeof AppChamadosRoute
   '/conferencia': typeof AppConferenciaRoute
@@ -147,6 +154,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/ajuda': typeof AppAjudaRoute
   '/buscar': typeof AppBuscarRoute
   '/chamados': typeof AppChamadosRoute
   '/conferencia': typeof AppConferenciaRoute
@@ -169,6 +177,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
+  '/_app/ajuda': typeof AppAjudaRoute
   '/_app/buscar': typeof AppBuscarRoute
   '/_app/chamados': typeof AppChamadosRoute
   '/_app/conferencia': typeof AppConferenciaRoute
@@ -191,6 +200,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/ajuda'
     | '/buscar'
     | '/chamados'
     | '/conferencia'
@@ -211,6 +221,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/ajuda'
     | '/buscar'
     | '/chamados'
     | '/conferencia'
@@ -232,6 +243,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/login'
+    | '/_app/ajuda'
     | '/_app/buscar'
     | '/_app/chamados'
     | '/_app/conferencia'
@@ -278,6 +290,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/ajuda': {
+      id: '/_app/ajuda'
+      path: '/ajuda'
+      fullPath: '/ajuda'
+      preLoaderRoute: typeof AppAjudaRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/buscar': {
       id: '/_app/buscar'
@@ -395,6 +414,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
+  AppAjudaRoute: typeof AppAjudaRoute
   AppBuscarRoute: typeof AppBuscarRoute
   AppChamadosRoute: typeof AppChamadosRoute
   AppConferenciaRoute: typeof AppConferenciaRoute
@@ -414,6 +434,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAjudaRoute: AppAjudaRoute,
   AppBuscarRoute: AppBuscarRoute,
   AppChamadosRoute: AppChamadosRoute,
   AppConferenciaRoute: AppConferenciaRoute,
