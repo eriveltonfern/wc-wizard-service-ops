@@ -186,7 +186,7 @@ export function handleReports(method: string, path: string, q: URLSearchParams, 
         : sit === "extra" ? c.status === "valid" && !c.task_id
         : sit === "cancelled" ? c.status === "cancelled" : true)))
       .sort((a, b) => b.registered_at.localeCompare(a.registered_at));
-    return ok({ totals: stats.totals, rows: rows.slice(0, 300).map((c) => cleaningView(d, c)) }, 200, { total: rows.length, limit: 300 });
+    return ok({ totals: stats.totals, rows: rows.slice(0, 300).map((c) => cleaningView(d, c)), total: rows.length, limit: 300 });
   }
 
   if (method === "GET" && path === "/audit") {

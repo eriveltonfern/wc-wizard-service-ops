@@ -162,11 +162,8 @@ export const cancelCleaning = (id: number, reason: string) => api.post<{ cleanin
 // Painel, Pendências, Histórico, Relatórios e Fechamento (Partes 3/4) — todos usam o mesmo cálculo no servidor
 export const getStats = (f?: StatsFilter) => api.get<Stats>(`/stats${qs(f)}`);
 export const listPendingTasks = (p?: { contract_id?: number | undefined; shift?: string | undefined }) => api.get<PendingTask[]>(`/pending-tasks${qs(p)}`);
-export async function listCleaningHistory(p: StatsFilter & { user_id?: number | undefined; situation?: HistorySituation | undefined }): Promise<CleaningHistory> {
-  const r = await api.getPage<CleaningHistory>(`/history/cleanings${qs(p)}`);
-  const data = r.rows as unknown as CleaningHistory | CleaningHistory[];
-  return Array.isArray(data) ? data[0]! : { ...data, total: r.total, limit: r.limit };
-}
+export const listCleaningHistory = (p: StatsFilter & { user_id?: number | undefined; situation?: HistorySituation | undefined }) =>
+  api.get<CleaningHistory>(`/history/cleanings${qs(p)}`);
 export const listAudit = (p?: { entity?: string | undefined }) => api.get<AuditEntry[]>(`/audit${qs(p)}`);
 export const listClosings = (contractId: number) => api.get<Closing[]>(`/contracts/${contractId}/closings`);
 export const closeMonth = (contractId: number, month: string) => api.post<Closing>(`/contracts/${contractId}/closings`, { month });
