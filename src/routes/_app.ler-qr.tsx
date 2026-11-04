@@ -1,5 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { meQuery } from "@/lib/auth";
 import { Loader2, ScanLine } from "lucide-react";
 import { ApiError } from "@/lib/api";
 import { listBathrooms, lookupQr } from "@/lib/endpoints";
@@ -27,6 +29,8 @@ const tokenFrom = (v: string) => v.trim().match(/(?:\/q\/)?([A-Za-z0-9]{6,})\/?$
 
 function ReadQrPage() {
   const navigate = useNavigate();
+  const { data: me } = useSuspenseQuery(meQuery);
+  const maint = me.role === "manutencao";
   const [text, setText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -37,7 +41,8 @@ function ReadQrPage() {
     setBusy(true);
     try {
       const r = await lookupQr(token);
-      navigate({ to: "/registrar/$id", params: { id: String(r.bathroom_id) } });
+      if (maint) navigate({ to: "/chamados", search: { f: "todos", banheiro: r.bathroom_id } });
+      else navigate({ to: "/registrar/$id", params: { id: String(r.bathroom_id) } });
     } catch (e) {
       setError(e instanceof ApiError && e.status === 404 ? "Etiqueta não encontrada ou de um contrato que não é seu." : e instanceof ApiError ? e.message : "Não foi possível ler a etiqueta.");
     } finally {
@@ -58,7 +63,7 @@ function ReadQrPage() {
   return (
     <div className="mx-auto max-w-md space-y-4">
       <PageHelp>Aponte a câmera para a etiqueta colada no banheiro. Se a câmera não funcionar, cole o endereço da etiqueta logo abaixo.</PageHelp>
-      <PageHeader title="Ler QR" subtitle="Aponte para a etiqueta do banheiro." />
+      <PageHeader title="Ler QR" subtitle={maint ? "Aponte para a etiqueta para ver os chamados do banheiro." : "Aponte para a etiqueta do banheiro."} />
       <div className="relative mx-auto aspect-square w-full max-w-xs overflow-hidden rounded-2xl bg-sidebar" aria-label="Câmera">
         <div className="absolute inset-10 rounded-xl border-4 border-primary-foreground/80" />
         <ScanLine className="absolute left-1/2 top-1/2 h-16 w-16 -translate-x-1/2 -translate-y-1/2 text-primary-foreground/60" />

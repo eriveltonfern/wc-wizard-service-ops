@@ -1,7 +1,7 @@
 // Fila de limpezas guardadas no aparelho enquanto não há internet. Envia pelo endpoints.ts quando a conexão volta.
 import { useSyncExternalStore } from "react";
 import { ApiError } from "./api";
-import { createCleaning } from "./endpoints";
+import { createCleaning, finishTicket, startTicket } from "./endpoints";
 import type { CleaningInput } from "./types";
 
 const KEY = "wccheck.outbox";
@@ -9,14 +9,22 @@ const SIM_KEY = "wccheck.simOffline";
 const EVT = "wccheck-outbox";
 
 export type QueuedCleaning = Omit<CleaningInput, "photo_before" | "photo_after" | "queued"> & {
+  kind?: "cleaning" | undefined;
   bathroom_name: string; photo_before?: string | undefined; photo_after?: string | undefined; // fotos em data URL
 };
+/** Ações de chamado da manutenção guardadas sem internet. */
+export type QueuedTicket = {
+  kind: "ticket_start" | "ticket_done"; ticket_id: number; label: string; idempotency_key: string; client_at: string;
+  note?: string | undefined; photo?: string | undefined;
+};
+export type QueuedItem = QueuedCleaning | QueuedTicket;
+export const isQueuedCleaning = (x: QueuedItem): x is QueuedCleaning => x.kind === undefined || x.kind === "cleaning";
 
-function read(): QueuedCleaning[] {
+function read(): QueuedItem[] {
   if (typeof window === "undefined") return [];
-  try { return JSON.parse(localStorage.getItem(KEY) ?? "[]") as QueuedCleaning[]; } catch { return []; }
+  try { return JSON.parse(localStorage.getItem(KEY) ?? "[]") as QueuedItem[]; } catch { return []; }
 }
-function write(items: QueuedCleaning[]) {
+function write(items: QueuedItem[]) {
   localStorage.setItem(KEY, JSON.stringify(items));
   window.dispatchEvent(new Event(EVT));
 }
@@ -28,6 +36,7 @@ export function setSimulatedOffline(on: boolean) {
   if (!on) void flushOutbox();
 }
 export function enqueueCleaning(item: QueuedCleaning) { write([...read(), item]); }
+export function enqueueTicketAction(item: QueuedTicket) { write([...read(), item]); }
 
 export function dataUrlToBlob(url: string): Blob {
   const [head, data] = url.split(",");
@@ -56,10 +65,12 @@ export async function flushOutbox() {
     for (const item of read()) {
       if (isOffline()) break;
       try {
-        await createCleaning(toInput(item, true));
+        if (isQueuedCleaning(item)) await createCleaning(toInput(item, true));
+        else if (item.kind === "ticket_start") await startTicket(item.ticket_id, item.idempotency_key);
+        else await finishTicket(item.ticket_id, { note: item.note ?? "", photo: item.photo ? dataUrlToBlob(item.photo) : null, idempotency_key: item.idempotency_key });
         result.sent++;
       } catch (e) {
-        if (e instanceof ApiError && e.status >= 400 && e.status < 500 && e.status !== 401) result.failed.push({ name: item.bathroom_name, message: e.message });
+        if (e instanceof ApiError && e.status >= 400 && e.status < 500 && e.status !== 401) result.failed.push({ name: isQueuedCleaning(item) ? item.bathroom_name : item.label, message: e.message });
         else break;
       }
       write(read().filter((x) => x.idempotency_key !== item.idempotency_key));
@@ -85,6 +96,6 @@ function subscribe(cb: () => void) {
 const snap = () => `${localStorage.getItem(KEY) ?? "[]"}|${isOffline() ? 1 : 0}`;
 export function useOutbox() {
   const s = useSyncExternalStore(subscribe, snap, () => "[]|0");
-  const items = (() => { try { return JSON.parse(s.split("|")[0] ?? "[]") as QueuedCleaning[]; } catch { return []; } })();
+  const items = (() => { try { return JSON.parse(s.split("|")[0] ?? "[]") as QueuedItem[]; } catch { return []; } })();
   return { items, count: items.length, offline: s.endsWith("|1"), simulated: typeof window !== "undefined" && isSimulatedOffline() };
 }

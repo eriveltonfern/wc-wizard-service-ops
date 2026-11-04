@@ -1,8 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { CloudOff, ListChecks } from "lucide-react";
-import { listMyCleanings } from "@/lib/endpoints";
-import { useOutbox } from "@/lib/outbox";
+import { CloudOff, ListChecks, Wrench } from "lucide-react";
+import { listMyCleanings, listTickets } from "@/lib/endpoints";
+import { cn } from "@/lib/utils";
+import { TicketStatusPill, CATEGORY, fmtAgo } from "@/components/tickets/kit";
+import { isQueuedCleaning, useOutbox } from "@/lib/outbox";
 import { fmtDate, todayIso } from "@/lib/format";
 import type { Cleaning } from "@/lib/types";
 import { PageHeader, PageHelp } from "@/components/layout/PageHeader";
@@ -11,6 +13,7 @@ import { CleaningPills, PreviewBanner, fmtTime, isoDay } from "@/components/fiel
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_app/minhas-limpezas/")({
+  validateSearch: (s: Record<string, unknown>): { aba?: "chamados" } => (s["aba"] === "chamados" ? { aba: "chamados" } : {}),
   head: () => ({
     meta: [
       { title: "Minhas limpezas · WCCheck 2.0" },
@@ -32,18 +35,56 @@ function dayTitle(day: string) {
 }
 
 function MyCleaningsPage() {
+  const { aba } = Route.useSearch();
+  const navigate = useNavigate({ from: "/minhas-limpezas/" });
+  return (
+    <div className="mx-auto max-w-2xl space-y-4">
+      <PreviewBanner />
+      <PageHelp>Aqui ficam as limpezas que você registrou nos últimos dias e os chamados que você abriu. Toque numa limpeza para ver os detalhes.</PageHelp>
+      <PageHeader title="Minhas limpezas" subtitle="Suas últimas limpezas e seus chamados." />
+      <div role="tablist" aria-label="Ver" className="grid grid-cols-2 gap-1 rounded-lg bg-secondary p-1">
+        {([[undefined, "Limpezas"], ["chamados", "Meus chamados"]] as const).map(([k, label]) => (
+          <button key={label} role="tab" aria-selected={aba === k} onClick={() => void navigate({ search: k ? { aba: k } : {} })}
+            className={cn("min-h-11 rounded-md text-sm font-semibold", aba === k ? "bg-card text-ink shadow-sm" : "text-muted-foreground")}>{label}</button>
+        ))}
+      </div>
+      {aba === "chamados" ? <MyTickets /> : <MyCleanings />}
+    </div>
+  );
+}
+
+function MyTickets() {
+  const q = useQuery({ queryKey: ["tickets", "mine-opened"], queryFn: () => listTickets({}) });
+  if (q.isPending) return <SkeletonBlock rows={4} />;
+  if (q.isError) return <ErrorState message="Não foi possível carregar seus chamados." onRetry={() => void q.refetch()} />;
+  if (q.data.length === 0) return <EmptyState icon={Wrench} title="Você ainda não abriu chamados." description="Use “Relatar problema” no banheiro quando algo estiver quebrado." />;
+  return (
+    <DataCard title="Chamados que você abriu" actions={<span className="text-sm tabular-nums text-muted-foreground">{q.data.length}</span>}>
+      <ul className="divide-y">
+        {q.data.map((t) => (
+          <li key={t.id} className="flex min-h-14 flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 text-sm">
+            <span className="min-w-0 flex-1">
+              <span className="font-bold text-ink">{t.bathroom.name}</span><span className="text-muted-foreground"> · {CATEGORY[t.category].label}</span>
+              <span className="block text-xs text-muted-foreground">{t.description} · aberto {fmtAgo(t.opened_at)}</span>
+            </span>
+            <TicketStatusPill status={t.status} />
+          </li>
+        ))}
+      </ul>
+    </DataCard>
+  );
+}
+
+function MyCleanings() {
   const q = useQuery({ queryKey: ["field", "mine"], queryFn: listMyCleanings });
-  const { items: queued } = useOutbox();
+  const queued = useOutbox().items.filter(isQueuedCleaning);
   const groups = new Map<string, Cleaning[]>();
   for (const c of q.data ?? []) {
     const k = isoDay(c.registered_at);
     groups.set(k, [...(groups.get(k) ?? []), c]);
   }
   return (
-    <div className="mx-auto max-w-2xl space-y-4">
-      <PreviewBanner />
-      <PageHelp>Aqui ficam as limpezas que você registrou nos últimos dias. Toque numa limpeza para ver os detalhes.</PageHelp>
-      <PageHeader title="Minhas limpezas" subtitle="Suas últimas limpezas, por dia." />
+    <div className="space-y-4">
       {queued.length > 0 && (
         <DataCard title={<span className="flex items-center gap-2"><CloudOff className="h-4 w-4 text-pending" />Aguardando internet</span>}>
           <ul className="divide-y">

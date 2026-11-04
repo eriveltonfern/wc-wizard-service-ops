@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Camera, Check, CloudOff, Loader2, MapPin, MapPinOff, RotateCcw } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Camera, Wrench, Check, CloudOff, Loader2, MapPin, MapPinOff, RotateCcw } from "lucide-react";
 import { ApiError } from "@/lib/api";
+import { shrinkPhoto } from "@/lib/photo";
 import { createCleaning, getCleaningForm } from "@/lib/endpoints";
 import { enqueueCleaning, isOffline, toInput, type QueuedCleaning } from "@/lib/outbox";
 import type { ChecklistAnswer, Cleaning, CleaningForm, PhotoRule, Task } from "@/lib/types";
@@ -37,24 +38,6 @@ type StepKey = "before" | "checklist" | "after" | "review";
 type Geo = { state: "pending" } | { state: "ok"; lat: number; lng: number; acc: number } | { state: "missing" };
 type Answers = Record<number, { answer: ChecklistAnswer; ticket?: boolean | undefined }>;
 type Done = { kind: "sent"; cleaning: Cleaning; next: Task | null } | { kind: "queued" };
-
-/** Reduz a foto no aparelho (máx. 1024 px) para enviar mais rápido e caber na fila sem internet. */
-function shrink(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      const k = Math.min(1, 1024 / Math.max(img.width, img.height));
-      const c = document.createElement("canvas");
-      c.width = Math.max(1, Math.round(img.width * k)); c.height = Math.max(1, Math.round(img.height * k));
-      c.getContext("2d")!.drawImage(img, 0, 0, c.width, c.height);
-      URL.revokeObjectURL(url);
-      resolve(c.toDataURL("image/jpeg", 0.8));
-    };
-    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("img")); };
-    img.src = url;
-  });
-}
 
 function Register({ bathroomId }: { bathroomId: number }) {
   const q = useQuery({ queryKey: ["field", "form", bathroomId], queryFn: () => getCleaningForm(bathroomId), retry: false });
@@ -158,6 +141,11 @@ function Wizard({ form }: { form: CleaningForm }) {
         </div>
         {c.link.kind === "extra" && <p className="text-xs text-muted-foreground">Não havia limpeza pendente para este banheiro agora. Ela fica registrada à parte e não entra no percentual.</p>}
         <div className="grid w-full gap-2">
+          {(c.ticket_suggestions?.length ?? 0) > 0 && (
+            <Button variant="destructive" className="h-12 w-full" onClick={() => navigate({ to: "/relatar/$id", params: { id: String(c.bathroom.id) }, search: { limpeza: c.id, n: 0 } })}>
+              <Wrench className="h-4 w-4" />Abrir chamado ({c.ticket_suggestions!.length})
+            </Button>
+          )}
           {done.next && (
             <Button className="h-12 w-full" onClick={() => navigate({ to: "/registrar/$id", params: { id: String(done.next!.bathroom.id) } })}>
               Próxima limpeza: {done.next.bathroom.name}
@@ -183,6 +171,9 @@ function Wizard({ form }: { form: CleaningForm }) {
           <p className="truncate text-sm font-bold text-ink">{form.bathroom.name}</p>
           <p className="truncate text-xs text-muted-foreground">{form.bathroom.location ?? "Sem local"} · {form.contract.code}</p>
         </div>
+        <Button asChild variant="outline" className="h-12 px-3">
+          <Link to="/relatar/$id" params={{ id: String(form.bathroom.id) }}><AlertTriangle className="h-4 w-4" />Relatar problema</Link>
+        </Button>
       </div>
       <div>
         <div className="flex justify-between text-xs font-semibold text-muted-foreground"><span>Passo {step + 1} de {steps.length}</span><span>{titles[current]}</span></div>
@@ -263,7 +254,7 @@ function PhotoStep({ label, rule, value, onChange, onNext, onSkip }: {
   async function pick(f?: File) {
     if (!f) return;
     setBusy(true);
-    try { onChange(await shrink(f)); } catch { onChange(undefined); } finally { setBusy(false); if (input.current) input.current.value = ""; }
+    try { onChange(await shrinkPhoto(f)); } catch { onChange(undefined); } finally { setBusy(false); if (input.current) input.current.value = ""; }
   }
   return (
     <div className="space-y-3">
