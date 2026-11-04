@@ -25,7 +25,7 @@ export const Route = createFileRoute("/login")({
   component: LoginPage,
 });
 
-const TEST_USERS = [
+const TEST_USERS: [string, string][] = [
   ["admin@wccheck.test", "Diretoria"],
   ["gestor@wccheck.test", "Gestor"],
   ["fiscal@wccheck.test", "Fiscal"],
