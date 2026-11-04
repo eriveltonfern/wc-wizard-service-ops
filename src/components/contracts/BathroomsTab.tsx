@@ -55,7 +55,7 @@ export function BathroomsTab({ contract: c, ctx }: { contract: ContractDetail; c
 
       {query.isLoading ? <LoadingBlock label="Carregando banheiros…" />
         : query.isError ? <ErrorBlock message="Não foi possível carregar os banheiros." onRetry={() => void query.refetch()} />
-        : !query.data?.length ? (
+        : !query.data?.rows.length ? (
           <EmptyBlock title={dq || status ? "Nenhum banheiro encontrado." : "Nenhum banheiro cadastrado."}>
             {ctx.canManage && !dq && !status && <Button className="min-h-11" onClick={() => setDlg({ kind: "form" })}>Cadastrar banheiro</Button>}
           </EmptyBlock>
