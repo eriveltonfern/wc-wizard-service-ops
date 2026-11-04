@@ -39,6 +39,203 @@ type Geo = { state: "pending" } | { state: "ok"; lat: number; lng: number; acc: 
 type Answers = Record<number, { answer: ChecklistAnswer; ticket?: boolean | undefined }>;
 type Done = { kind: "sent"; cleaning: Cleaning; next: Task | null } | { kind: "queued" };
 
+function Register({ bathroomId }: { bathroomId: number }) {
+  const q = useQuery({ queryKey: ["field", "form", bathroomId], queryFn: () => getCleaningForm(bathroomId), retry: false });
+  return (
+    <div className="mx-auto max-w-xl space-y-4">
+      <PreviewBanner />
+      {q.isPending ? <SkeletonBlock rows={5} /> : q.isError ? (
+        <ErrorState message={q.error instanceof ApiError ? q.error.message : "Não foi possível abrir este banheiro."} onRetry={() => void q.refetch()} />
+      ) : <Wizard form={q.data} />}
+    </div>
+  );
+}
+
+function Wizard({ form }: { form: CleaningForm }) {
+  const navigate = useNavigate();
+  const router = useRouter();
+  const qc = useQueryClient();
+  const steps: StepKey[] = [
+    ...(form.rules.photo_before !== "off" ? (["before"] as const) : []),
+    "checklist",
+    ...(form.rules.photo_after !== "off" ? (["after"] as const) : []),
+    "review",
+  ];
+  const [step, setStep] = useState(0);
+  const [photos, setPhotos] = useState<{ before?: string | undefined; after?: string | undefined }>({});
+  const [answers, setAnswers] = useState<Answers>({});
+  const [notes, setNotes] = useState("");
+  const [geo, setGeo] = useState<Geo>(form.rules.capture_location ? { state: "pending" } : { state: "missing" });
+  const [error, setError] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
+  const [done, setDone] = useState<Done | null>(null);
+  const key = useRef(crypto.randomUUID());
+  const top = useRef<HTMLDivElement>(null);
+  const current = steps[step]!;
+
+  useEffect(() => {
+    if (!form.rules.capture_location) return;
+    if (!("geolocation" in navigator)) { setGeo({ state: "missing" }); return; }
+    navigator.geolocation.getCurrentPosition(
+      (p) => setGeo({ state: "ok", lat: p.coords.latitude, lng: p.coords.longitude, acc: Math.round(p.coords.accuracy) }),
+      () => setGeo({ state: "missing" }),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+    );
+  }, [form.rules.capture_location]);
+
+  const go = (i: number) => { setError(null); setStep(i); top.current?.scrollIntoView({ block: "start" }); };
+  const back = () => (step === 0 ? router.history.back() : go(step - 1));
+
+  async function submit() {
+    setError(null);
+    const item: QueuedCleaning = {
+      bathroom_id: form.bathroom.id, bathroom_name: form.bathroom.name,
+      photo_before: photos.before, photo_after: photos.after,
+      checklist: form.checklist.map((i) => ({ item_id: i.id, answer: answers[i.id]?.answer ?? ("" as ChecklistAnswer), open_ticket: answers[i.id]?.ticket })),
+      notes: notes.trim() || undefined,
+      ...(geo.state === "ok" ? { latitude: geo.lat, longitude: geo.lng, accuracy: geo.acc } : {}),
+      client_finished_at: new Date().toISOString(), idempotency_key: key.current,
+    };
+    if (isOffline()) { enqueueCleaning(item); setDone({ kind: "queued" }); return; }
+    setSending(true);
+    try {
+      const r = await createCleaning(toInput(item, false));
+      void qc.invalidateQueries({ queryKey: ["field"] });
+      setDone({ kind: "sent", cleaning: r.cleaning, next: r.next });
+    } catch (e) {
+      if (e instanceof ApiError) {
+        const f = e.fields ?? {};
+        const target = f["photo_before"] ? "before" : f["checklist"] ? "checklist" : f["photo_after"] ? "after" : null;
+        const msg = (target && (f[target === "before" ? "photo_before" : target === "after" ? "photo_after" : "checklist"])) || e.message;
+        if (target && steps.includes(target)) setStep(steps.indexOf(target));
+        setError(msg);
+      } else {
+        enqueueCleaning(item); // sem conexão com o servidor: guarda no celular
+        setDone({ kind: "queued" });
+      }
+    } finally {
+      setSending(false);
+    }
+  }
+
+  if (done?.kind === "queued") {
+    return (
+      <div className="flex flex-col items-center gap-4 rounded-[10px] border bg-card px-6 py-10 text-center">
+        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-pending-soft text-pending"><CloudOff className="h-8 w-8" /></span>
+        <h1 className="text-xl font-extrabold text-ink">Guardada no celular.</h1>
+        <p className="text-sm text-muted-foreground">Vamos enviar assim que a internet voltar.</p>
+        <Button asChild className="h-12 w-full"><Link to="/hoje">Voltar para Hoje</Link></Button>
+      </div>
+    );
+  }
+  if (done?.kind === "sent") {
+    const c = done.cleaning;
+    return (
+      <div className="flex flex-col items-center gap-4 rounded-[10px] border bg-card px-6 py-10 text-center">
+        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-success-soft text-success"><Check className="h-9 w-9" strokeWidth={3} /></span>
+        <h1 className="text-xl font-extrabold text-ink">Limpeza registrada às {fmtTime(c.registered_at)}</h1>
+        <p className="text-sm text-muted-foreground">{c.bathroom.name}{c.location ? ` · ${c.location}` : ""}</p>
+        <div className="flex flex-wrap justify-center gap-2">
+          {c.link.kind === "extra" ? <Pill tone="info">Limpeza extra</Pill> : <Pill tone="success">{shiftTaskLabel[c.link.shift ?? ""] ?? "Tarefa do dia"}</Pill>}
+          {c.marks.includes("no_location") && <Pill tone="neutral">Registrada sem localização</Pill>}
+        </div>
+        {c.link.kind === "extra" && <p className="text-xs text-muted-foreground">Não havia limpeza pendente para este banheiro agora. Ela fica registrada à parte e não entra no percentual.</p>}
+        <div className="grid w-full gap-2">
+          {(c.ticket_suggestions?.length ?? 0) > 0 && (
+            <Button variant="destructive" className="h-12 w-full" onClick={() => navigate({ to: "/relatar/$id", params: { id: String(c.bathroom.id) }, search: { limpeza: c.id, n: 0 } })}>
+              <Wrench className="h-4 w-4" />Abrir chamado ({c.ticket_suggestions!.length})
+            </Button>
+          )}
+          {done.next && (
+            <Button className="h-12 w-full" onClick={() => navigate({ to: "/registrar/$id", params: { id: String(done.next!.bathroom.id) } })}>
+              Próxima limpeza: {done.next.bathroom.name}
+            </Button>
+          )}
+          <Button asChild variant={done.next ? "outline" : "default"} className="h-12 w-full"><Link to="/hoje">Voltar para Hoje</Link></Button>
+        </div>
+      </div>
+    );
+  }
+
+  const pct = Math.round(((step + 1) / steps.length) * 100);
+  const titles: Record<StepKey, string> = { before: "Foto antes", checklist: "Checklist", after: "Foto depois", review: "Revisar e enviar" };
+  return (
+    <div ref={top} className="scroll-mt-20 space-y-4">
+      <PageHelp>
+        Siga os passos: foto antes, checklist, foto depois e envio. Se a internet cair, a limpeza fica guardada no celular e é enviada depois.
+        <br /><SimOfflineToggle />
+      </PageHelp>
+      <div className="flex items-center gap-2">
+        <Button variant="outline" className="h-12 px-3" onClick={back}><ArrowLeft className="h-5 w-5" />Voltar</Button>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-bold text-ink">{form.bathroom.name}</p>
+          <p className="truncate text-xs text-muted-foreground">{form.bathroom.location ?? "Sem local"} · {form.contract.code}</p>
+        </div>
+        <Button asChild variant="outline" className="h-12 px-3">
+          <Link to="/relatar/$id" params={{ id: String(form.bathroom.id) }}><AlertTriangle className="h-4 w-4" />Relatar problema</Link>
+        </Button>
+      </div>
+      <div>
+        <div className="flex justify-between text-xs font-semibold text-muted-foreground"><span>Passo {step + 1} de {steps.length}</span><span>{titles[current]}</span></div>
+        <div className="mt-1 h-2 overflow-hidden rounded-full bg-secondary" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={`Passo ${step + 1} de ${steps.length}`}>
+          <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+        </div>
+      </div>
+      <p className="text-sm text-muted-foreground">
+        {form.pending_task ? <>Vale para a <strong className="text-ink">{shiftTaskLabel[form.pending_task.shift]?.replace("Tarefa", "tarefa")}</strong> (até {form.pending_task.shift_ends_at}).</> : "Não há limpeza pendente agora: será registrada como limpeza extra."}
+      </p>
+
+      <h1 className="text-2xl font-extrabold tracking-tight text-ink">{titles[current]}</h1>
+      {error && <p role="alert" className="rounded-lg bg-danger-soft px-3 py-2 text-sm font-semibold text-danger">{error}</p>}
+
+      {(current === "before" || current === "after") && (
+        <PhotoStep key={current} label={current === "before" ? "antes" : "depois"} rule={current === "before" ? form.rules.photo_before : form.rules.photo_after}
+          value={photos[current]} onChange={(v) => setPhotos((p) => ({ ...p, [current]: v }))}
+          onNext={() => go(step + 1)} onSkip={() => { setPhotos((p) => ({ ...p, [current]: undefined })); go(step + 1); }} />
+      )}
+      {current === "checklist" && (
+        <ChecklistStep items={form.checklist} answers={answers} onChange={setAnswers} onNext={() => go(step + 1)} setError={setError} />
+      )}
+      {current === "review" && (
+        <div className="space-y-4">
+          {(form.rules.photo_before !== "off" || form.rules.photo_after !== "off") && (
+            <div className="grid grid-cols-2 gap-3">
+              {form.rules.photo_before !== "off" && <Thumb label="Antes" src={photos.before} />}
+              {form.rules.photo_after !== "off" && <Thumb label="Depois" src={photos.after} />}
+            </div>
+          )}
+          <section className="rounded-[10px] border bg-card">
+            <h2 className="border-b px-4 py-3 text-base font-bold text-ink">Checklist</h2>
+            <ul className="divide-y">
+              {form.checklist.map((i) => {
+                const a = answers[i.id];
+                return (
+                  <li key={i.id} className="flex items-center justify-between gap-2 px-4 py-2.5 text-sm">
+                    <span className="text-ink">{i.label}</span>
+                    {a?.answer === "ok" ? <Pill tone="success">OK</Pill> : a?.answer === "not_ok" ? <Pill tone="danger">Não OK{a.ticket ? " · chamado" : ""}</Pill> : a?.answer === "na" ? <Pill tone="neutral">Não se aplica</Pill> : <Pill tone="warning">Sem resposta</Pill>}
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+          <div className="space-y-2">
+            <Label htmlFor="obs">Observação (opcional)</Label>
+            <Textarea id="obs" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Ex.: faltou papel toalha" />
+          </div>
+          {form.rules.capture_location && (
+            <p className={cn("flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold", geo.state === "ok" ? "bg-success-soft text-success" : "bg-neutral-soft text-neutral")} role="status">
+              {geo.state === "ok" ? <><MapPin className="h-4 w-4" />Localização registrada</> : geo.state === "pending" ? <><Loader2 className="h-4 w-4 animate-spin" />Buscando localização…</> : <><MapPinOff className="h-4 w-4" />Sem localização — a limpeza vale do mesmo jeito</>}
+            </p>
+          )}
+          <Button className="h-14 w-full text-base" onClick={() => void submit()} disabled={sending}>
+            {sending && <Loader2 className="h-5 w-5 animate-spin" />}Enviar limpeza
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Thumb({ label, src }: { label: string; src?: string | undefined }) {
   return (
     <figure className="overflow-hidden rounded-[10px] border bg-card">
