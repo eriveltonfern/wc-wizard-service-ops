@@ -96,7 +96,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 }
 
 /** Lista paginada: devolve as linhas e o meta da API (total, limit...). */
-export type Page<T> = { rows: T[]; total: number; limit?: number };
+export type Page<T> = { rows: T[]; total: number; limit?: number | undefined };
 
 async function requestPage<T>(method: string, path: string, body?: unknown): Promise<Page<T>> {
   const { data, meta } = await requestRaw(method, path, body);
