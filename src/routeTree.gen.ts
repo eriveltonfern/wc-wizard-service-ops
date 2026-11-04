@@ -22,6 +22,7 @@ import { Route as AppPainelRouteImport } from './routes/_app.painel'
 import { Route as QTokenRouteImport } from './routes/q.$token'
 import { Route as AppBanheirosIndexRouteImport } from './routes/_app.banheiros.index'
 import { Route as AppBanheirosIdRouteImport } from './routes/_app.banheiros.$id'
+import { Route as AppChamadosIndexRouteImport } from './routes/_app.chamados.index'
 import { Route as AppContratosIndexRouteImport } from './routes/_app.contratos.index'
 import { Route as AppContratosIdRouteImport } from './routes/_app.contratos.$id'
 import { Route as AppEmpresasIndexRouteImport } from './routes/_app.empresas.index'
@@ -96,6 +97,11 @@ const AppBanheirosIdRoute = AppBanheirosIdRouteImport.update({
   path: '/banheiros/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppChamadosIndexRoute = AppChamadosIndexRouteImport.update({
+  id: '/chamados/',
+  path: '/chamados/',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppContratosIndexRoute = AppContratosIndexRouteImport.update({
   id: '/contratos/',
   path: '/contratos/',
@@ -160,6 +166,7 @@ export interface FileRoutesByFullPath {
   '/pessoas/$id': typeof AppPessoasIdRoute
   '/registrar/$id': typeof AppRegistrarIdRoute
   '/banheiros/': typeof AppBanheirosIndexRoute
+  '/chamados/': typeof AppChamadosIndexRoute
   '/contratos/': typeof AppContratosIndexRoute
   '/empresas/': typeof AppEmpresasIndexRoute
   '/minhas-limpezas/': typeof AppMinhasLimpezasIndexRoute
@@ -183,6 +190,7 @@ export interface FileRoutesByTo {
   '/pessoas/$id': typeof AppPessoasIdRoute
   '/registrar/$id': typeof AppRegistrarIdRoute
   '/banheiros': typeof AppBanheirosIndexRoute
+  '/chamados': typeof AppChamadosIndexRoute
   '/contratos': typeof AppContratosIndexRoute
   '/empresas': typeof AppEmpresasIndexRoute
   '/minhas-limpezas': typeof AppMinhasLimpezasIndexRoute
@@ -208,6 +216,7 @@ export interface FileRoutesById {
   '/_app/pessoas/$id': typeof AppPessoasIdRoute
   '/_app/registrar/$id': typeof AppRegistrarIdRoute
   '/_app/banheiros/': typeof AppBanheirosIndexRoute
+  '/_app/chamados/': typeof AppChamadosIndexRoute
   '/_app/contratos/': typeof AppContratosIndexRoute
   '/_app/empresas/': typeof AppEmpresasIndexRoute
   '/_app/minhas-limpezas/': typeof AppMinhasLimpezasIndexRoute
@@ -233,6 +242,7 @@ export interface FileRouteTypes {
     | '/pessoas/$id'
     | '/registrar/$id'
     | '/banheiros/'
+    | '/chamados/'
     | '/contratos/'
     | '/empresas/'
     | '/minhas-limpezas/'
@@ -256,6 +266,7 @@ export interface FileRouteTypes {
     | '/pessoas/$id'
     | '/registrar/$id'
     | '/banheiros'
+    | '/chamados'
     | '/contratos'
     | '/empresas'
     | '/minhas-limpezas'
@@ -280,6 +291,7 @@ export interface FileRouteTypes {
     | '/_app/pessoas/$id'
     | '/_app/registrar/$id'
     | '/_app/banheiros/'
+    | '/_app/chamados/'
     | '/_app/contratos/'
     | '/_app/empresas/'
     | '/_app/minhas-limpezas/'
@@ -386,6 +398,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppBanheirosIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/chamados/': {
+      id: '/_app/chamados/'
+      path: '/chamados'
+      fullPath: '/chamados/'
+      preLoaderRoute: typeof AppChamadosIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/contratos/': {
       id: '/_app/contratos/'
       path: '/contratos'
@@ -467,6 +486,7 @@ interface AppRouteChildren {
   AppPessoasIdRoute: typeof AppPessoasIdRoute
   AppRegistrarIdRoute: typeof AppRegistrarIdRoute
   AppBanheirosIndexRoute: typeof AppBanheirosIndexRoute
+  AppChamadosIndexRoute: typeof AppChamadosIndexRoute
   AppContratosIndexRoute: typeof AppContratosIndexRoute
   AppEmpresasIndexRoute: typeof AppEmpresasIndexRoute
   AppMinhasLimpezasIndexRoute: typeof AppMinhasLimpezasIndexRoute
@@ -488,6 +508,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppPessoasIdRoute: AppPessoasIdRoute,
   AppRegistrarIdRoute: AppRegistrarIdRoute,
   AppBanheirosIndexRoute: AppBanheirosIndexRoute,
+  AppChamadosIndexRoute: AppChamadosIndexRoute,
   AppContratosIndexRoute: AppContratosIndexRoute,
   AppEmpresasIndexRoute: AppEmpresasIndexRoute,
   AppMinhasLimpezasIndexRoute: AppMinhasLimpezasIndexRoute,
