@@ -20,3 +20,4 @@
 - Field actions captured offline (cleanings, ticket start/finish) are queued on the device by `src/lib/outbox.ts` (localStorage "wccheck.outbox") and resent with the same `idempotency_key`. Why: field work must never be lost or duplicated when the connection drops.
 - Which ticket/review buttons appear comes from the server's `can` flags on each ticket, not from role checks in screens. Why: the UI holds no business rules.
 - Every compliance number (Painel, Pendências, Histórico, Relatórios, Fechamento) comes from the single server calculation (`computeStats` in the preview mock, `/stats` contract); screens never compute percentages themselves. Why: all screens must show identical numbers for the same filter.
+- The QR page `/q/$token` is public (outside `_app`, no login) and only calls `/public/*` routes; the mock answers `/public/*` before checking the token. Why: QR codes are for anonymous customer ratings, not field work.
