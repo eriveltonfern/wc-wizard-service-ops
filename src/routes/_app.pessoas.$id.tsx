@@ -1,3 +1,4 @@
+import { PersonBathroomsCard } from "@/components/bathrooms/manage";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { PageHelp } from "@/components/layout/PageHeader";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
@@ -100,6 +101,8 @@ function PersonPage() {
         )}
         <div className="mt-3"><FormError error={react.error} /></div>
       </header>
+
+      {u.role === "limpeza" && <PersonBathroomsCard userId={u.id} canManage={manage} />}
 
       <section className="rounded-[10px] border bg-card p-5">
         <h2 className="text-lg font-semibold text-foreground">Equipes</h2>
