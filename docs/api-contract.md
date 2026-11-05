@@ -50,7 +50,7 @@ POST /contracts/{id}/teams — Criar equipe de limpeza ou manutenção. body {na
 PATCH /teams/{id} — Editar ou inativar equipe. body {name: string, shift: string, status: string} → 200 Team
 DELETE /teams/{id} — Excluir equipe sem histórico. → 204
 GET /teams/{id}/members — Membros (include_past=1 traz os antigos). → 200 Member[]
-POST /teams/{id}/members — Adicionar pessoa à equipe. body {user_id: integer, starts_on: date} → 201 Member
+POST /teams/{id}/members — Adicionar pessoa à equipe. body {user_id: integer, starts_on: date} → 201 Member; ou várias de uma vez: body {user_ids: integer[], starts_on: date} → 201 Member[] (se alguém da lista não puder entrar, recusa tudo: 422 com fields.user_ids)
 POST /team-members/{id}/end — Tirar da equipe (motivo obrigatório). body {ends_on: date, reason: string} → 200 Member
 POST /team-members/{id}/move — Trocar de equipe (atômico, motivo obrigatório). body {to_team_id: integer, date: date, reason: string} → 200 Member
 GET /users — Listar pessoas (role, status, q) no escopo. → 200 User[]

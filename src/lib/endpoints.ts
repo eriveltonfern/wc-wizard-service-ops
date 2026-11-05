@@ -89,6 +89,8 @@ export const createTeam = (contractId: number, input: { name: string; kind: stri
 export const updateTeam = (id: number, input: Partial<{ name: string; shift: string; status: string }>) => api.patch<Team>(`/teams/${id}`, input);
 export const deleteTeam = (id: number) => api.delete<void>(`/teams/${id}`);
 export const listTeamMembers = (teamId: number, includePast = false) => api.get<Member[]>(`/teams/${teamId}/members${includePast ? "?include_past=1" : ""}`);
+/** Vários de uma vez: se alguém não puder entrar, a API recusa tudo (422 em fields.user_ids). */
+export const addTeamMembers = (teamId: number, input: { user_ids: number[]; starts_on: ISODate }) => api.post<Member[]>(`/teams/${teamId}/members`, input);
 export const addTeamMember = (teamId: number, input: { user_id: number; starts_on: ISODate }) => api.post<Member>(`/teams/${teamId}/members`, input);
 export const endTeamMember = (memberId: number, input: { ends_on: ISODate; reason: string }) => api.post<Member>(`/team-members/${memberId}/end`, input);
 export const moveTeamMember = (memberId: number, input: { to_team_id: number; date: ISODate; reason: string }) => api.post<Member>(`/team-members/${memberId}/move`, input);
