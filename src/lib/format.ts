@@ -39,3 +39,6 @@ export const missingLabel: Record<string, string> = {
   company: "Empresa ativa",
 };
 export const cleaningAccessLabel: Record<string, string> = { all: "Qualquer funcionário da limpeza", assigned: "Pessoas escolhidas por banheiro" };
+export const RATING_PROBLEM_LABEL: Record<import("./types").RatingProblem, string> = {
+  sujo: "Sujo", sem_papel: "Sem papel", sem_sabonete: "Sem sabonete", mau_cheiro: "Mau cheiro", lixo_cheio: "Lixo cheio", vazamento: "Vazamento", outro: "Outro",
+};
