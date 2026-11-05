@@ -8,6 +8,7 @@ import {
   seed, SEED_VERSION, defaultRules, DEFAULT_CHECKLIST, type DbBathroom, type DbContract, type DbMember, type DbTeam, type DbUser, type MockDb,
 } from "./data";
 import { handlePreview, resetPreviewDb } from "./preview/preview-handlers";
+import { handlePublic } from "./preview/preview-ratings";
 
 const DB_KEY = "wccheck.mockdb";
 type MockResponse = { status: number; body: unknown };
@@ -22,6 +23,7 @@ function load(): MockDb {
     const parsed = raw ? (JSON.parse(raw) as MockDb) : null;
     // Dados salvos de uma versão anterior do mock são recriados.
     db = parsed && parsed.version === SEED_VERSION ? parsed : seed();
+    db.bathroom_cleaners ??= [];
   } catch {
     db = seed();
   }
@@ -357,7 +359,7 @@ function contractInput(d: MockDb, body: Body, existing?: DbContract) {
   const manager_id = v.int("manager_id", false, 1);
   if (manager_id && !d.users.some((u) => u.id === manager_id && u.role === "gestor" && u.status === "active")) v.fail("manager_id", MSG.option);
   const timezone = v.str("timezone", true);
-  const photos = ["required", "optional", "off"] as const;
+  const photos = ["required", "optional"] as const;
   const photo_before = v.oneOf("photo_before", photos, true);
   const photo_after = v.oneOf("photo_after", photos, true);
   const cpd = v.int("default_cleanings_per_day", true, 1);
@@ -367,9 +369,13 @@ function contractInput(d: MockDb, body: Body, existing?: DbContract) {
   if (!Array.isArray(rawShifts) || rawShifts.length === 0) v.fail("shifts", MSG.required);
   else if (rawShifts.some((s) => !["manha", "tarde", "noite"].includes(String(s)))) v.fail("shifts", MSG.option);
   else shifts = [...new Set(rawShifts as ("manha" | "tarde" | "noite")[])];
+  const target = v.int("monthly_target", true, 1);
+  if (target !== null && target > 100) v.fail("monthly_target", "Informe um valor de 1 a 100.");
+  if (v.fields["monthly_target"] === MSG.option) v.fields["monthly_target"] = "Informe um valor de 1 a 100.";
+  const access = v.oneOf("cleaning_access", ["all", "assigned"] as const, true);
   v.done();
   return { company_id: company_id!, code: code!, name: name!, starts_on: starts_on!, ends_on: ends_on, manager_id: manager_id, timezone: timezone!,
-    rules: { photo_before: photo_before!, photo_after: photo_after!, default_cleanings_per_day: cpd!, default_weekdays: wd!, shifts } };
+    rules: { photo_before: photo_before!, photo_after: photo_after!, default_cleanings_per_day: cpd!, default_weekdays: wd!, shifts, monthly_target: target!, cleaning_access: access! } };
 }
 on("GET", "/contracts", ({ d, me, query }) => {
   const ids = scopeIds(d, me);
@@ -587,6 +593,7 @@ on("DELETE", "/bathrooms/{id}", (c) => {
   const counts = { status_periods: c.d.status_periods.filter((s) => s.bathroom_id === b.id).length };
   if (counts.status_periods) throw hasHistory(counts);
   c.d.bathrooms = c.d.bathrooms.filter((x) => x.id !== b.id);
+  c.d.bathroom_cleaners = c.d.bathroom_cleaners.filter((x) => x.bathroom_id !== b.id);
   return noContent();
 });
 const setBathroomStatus = (status: "active" | "inactive"): Handler => (c) => {
@@ -631,6 +638,88 @@ on("GET", "/contracts/{id}/labels", ({ d, me, p }) => {
     bathroom_id: b.id, name: b.name, location: opt(d.locations.find((l) => l.id === b.location_id)?.name ?? null),
     url: `https://wccheck.com.br/q/${b.qr_token}`,
   })));
+});
+
+// Transferência de banheiros: muda contrato e empresa, mantém o QR e todo o histórico.
+on("POST", "/bathrooms/transfer", ({ d, me, body }) => {
+  requireStaff(me);
+  const v = new V(body);
+  const ids = Array.isArray(body["bathroom_ids"]) ? [...new Set((body["bathroom_ids"] as unknown[]).map(Number))] : [];
+  if (!ids.length) v.fail("bathroom_ids", "Escolha pelo menos um banheiro.");
+  const to_id = v.int("to_contract_id", true, 1);
+  const location_id = v.int("location_id", false, 1);
+  const date = v.date("date", true);
+  const reason = v.str("reason", true);
+  const managed = (cid: number) => me.role === "admin" || d.contracts.find((c) => c.id === cid)?.manager_id === me.id;
+  const to = to_id ? d.contracts.find((c) => c.id === to_id) : undefined;
+  if (to_id && (!to || !managed(to.id) || to.status === "ended")) v.fail("to_contract_id", MSG.option);
+  if (location_id && !d.locations.some((l) => l.id === location_id && l.contract_id === to_id)) v.fail("location_id", MSG.option);
+  const rows = ids.map((id) => d.bathrooms.find((b) => b.id === id));
+  if (rows.some((b) => !b || !scopeIds(d, me).has(b.contract_id))) throw notFound();
+  if (rows.some((b) => !managed(b!.contract_id))) throw forbidden();
+  if (to && rows.some((b) => b!.contract_id === to.id)) v.fail("to_contract_id", "Um dos banheiros já está neste contrato.");
+  if (to) for (const b of rows) if (d.bathrooms.some((x) => x.contract_id === to.id && norm(x.name) === norm(b!.name)))
+    v.fail("to_contract_id", `O contrato de destino já tem um banheiro chamado "${b!.name}".`);
+  v.done();
+  for (const b of rows as DbBathroom[]) {
+    const from = d.contracts.find((c) => c.id === b.contract_id)!;
+    const before = { contract: from.code, company_id: from.company_id };
+    b.contract_id = to!.id; b.location_id = location_id;
+    // responsáveis do contrato antigo não valem no novo
+    d.bathroom_cleaners = d.bathroom_cleaners.filter((x) => x.bathroom_id !== b.id);
+    audit(d, me, "bathroom.transferred", "bathroom", b.id, before, { contract: to!.code, company_id: to!.company_id, date }, reason);
+  }
+  return list((rows as DbBathroom[]).map((b) => bathroom(d, b)));
+});
+
+// Responsáveis por banheiro (contrato em "Pessoas escolhidas por banheiro")
+const cleanerView = (d: MockDb, uid: number) => ({ id: uid, name: d.users.find((u) => u.id === uid)?.name ?? "—" });
+on("GET", "/bathrooms/{id}/cleaners", (c) => {
+  const b = bathroomFor(c);
+  return list(c.d.bathroom_cleaners.filter((x) => x.bathroom_id === b.id).map((x) => cleanerView(c.d, x.user_id)));
+});
+on("PUT", "/bathrooms/{id}/cleaners", (c) => {
+  const b = bathroomFor(c, true);
+  const raw = c.body["user_ids"];
+  const v = new V(c.body);
+  const ids = Array.isArray(raw) ? [...new Set(raw.map(Number))] : null;
+  if (!ids) v.fail("user_ids", MSG.required);
+  else if (ids.some((id) => !c.d.users.some((u) => u.id === id && u.role === "limpeza" && u.status === "active"))) v.fail("user_ids", MSG.option);
+  v.done();
+  const before = c.d.bathroom_cleaners.filter((x) => x.bathroom_id === b.id).map((x) => x.user_id);
+  c.d.bathroom_cleaners = [...c.d.bathroom_cleaners.filter((x) => x.bathroom_id !== b.id), ...ids!.map((user_id) => ({ bathroom_id: b.id, user_id }))];
+  audit(c.d, c.me, "bathroom.cleaners_changed", "bathroom", b.id, { user_ids: before }, { user_ids: ids });
+  return list(ids!.map((id) => cleanerView(c.d, id)));
+});
+on("GET", "/users/{id}/bathrooms", ({ d, me, p }) => {
+  const u = getUserFor(d, me, p[0]!);
+  const ids = scopeIds(d, me);
+  return list(d.bathroom_cleaners.filter((x) => x.user_id === u.id).map((x) => d.bathrooms.find((b) => b.id === x.bathroom_id)!)
+    .filter((b) => b && ids.has(b.contract_id)).map((b) => {
+      const ct = d.contracts.find((c) => c.id === b.contract_id)!;
+      return { id: b.id, name: b.name, location: opt(d.locations.find((l) => l.id === b.location_id)?.name ?? null), contract: { id: ct.id, code: ct.code, name: ct.name } };
+    }));
+});
+on("POST", "/cleaners/transfer", ({ d, me, body }) => {
+  requireStaff(me);
+  const v = new V(body);
+  const from = v.int("from_user_id", true, 1); const to = v.int("to_user_id", true, 1); const reason = v.str("reason", true);
+  const ids = Array.isArray(body["bathroom_ids"]) ? [...new Set((body["bathroom_ids"] as unknown[]).map(Number))] : [];
+  if (!ids.length) v.fail("bathroom_ids", "Escolha pelo menos um banheiro.");
+  if (to && (to === from || !d.users.some((u) => u.id === to && u.role === "limpeza" && u.status === "active"))) v.fail("to_user_id", MSG.option);
+  v.done();
+  for (const bid of ids) {
+    const b = d.bathrooms.find((x) => x.id === bid);
+    if (!b || !d.bathroom_cleaners.some((x) => x.bathroom_id === bid && x.user_id === from)) throw notFound();
+    getContractFor(d, me, b.contract_id, true);
+  }
+  for (const bid of ids) {
+    d.bathroom_cleaners = d.bathroom_cleaners.filter((x) => !(x.bathroom_id === bid && x.user_id === from));
+    if (!d.bathroom_cleaners.some((x) => x.bathroom_id === bid && x.user_id === to)) d.bathroom_cleaners.push({ bathroom_id: bid, user_id: to! });
+    audit(d, me, "bathroom.cleaners_changed", "bathroom", bid, { user_ids: [from] }, { user_ids: [to] }, reason);
+  }
+  audit(d, me, "user.bathrooms_transferred", "user", from!, { bathroom_ids: ids }, { to_user_id: to }, reason);
+  return ok({ moved: ids.length });
 });
 
 // Equipes
@@ -847,6 +936,8 @@ export function handleMock(method: string, rawPath: string, body: unknown, token
     : body && typeof body === "object" ? body : {}) as Body;
   try {
     if (method === "GET" && path === "/health") return ok({ db: "ok", disk_free_mb: 10240 });
+    const pub = handlePublic(method, path!, b, d);
+    if (pub) { if (method !== "GET") save(); return pub; }
     if (method === "POST" && path === "/auth/login") {
       const email = String(b["email"] ?? "").trim().toLowerCase();
       const u = d.users.find((x) => x.email === email);
