@@ -62,7 +62,7 @@ function RelatoriosPage() {
         <PageHeader title="Relatórios" subtitle={`${periodText(search)} · ${scopeText}`} />
         <div className="flex flex-wrap gap-2 print:hidden">
           <Button asChild variant="outline" className="min-h-10">
-            <Link to="/historico" search={filterKeys(search)}><History className="h-4 w-4" />Ver no histórico</Link>
+            <Link to="/historico" search={{ ...filterKeys(search), periodo: search.periodo ?? "30d" }}><History className="h-4 w-4" />Ver no histórico</Link>
           </Button>
           <Button variant="outline" className="min-h-10" disabled title="Disponível quando os dados reais existirem"><Download className="h-4 w-4" />Baixar Excel</Button>
           <PrintButton />
@@ -143,9 +143,9 @@ function RelatoriosPage() {
           <SortTable title="Banheiros" searchable rows={q.data.by_bathroom.map((b) => ({
             key: b.bathroom.id, name: b.bathroom.name, sub: `${b.location ? `${b.location} · ` : ""}${b.company.name} · ${b.contract.code}`, t: b,
             to: { banheiro: b.bathroom.id, contrato: b.contract.id },
-          }))} historySearch={filterKeys(search)} />
+          }))} historySearch={{ ...filterKeys(search), periodo: search.periodo ?? "30d" }} />
         ) : (
-          <PeopleTable rows={q.data.by_person} onPick={(id) => set({ pessoa: id })} selected={search.pessoa} historySearch={filterKeys(search)} />
+          <PeopleTable rows={q.data.by_person} onPick={(id) => set({ pessoa: id })} selected={search.pessoa} historySearch={{ ...filterKeys(search), periodo: search.periodo ?? "30d" }} />
         )}
     </div>
   );

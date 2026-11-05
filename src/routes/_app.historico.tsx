@@ -70,7 +70,7 @@ function HistoricoPage() {
         <PageHeader title="Histórico" subtitle="Limpezas feitas e alterações nos cadastros." />
         {search.aba !== "alteracoes" && (
           <Button asChild variant="outline" className="min-h-10">
-            <Link to="/relatorios" search={filterKeys(search)}><BarChart3 className="h-4 w-4" />Ver relatório</Link>
+            <Link to="/relatorios" search={{ ...filterKeys(search), periodo: search.periodo ?? "7d" }}><BarChart3 className="h-4 w-4" />Ver relatório</Link>
           </Button>
         )}
       </div>
