@@ -70,7 +70,7 @@ function Body({ t }: { t: Ticket }) {
   }
   async function start() {
     setError(null);
-    if (isOffline()) { enqueueTicketAction({ kind: "ticket_start", ticket_id: t.id, label, idempotency_key: crypto.randomUUID(), client_at: new Date().toISOString() }); setMode({ kind: "queued", what: "O início do atendimento" }); return; }
+    if (isOffline()) { await queue({ kind: "ticket_start", ticket_id: t.id, label, idempotency_key: crypto.randomUUID(), client_at: new Date().toISOString() }, "O início do atendimento"); return; }
     setPending(true);
     try { await startTicket(t.id); refresh(); }
     catch (e) {
@@ -81,7 +81,7 @@ function Body({ t }: { t: Ticket }) {
   async function finish() {
     setError(null);
     const item = { kind: "ticket_done" as const, ticket_id: t.id, label, idempotency_key: key.current, client_at: new Date().toISOString(), note: note.trim(), photo };
-    if (isOffline()) { enqueueTicketAction(item); setMode({ kind: "queued", what: "A conclusão do chamado" }); return; }
+    if (isOffline()) { await queue(item, "A conclusão do chamado"); return; }
     setPending(true);
     try { await finishTicket(t.id, { note: note.trim(), photo: photo ? dataUrlToBlob(photo) : null, idempotency_key: key.current }); refresh(); setMode({ kind: "done" }); }
     catch (e) {

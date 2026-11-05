@@ -38,11 +38,22 @@ const FACES: { score: number; label: string; icon: LucideIcon; tone: string }[] 
 const PROBLEMS = Object.keys(RATING_PROBLEM_LABEL) as RatingProblem[];
 
 /** Identificador anônimo do aparelho (o servidor aceita 1 avaliação por banheiro a cada 30 min). */
+let sessionKey: string | null = null;
+function randomKey() {
+  try { return crypto.randomUUID(); } catch { /* navegador antigo */ }
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+}
 function deviceKey() {
   const k = "wccheck.device";
-  let v = localStorage.getItem(k);
-  if (!v) { v = crypto.randomUUID(); localStorage.setItem(k, v); }
-  return v;
+  try {
+    let v = localStorage.getItem(k);
+    if (!v) { v = randomKey(); localStorage.setItem(k, v); }
+    return v;
+  } catch {
+    // Sem localStorage (navegação anônima/bloqueado): chave aleatória só desta sessão.
+    sessionKey ??= randomKey();
+    return sessionKey;
+  }
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
