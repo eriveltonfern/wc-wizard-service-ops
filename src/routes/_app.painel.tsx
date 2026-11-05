@@ -107,7 +107,7 @@ function PainelPage() {
 
   return (
     <div className="space-y-6">
-      {USE_MOCKS && <PreviewBanner />}
+      <PreviewBanner />
       <PageHelp>
         {readOnly ? "Os números mostram o cumprimento dos contratos que você acompanha. É só para leitura." : "Os números do topo mostram o cumprimento das limpezas."}{" "}
         Cumprimento = limpezas feitas ÷ limpezas previstas. Limpezas extras aparecem à parte e não entram no percentual. Use "Hoje" ou "Este mês" para trocar o período.
@@ -115,12 +115,12 @@ function PainelPage() {
       </PageHelp>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <PageHeader title={readOnly ? "Painel do contrato" : "Painel"} subtitle="O que precisa da sua atenção agora." />
-        <div role="tablist" aria-label="Período" className="inline-grid grid-cols-2 gap-1 rounded-lg bg-secondary p-1">
+        {numeros && <div role="tablist" aria-label="Período" className="inline-grid grid-cols-2 gap-1 rounded-lg bg-secondary p-1">
           {([["hoje", "Hoje"], ["mes", "Este mês"]] as const).map(([k, label]) => (
             <button key={k} role="tab" aria-selected={period === k} onClick={() => setPeriod(k)}
               className={cn("min-h-10 rounded-md px-4 text-sm font-semibold", period === k ? "bg-card text-ink shadow-sm" : "text-muted-foreground")}>{label}</button>
           ))}
-        </div>
+        </div>}
       </div>
 
       {numeros ? (
