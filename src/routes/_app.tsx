@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import { ChangePasswordDialog, ForcePasswordScreen } from "@/components/people/ChangePassword";
 import { getToken, setToken } from "@/lib/api";
 import { logout } from "@/lib/endpoints";
-import { meQuery, navByRole, navGroupsByRole, canAccess, homeFor, isFieldRole } from "@/lib/auth";
+import { meQuery, navByRole, navGroupsByRole, canAccess, homeFor, isFieldRole, isWaitingAccess } from "@/lib/auth";
 import { AppShell } from "@/components/layout/AppShell";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { OutboxBar } from "@/components/field/kit";
 import { flushOutbox, onFlushed } from "@/lib/outbox";
@@ -22,6 +23,7 @@ export const Route = createFileRoute("/_app")({
       setToken(null);
       throw redirect({ to: "/login" });
     }
+    if (isWaitingAccess(user.role)) return;
     if (!canAccess(user.role, location.pathname)) throw redirect({ to: homeFor(user.role) });
   },
   component: AppLayout,
@@ -64,6 +66,17 @@ function AppLayout() {
 
   if (user.must_change_password) {
     return <ForcePasswordScreen onDone={() => void navigate({ to: homeFor(user.role), replace: true })} />;
+  }
+
+  if (isWaitingAccess(user.role)) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-background px-4">
+        <div className="flex max-w-sm flex-col items-center gap-4 rounded-[10px] border bg-card px-6 py-10 text-center">
+          <p className="text-lg font-bold text-ink">Seu acesso ao app será liberado em breve.</p>
+          <Button className="min-h-10" onClick={() => void logout()}>Sair</Button>
+        </div>
+      </main>
+    );
   }
 
   const items = navByRole[user.role];
