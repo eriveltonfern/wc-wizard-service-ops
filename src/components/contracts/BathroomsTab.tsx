@@ -22,7 +22,7 @@ import {
   PendingButton, StatusBadge, WeekdayChips, useAction,
 } from "./kit";
 
-type Dlg = { kind: "form"; b?: Bathroom } | { kind: "qr" | "periods" | "delete"; b: Bathroom } | { kind: "locations" } | null;
+type Dlg = { kind: "form"; b?: Bathroom } | { kind: "qr" | "periods" | "delete" | "transfer"; b: Bathroom } | { kind: "locations" } | null;
 
 export function BathroomsTab({ contract: c, ctx }: { contract: ContractDetail; ctx: ContractCtx }) {
   const [q, setQ] = useState("");
