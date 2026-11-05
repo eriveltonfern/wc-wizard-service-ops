@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { addCompanyFiscal, listCompanies, listUsers } from "@/lib/endpoints";
-import { EmptyBlock, LoadingBlock } from "@/components/ui-kit";
-import { Field, FormDialog, FormError, NativeSelect, useAction } from "@/components/contracts/kit";
+import { Field, EmptyBlock, FormDialog, FormError, LoadingBlock, NativeSelect, useAction } from "@/components/contracts/kit";
 
 /** Adiciona à empresa uma pessoa que já está cadastrada com o perfil fiscal. */
 export function FiscalPickerDialog({ open, onOpenChange, companyId, companyName, onAdded }: {

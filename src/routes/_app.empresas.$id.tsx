@@ -2,13 +2,14 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { PageHelp } from "@/components/layout/PageHeader";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { AlertTriangle, ArrowLeft, Pencil, Trash2, UserPlus } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Pencil, Trash2, UserCheck, UserPlus } from "lucide-react";
 import { deleteCompany, getCompany, inactivateCompany, reactivateCompany } from "@/lib/endpoints";
 import { ApiError } from "@/lib/api";
 import { fmtPeriod } from "@/lib/format";
 import type { User } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { CompanyForm } from "@/components/people/CompanyForm";
+import { FiscalPickerDialog } from "@/components/people/FiscalPickerDialog";
 import { TempPasswordDialog, UserForm } from "@/components/people/UserForm";
 import { ConfirmDialog, EmptyBlock, ErrorBlock, FormError, HistoryNotice, LoadingBlock, PendingButton, ReasonDialog, StatusBadge, useAction } from "@/components/contracts/kit";
 

@@ -173,3 +173,6 @@ O QR não registra mais limpeza nem chamado; a interface não tem mais "Ler QR".
 
 ### GET /ratings?from=&to=&contract_id=&bathroom_id= → `{ rows, summary }`
 Admin, gestor e fiscal (escopo de sempre). `rows` (até 100, mais recentes primeiro): `{id, score, problems, comment?, created_at, bathroom, location?, contract, company}`. `summary`: `{ average, count, negative_share (nota 1–2), top_problem, worst: [{bathroom, company, average, count}] }`.
+
+### POST /companies/{id}/fiscals `{ user_id }` → 201 CompanyDetail
+Adiciona à empresa uma pessoa que já está cadastrada com o perfil fiscal (só diretoria). A pessoa passa a ser fiscal desta empresa; se era fiscal de outra, sai de lá e os vínculos dela em contratos da empresa anterior são encerrados na data de hoje (fica em `/audit`, action `fiscal.company_changed`). Erros: 422 `user_id` — "Este fiscal já é desta empresa.", "Esta pessoa não tem o perfil fiscal.", "Este fiscal está inativo. Reative-o antes."; 403 fora da diretoria.
