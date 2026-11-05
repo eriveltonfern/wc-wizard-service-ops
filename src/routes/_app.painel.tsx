@@ -59,7 +59,7 @@ function PainelPage() {
 
   const t = stats.data?.totals;
   const td = todayStats.data?.totals;
-  const below = (stats.data?.by_bathroom ?? []).filter((b) => b.expected > 0 && !metGoal(b.compliance));
+  const below = (stats.data?.by_bathroom ?? []).filter((b) => b.expected > 0 && !metGoal(b.compliance, b.target));
   const num = (loading: boolean, error: boolean, v: ReactNode) => (loading ? "…" : error ? "—" : v ?? "—");
   const LIMIT = 8;
   type Cat = "chamados" | "empresas" | "banheiros" | "contratos";
@@ -75,7 +75,7 @@ function PainelPage() {
     ...below.map((b) => ({ key: `b-${b.bathroom.id}`, cat: "banheiros" as Cat, node: (
       <AttentionRow key={`b-${b.bathroom.id}`} to="/banheiros/$id" params={{ id: String(b.bathroom.id) }} name={b.bathroom.name}
         detail={`${b.location ? `${b.location} · ` : ""}${b.company.name} · ${b.contract.code}`}
-        progress={{ value: (b.compliance ?? 0) * 100, tone: complianceTone(b.compliance) }} pills={<GoalPills t={b} />} />) })),
+        progress={{ value: (b.compliance ?? 0) * 100, tone: complianceTone(b.compliance, b.target) }} pills={<GoalPills t={b} />} />) })),
     ...drafts.map((c, i) => ({ key: `c-${c.id}`, cat: "contratos" as Cat, node: (
       <AttentionRow key={c.id} to="/contratos/$id" params={{ id: String(c.id) }} name={c.name} detail={`${c.code} · ${c.company.name}`}
         pills={<><Pill tone="info">Rascunho</Pill>{activations[i]?.data?.missing.map((m) => missingPill[m] && <Pill key={m} tone="warning">{missingPill[m]}</Pill>)}</>} />) })),
@@ -93,7 +93,7 @@ function PainelPage() {
       <PageHelp>
         {readOnly ? "Os números mostram o cumprimento dos contratos que você acompanha. É só para leitura." : "Os números do topo mostram o cumprimento das limpezas."}{" "}
         Cumprimento = limpezas feitas ÷ limpezas previstas. Limpezas extras aparecem à parte e não entram no percentual. Use "Hoje" ou "Este mês" para trocar o período.
-        Em "Precisa de atenção" ficam os chamados urgentes, as empresas sem fiscal, os banheiros abaixo da meta (95%) e os contratos parados.
+        Em "Precisa de atenção" ficam os chamados urgentes, as empresas sem fiscal, os banheiros abaixo da meta do contrato e os contratos parados.
       </PageHelp>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <PageHeader title={readOnly ? "Painel do contrato" : "Painel"} subtitle="O que precisa da sua atenção agora." />
@@ -106,12 +106,12 @@ function PainelPage() {
       </div>
 
       <KpiGrid>
-        <KpiCard label="Cumprimento geral" tone={complianceTone(t?.compliance)} value={num(stats.isLoading, stats.isError, pct(t?.compliance))}
+        <KpiCard label="Cumprimento geral" tone={complianceTone(t?.compliance, t?.target)} value={num(stats.isLoading, stats.isError, pct(t?.compliance))}
           caption={t ? `${t.done} de ${t.expected} limpezas da meta ${periodLabel}` : " "} />
         <KpiCard label="Limpezas pendentes" tone={td?.late_pending ? "warning" : "info"} value={num(todayStats.isLoading, todayStats.isError, td?.pending)}
           caption={td ? `hoje · ${td.late_pending} atrasada${td.late_pending === 1 ? "" : "s"}` : " "} {...(readOnly ? {} : { to: "/pendencias" })} />
         <KpiCard label="Abaixo da meta" tone={below.length ? "danger" : "success"} value={num(stats.isLoading, stats.isError, below.length)}
-          caption={`banheiros abaixo de 95% ${periodLabel}`} />
+          caption={`banheiros abaixo da meta do contrato ${periodLabel}`} />
         <KpiCard label="Banheiros ativos" tone="neutral" value={num(active.isLoading, active.isError, active.data?.total)} caption="no seu escopo" to="/banheiros" />
       </KpiGrid>
 
@@ -147,8 +147,8 @@ function PainelPage() {
                   {[...stats.data.by_contract].sort((a, b) => (a.compliance ?? 1) - (b.compliance ?? 1)).map((c) => (
                     <AttentionRow key={c.contract.id} to="/contratos/$id" params={{ id: String(c.contract.id) }} name={c.contract.name}
                       detail={`${c.contract.code} · ${c.done} de ${c.expected}${c.extras ? ` · ${c.extras} extra${c.extras === 1 ? "" : "s"}` : ""}`}
-                      progress={{ value: (c.compliance ?? 0) * 100, tone: complianceTone(c.compliance) }}
-                      pills={<Pill tone={complianceTone(c.compliance)}>{pct(c.compliance)}</Pill>} />
+                      progress={{ value: (c.compliance ?? 0) * 100, tone: complianceTone(c.compliance, c.target) }}
+                      pills={<Pill tone={complianceTone(c.compliance, c.target)}>{pct(c.compliance)}</Pill>} />
                   ))}
                 </ul>
               )}
