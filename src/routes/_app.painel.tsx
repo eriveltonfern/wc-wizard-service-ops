@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQueries, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { meQuery } from "@/lib/auth";
 import { CheckCircle2 } from "lucide-react";
-import { getContractActivation, getStats, listBathrooms, listCompanies, listContracts, listTickets } from "@/lib/endpoints";
+import { getContractActivation, getStats, listBathrooms, listCompanies, listContracts, listRatings, listTickets } from "@/lib/endpoints";
 import type { ActivationMissing } from "@/lib/types";
 import { PageHeader, PageHelp } from "@/components/layout/PageHeader";
 import { AttentionList, AttentionRow, DataCard, ErrorState, KpiCard, KpiGrid, Pill, SkeletonBlock } from "@/components/ui-kit";
