@@ -11,6 +11,8 @@ import { PreviewBanner } from "@/components/field/kit";
 import { GoalPills, complianceTone, metGoal, pct } from "@/components/reports/kit";
 import { RATING_PROBLEM_LABEL, todayIso } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { isModuleOn } from "@/lib/modules";
+import { listTeams } from "@/lib/endpoints";
 
 export const Route = createFileRoute("/_app/painel")({
   head: () => ({
@@ -42,16 +44,18 @@ function PainelPage() {
   const [period, setPeriod] = useState<"hoje" | "mes">("mes");
   const today = todayIso();
   const filter = period === "hoje" ? { from: today, to: today } : { month: today.slice(0, 7) };
-  const stats = useQuery({ queryKey: ["stats", filter], queryFn: () => getStats(filter) });
-  const todayStats = useQuery({ queryKey: ["stats", { from: today, to: today }], queryFn: () => getStats({ from: today, to: today }) });
+  const numeros = isModuleOn("numeros");
+  const limpeza = isModuleOn("limpeza");
+  const stats = useQuery({ queryKey: ["stats", filter], queryFn: () => getStats(filter), enabled: numeros });
+  const todayStats = useQuery({ queryKey: ["stats", { from: today, to: today }], queryFn: () => getStats({ from: today, to: today }), enabled: numeros });
   const companies = useQuery({ queryKey: ["companies"], queryFn: listCompanies, enabled: isAdmin });
   const noFiscal = (companies.data ?? []).filter((c) => c.status === "active" && c.fiscals_count === 0);
   const contracts = useQuery({ queryKey: ["contracts", { status: "" }], queryFn: () => listContracts() });
   const active = useQuery({ queryKey: ["bathrooms", "active-count"], queryFn: () => listBathrooms({ status: "active" }) });
-  const urgent = useQuery({ queryKey: ["tickets", "urgent"], queryFn: () => listTickets({ status: "active", priority: "urgente" }) });
+  const urgent = useQuery({ queryKey: ["tickets", "urgent"], queryFn: () => listTickets({ status: "active", priority: "urgente" }), enabled: isModuleOn("chamados") });
   const urgentRows = urgent.data ?? [];
   const yesterday = new Date(Date.now() - 86400000);
-  const ratings = useQuery({ queryKey: ["ratings", "negative-24h", today], queryFn: () => listRatings({ from: `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, "0")}-${String(yesterday.getDate()).padStart(2, "0")}`, to: today }) });
+  const ratings = useQuery({ queryKey: ["ratings", "negative-24h", today], queryFn: () => listRatings({ from: `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, "0")}-${String(yesterday.getDate()).padStart(2, "0")}`, to: today }), enabled: isModuleOn("avaliacoes") });
   const badRatings = (ratings.data?.rows ?? []).filter((r) => r.score <= 2 && Date.now() - new Date(r.created_at).getTime() < 86400000);
   const all = contracts.data ?? [];
   const drafts = readOnly ? [] : all.filter((c) => c.status === "draft");
@@ -59,6 +63,13 @@ function PainelPage() {
   const activations = useQueries({
     queries: drafts.map((c) => ({ queryKey: ["contract", c.id, "activation"], queryFn: () => getContractActivation(c.id) })),
   });
+  // Sem o módulo "numeros": cartões só com rotas de cadastro.
+  const activeContracts = all.filter((c) => c.status === "active");
+  const teams = useQueries({
+    queries: (numeros ? [] : activeContracts).map((c) => ({ queryKey: ["contract", c.id, "teams"], queryFn: () => listTeams(c.id) })),
+  });
+  const teamsCount = teams.reduce((n, q) => n + (q.data?.filter((t) => t.status === "active").length ?? 0), 0);
+  const teamsLoading = teams.some((q) => q.isLoading);
 
   const t = stats.data?.totals;
   const td = todayStats.data?.totals;
@@ -104,26 +115,35 @@ function PainelPage() {
       </PageHelp>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <PageHeader title={readOnly ? "Painel do contrato" : "Painel"} subtitle="O que precisa da sua atenção agora." />
-        <div role="tablist" aria-label="Período" className="inline-grid grid-cols-2 gap-1 rounded-lg bg-secondary p-1">
+        {numeros && <div role="tablist" aria-label="Período" className="inline-grid grid-cols-2 gap-1 rounded-lg bg-secondary p-1">
           {([["hoje", "Hoje"], ["mes", "Este mês"]] as const).map(([k, label]) => (
             <button key={k} role="tab" aria-selected={period === k} onClick={() => setPeriod(k)}
               className={cn("min-h-10 rounded-md px-4 text-sm font-semibold", period === k ? "bg-card text-ink shadow-sm" : "text-muted-foreground")}>{label}</button>
           ))}
-        </div>
+        </div>}
       </div>
 
+      {numeros ? (
       <KpiGrid>
         <KpiCard label="Cumprimento geral" tone={complianceTone(t?.compliance, t?.target)} value={num(stats.isLoading, stats.isError, pct(t?.compliance))}
           caption={t ? `${t.done} de ${t.expected} limpezas da meta ${periodLabel}` : " "} />
         <KpiCard label="Limpezas pendentes" tone={td?.late_pending ? "warning" : "info"} value={num(todayStats.isLoading, todayStats.isError, td?.pending)}
-          caption={td ? `hoje · ${td.late_pending} atrasada${td.late_pending === 1 ? "" : "s"}` : " "} {...(readOnly ? {} : { to: "/pendencias" })} />
+          caption={td ? `hoje · ${td.late_pending} atrasada${td.late_pending === 1 ? "" : "s"}` : " "} {...(readOnly || !limpeza ? {} : { to: "/pendencias" })} />
         <KpiCard label="Abaixo da meta" tone={below.length ? "danger" : "success"} value={num(stats.isLoading, stats.isError, below.length)}
           caption={`banheiros abaixo da meta do contrato ${periodLabel}`} />
         <KpiCard label="Banheiros ativos" tone="neutral" value={num(active.isLoading, active.isError, active.data?.total)} caption="no seu escopo" to="/banheiros" />
       </KpiGrid>
+      ) : (
+      <KpiGrid>
+        <KpiCard label="Contratos ativos" tone="success" value={num(contracts.isLoading, contracts.isError, activeContracts.length)} caption="em andamento" to="/contratos" />
+        <KpiCard label="Em rascunho" tone={drafts.length ? "info" : "neutral"} value={num(contracts.isLoading, contracts.isError, all.filter((c) => c.status === "draft").length)} caption="contratos ainda não ativados" to="/contratos" />
+        <KpiCard label="Banheiros ativos" tone="neutral" value={num(active.isLoading, active.isError, active.data?.total)} caption="no seu escopo" to="/banheiros" />
+        <KpiCard label="Equipes" tone="info" value={num(contracts.isLoading || teamsLoading, contracts.isError, teamsCount)} caption="equipes ativas nos contratos ativos" />
+      </KpiGrid>
+      )}
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="space-y-3 lg:col-span-2">
+      <div className={cn("grid gap-6", numeros && "lg:grid-cols-3")}>
+        <div className={cn("space-y-3", numeros && "lg:col-span-2")}>
           {cats.length > 1 && (
             <div role="group" aria-label="Filtrar o que precisa de atenção" className="flex flex-wrap gap-2">
               {[{ k: "" as const, label: "Tudo", n: rows.length }, ...cats].map((c) => (
@@ -146,7 +166,7 @@ function PainelPage() {
             )}
         </div>
 
-        <div>
+        {numeros && <div>
           {stats.isLoading ? <SkeletonBlock rows={4} /> : stats.data && (
             <DataCard title="Cumprimento por contrato" actions={<span className="text-sm text-muted-foreground">{period === "hoje" ? "Hoje" : "Este mês"}</span>}>
               {stats.data.by_contract.length === 0 ? <p className="px-4 py-8 text-center text-sm text-muted-foreground">Nenhum contrato ativo com limpezas no período.</p> : (
@@ -161,7 +181,7 @@ function PainelPage() {
               )}
             </DataCard>
           )}
-        </div>
+        </div>}
       </div>
     </div>
   );

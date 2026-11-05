@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { getMe } from "./endpoints";
 import type { Role } from "./types";
+import { pathEnabled } from "./modules";
 
 export type { Role, User } from "./types";
 
@@ -48,7 +49,7 @@ const I = {
 export type NavGroup = { label: string; items: NavItem[] };
 
 /** Menu agrupado por perfil (DIA A DIA, GESTÃO, AJUSTES). Também define o acesso às rotas. */
-export const navGroupsByRole: Record<Role, NavGroup[]> = {
+const allNavGroupsByRole: Record<Role, NavGroup[]> = {
   admin: [
     { label: "Dia a dia", items: [I.painel, I.pendencias, I.historico, I.chamados, I.avaliacoes] },
     { label: "Gestão", items: [I.contratos, I.banheiros, I.empresas, I.pessoas, I.etiquetas, I.relatorios] },
@@ -68,6 +69,13 @@ export const navGroupsByRole: Record<Role, NavGroup[]> = {
   manutencao: [{ label: "Dia a dia", items: [I.chamados, I.concluidos] }],
 };
 
+/** Menu já sem os módulos desligados (src/lib/modules.ts). */
+export const navGroupsByRole: Record<Role, NavGroup[]> = Object.fromEntries(
+  Object.entries(allNavGroupsByRole).map(([r, groups]) => [r, groups
+    .map((g) => ({ ...g, items: g.items.filter((i) => pathEnabled(i.to)) }))
+    .filter((g) => g.items.length > 0)]),
+) as Record<Role, NavGroup[]>;
+
 export const navByRole: Record<Role, NavItem[]> = Object.fromEntries(
   Object.entries(navGroupsByRole).map(([r, groups]) => [r, groups.flatMap((g) => g.items)]),
 ) as Record<Role, NavItem[]>;
@@ -84,10 +92,12 @@ export const canManageUser = (me: { id: number; role: Role }, target: { role: Ro
 
 export const isFieldRole = (r: Role) => r === "limpeza" || r === "manutencao";
 const homeOverride: Partial<Record<Role, string>> = {};
-export const homeFor = (r: Role) => homeOverride[r] ?? navByRole[r][0]?.to ?? "/login";
+export const homeFor = (r: Role) => homeOverride[r] ?? navByRole[r][0]?.to ?? "/aguardando";
+/** Perfil de campo sem nenhum módulo ligado: mostra "Seu acesso ao app será liberado em breve." */
+export const isWaitingAccess = (r: Role) => navByRole[r].length === 0;
 /** Telas fora do menu que o perfil também pode abrir. */
 export const hiddenRoutesByRole: Record<Role, string[]> = {
   admin: [], gestor: [], fiscal: [], limpeza: ["/registrar", "/relatar"], manutencao: [],
 };
-export const canAccess = (r: Role, path: string) =>
+export const canAccess = (r: Role, path: string) => pathEnabled(path) &&
   [...navByRole[r].map((i) => i.to), ...hiddenRoutesByRole[r]].some((to) => path === to || path.startsWith(to + "/"));

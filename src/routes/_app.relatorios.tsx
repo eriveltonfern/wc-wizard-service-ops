@@ -7,6 +7,7 @@ import { getStats } from "@/lib/endpoints";
 import { fmtShort } from "@/lib/format";
 import type { StatTotals } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { isModuleOn } from "@/lib/modules";
 import { PageHeader, PageHelp } from "@/components/layout/PageHeader";
 import { DataCard, EmptyState, ErrorState, Pill, SkeletonBlock } from "@/components/ui-kit";
 import { PreviewBanner } from "@/components/field/kit";
@@ -17,7 +18,7 @@ import { Input } from "@/components/ui/input";
 
 type Tab = "geral" | "empresas" | "banheiros" | "pessoas" | "fechamento";
 type Search = FilterSearch & { aba?: Tab | undefined };
-const TABS: [Tab, string][] = [["geral", "Visão geral"], ["empresas", "Empresas e contratos"], ["banheiros", "Banheiros"], ["pessoas", "Funcionários"], ["fechamento", "Fechamento do mês"]];
+const TABS: [Tab, string][] = ([["geral", "Visão geral"], ["empresas", "Empresas e contratos"], ["banheiros", "Banheiros"], ["pessoas", "Funcionários"], ["fechamento", "Fechamento do mês"]] as [Tab, string][]).filter(([k]) => k !== "fechamento" || isModuleOn("fechamento"));
 
 export const Route = createFileRoute("/_app/relatorios")({
   validateSearch: (s: Record<string, unknown>): Search => {
@@ -61,9 +62,9 @@ function RelatoriosPage() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <PageHeader title="Relatórios" subtitle={`${periodText(search)} · ${scopeText}`} />
         <div className="flex flex-wrap gap-2 print:hidden">
-          <Button asChild variant="outline" className="min-h-10">
+          {isModuleOn("historico") && <Button asChild variant="outline" className="min-h-10">
             <Link to="/historico" search={{ ...filterKeys(search), periodo: search.periodo ?? "30d" }}><History className="h-4 w-4" />Ver no histórico</Link>
-          </Button>
+          </Button>}
           <Button variant="outline" className="min-h-10" disabled title="Disponível quando os dados reais existirem"><Download className="h-4 w-4" />Baixar Excel</Button>
           <PrintButton />
         </div>

@@ -1,6 +1,6 @@
 // Fila de limpezas guardadas no aparelho enquanto não há internet. Envia pelo endpoints.ts quando a conexão volta.
 import { useSyncExternalStore } from "react";
-import { ApiError } from "./api";
+import { ApiError, USE_MOCKS } from "./api";
 import { createCleaning, finishTicket, startTicket } from "./endpoints";
 import type { CleaningInput } from "./types";
 
@@ -20,23 +20,82 @@ export type QueuedTicket = {
 export type QueuedItem = QueuedCleaning | QueuedTicket;
 export const isQueuedCleaning = (x: QueuedItem): x is QueuedCleaning => x.kind === undefined || x.kind === "cleaning";
 
-function read(): QueuedItem[] {
-  if (typeof window === "undefined") return [];
-  try { return JSON.parse(localStorage.getItem(KEY) ?? "[]") as QueuedItem[]; } catch { return []; }
+// Guardado em IndexedDB (API nativa). A lista fica num cache em memória para a interface ler de forma síncrona.
+const DB_NAME = "wccheck";
+const STORE = "outbox";
+export const STORAGE_ERROR = "Não foi possível guardar no celular. Libere espaço ou conecte à internet para enviar.";
+export class OutboxStorageError extends Error { constructor() { super(STORAGE_ERROR); } }
+
+let cache: QueuedItem[] = [];
+let version = 0;
+let dbPromise: Promise<IDBDatabase> | null = null;
+
+function openDb(): Promise<IDBDatabase> {
+  if (dbPromise) return dbPromise;
+  dbPromise = new Promise<IDBDatabase>((resolve, reject) => {
+    try {
+      if (typeof indexedDB === "undefined") throw new Error("sem IndexedDB");
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = () => { if (!req.result.objectStoreNames.contains(STORE)) req.result.createObjectStore(STORE, { keyPath: "idempotency_key" }); };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error ?? new Error("IndexedDB"));
+    } catch (e) { reject(e); }
+  });
+  dbPromise.catch(() => { dbPromise = null; });
+  return dbPromise;
 }
-function write(items: QueuedItem[]) {
-  localStorage.setItem(KEY, JSON.stringify(items));
-  window.dispatchEvent(new Event(EVT));
+function tx<T>(mode: IDBTransactionMode, fn: (s: IDBObjectStore) => IDBRequest<T> | void): Promise<T | undefined> {
+  return openDb().then((db) => new Promise<T | undefined>((resolve, reject) => {
+    const t = db.transaction(STORE, mode);
+    const r = fn(t.objectStore(STORE));
+    t.oncomplete = () => resolve(r ? r.result : undefined);
+    t.onerror = () => reject(t.error ?? new Error("IndexedDB"));
+    t.onabort = () => reject(t.error ?? new Error("IndexedDB"));
+  }));
 }
-export const isSimulatedOffline = () => typeof window !== "undefined" && localStorage.getItem(SIM_KEY) === "1";
+function changed() {
+  version++;
+  if (typeof window !== "undefined") window.dispatchEvent(new Event(EVT));
+}
+/** Recarrega o cache do IndexedDB e migra os itens do localStorage antigo. */
+async function load() {
+  try {
+    const legacy = (() => { try { return JSON.parse(localStorage.getItem(KEY) ?? "[]") as QueuedItem[]; } catch { return []; } })();
+    if (legacy.length) {
+      await tx("readwrite", (st) => { legacy.forEach((x) => st.put(x)); });
+      localStorage.removeItem(KEY);
+    }
+    const all = (await tx<QueuedItem[]>("readonly", (st) => st.getAll() as IDBRequest<QueuedItem[]>)) ?? [];
+    all.sort((a, b) => (("client_finished_at" in a ? a.client_finished_at : a.client_at) ?? "").localeCompare(("client_finished_at" in b ? b.client_finished_at : b.client_at) ?? ""));
+    cache = all;
+  } catch { /* sem IndexedDB: a fila fica vazia e enqueue avisa o erro */ }
+  changed();
+}
+const ready: Promise<void> = typeof window === "undefined" ? Promise.resolve() : load();
+const read = () => cache;
+
+async function add(item: QueuedItem) {
+  try { await tx("readwrite", (st) => { st.put(item); }); }
+  catch { throw new OutboxStorageError(); }
+  cache = [...cache.filter((x) => x.idempotency_key !== item.idempotency_key), item];
+  changed();
+}
+async function remove(key: string) {
+  try { await tx("readwrite", (st) => { st.delete(key); }); } catch { /* tenta de novo no próximo envio */ return; }
+  cache = cache.filter((x) => x.idempotency_key !== key);
+  changed();
+}
+
+export const isSimulatedOffline = () => USE_MOCKS && typeof window !== "undefined" && localStorage.getItem(SIM_KEY) === "1";
 export const isOffline = () => typeof navigator !== "undefined" && (!navigator.onLine || isSimulatedOffline());
 export function setSimulatedOffline(on: boolean) {
   if (on) localStorage.setItem(SIM_KEY, "1"); else localStorage.removeItem(SIM_KEY);
-  window.dispatchEvent(new Event(EVT));
+  changed();
   if (!on) void flushOutbox();
 }
-export function enqueueCleaning(item: QueuedCleaning) { write([...read(), item]); }
-export function enqueueTicketAction(item: QueuedTicket) { write([...read(), item]); }
+/** Guarda no aparelho. Se não der para gravar, rejeita com OutboxStorageError (mensagem STORAGE_ERROR). */
+export function enqueueCleaning(item: QueuedCleaning) { return add(item); }
+export function enqueueTicketAction(item: QueuedTicket) { return add(item); }
 
 export function dataUrlToBlob(url: string): Blob {
   const [head, data] = url.split(",");
@@ -58,11 +117,12 @@ export const onFlushed = (fn: (r: FlushResult) => void) => { listeners.add(fn); 
 
 /** Tenta enviar a fila. Erros do servidor (4xx) tiram o item da fila e são avisados; falha de rede para e tenta depois. */
 export async function flushOutbox() {
+  await ready;
   if (flushing || isOffline() || read().length === 0) return;
   flushing = true;
   const result: FlushResult = { sent: 0, failed: [] };
   try {
-    for (const item of read()) {
+    for (const item of [...read()]) {
       if (isOffline()) break;
       try {
         if (isQueuedCleaning(item)) await createCleaning(toInput(item, true));
@@ -73,7 +133,7 @@ export async function flushOutbox() {
         if (e instanceof ApiError && e.status >= 400 && e.status < 500 && e.status !== 401) result.failed.push({ name: isQueuedCleaning(item) ? item.bathroom_name : item.label, message: e.message });
         else break;
       }
-      write(read().filter((x) => x.idempotency_key !== item.idempotency_key));
+      await remove(item.idempotency_key);
     }
   } finally {
     flushing = false;
@@ -93,9 +153,9 @@ function subscribe(cb: () => void) {
     window.removeEventListener("storage", cb);
   };
 }
-const snap = () => `${localStorage.getItem(KEY) ?? "[]"}|${isOffline() ? 1 : 0}`;
+const snap = () => `${version}|${isOffline() ? 1 : 0}`;
 export function useOutbox() {
-  const s = useSyncExternalStore(subscribe, snap, () => "[]|0");
-  const items = (() => { try { return JSON.parse(s.split("|")[0] ?? "[]") as QueuedItem[]; } catch { return []; } })();
+  const s = useSyncExternalStore(subscribe, snap, () => "0|0");
+  const items = typeof window === "undefined" ? [] : cache;
   return { items, count: items.length, offline: s.endsWith("|1"), simulated: typeof window !== "undefined" && isSimulatedOffline() };
 }

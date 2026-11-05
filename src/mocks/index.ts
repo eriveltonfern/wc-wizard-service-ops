@@ -798,6 +798,25 @@ function validMemberFor(v: V, d: MockDb, t: DbTeam, userId: number | null, on: s
 on("POST", "/teams/{id}/members", (c) => {
   const t = teamFor(c, c.p[0]!, true);
   const v = new V(c.body);
+  if (Array.isArray(c.body["user_ids"])) {
+    // Vários de uma vez: se alguém não puder entrar, recusa tudo (422 em fields.user_ids).
+    const starts_on = v.date("starts_on", true);
+    const ids = [...new Set((c.body["user_ids"] as unknown[]).map(Number))];
+    if (ids.length === 0 || ids.some((x) => !Number.isInteger(x) || x < 1)) v.fail("user_ids", MSG.required);
+    else for (const id of ids) {
+      const one = new V({});
+      validMemberFor(one, c.d, t, id, starts_on);
+      if (one.fields["user_id"]) { v.fail("user_ids", `${c.d.users.find((u) => u.id === id)?.name ?? `Pessoa ${id}`}: ${one.fields["user_id"]}`); break; }
+    }
+    v.done();
+    const rows = ids.map((id) => {
+      const row: DbMember = { id: nextId(c.d.members), team_id: t.id, user_id: id, starts_on: starts_on!, ends_on: null, removal_reason: null };
+      c.d.members.push(row);
+      audit(c.d, c.me, "team_member.added", "user", id, null, { team_id: t.id, starts_on });
+      return member(c.d, row);
+    });
+    return ok(rows, 201);
+  }
   const user_id = v.int("user_id", true, 1); const starts_on = v.date("starts_on", true);
   validMemberFor(v, c.d, t, user_id, starts_on);
   v.done();

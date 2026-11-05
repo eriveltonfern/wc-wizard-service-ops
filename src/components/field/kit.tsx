@@ -2,10 +2,12 @@
 import { CloudOff, FlaskConical } from "lucide-react";
 import { Pill } from "@/components/ui-kit";
 import { setSimulatedOffline, useOutbox } from "@/lib/outbox";
+import { USE_MOCKS } from "@/lib/api";
 import type { Cleaning, Task } from "@/lib/types";
 
 /** Faixa âmbar das telas que usam rotas ainda não ligadas ao servidor. */
 export function PreviewBanner() {
+  if (!USE_MOCKS) return null; // só no modo simulado
   return (
     <div role="note" className="flex items-start gap-2 rounded-[10px] border border-pending/30 bg-pending-soft px-4 py-2.5 text-sm font-semibold text-pending print:hidden">
       <FlaskConical className="mt-0.5 h-4 w-4 shrink-0" />
@@ -29,6 +31,7 @@ export function OutboxBar() {
 /** Botão "escondido" dentro da Ajuda da tela para simular falta de internet. */
 export function SimOfflineToggle() {
   const { simulated } = useOutbox();
+  if (!USE_MOCKS) return null; // controle de teste: só no modo simulado
   return (
     <button type="button" onClick={() => setSimulatedOffline(!simulated)}
       className="mt-2 text-xs font-semibold text-muted-foreground underline underline-offset-2 hover:text-ink">

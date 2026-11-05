@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as AppAguardandoRouteImport } from './routes/_app.aguardando'
 import { Route as AppAjudaRouteImport } from './routes/_app.ajuda'
 import { Route as AppAvaliacoesRouteImport } from './routes/_app.avaliacoes'
 import { Route as AppBuscarRouteImport } from './routes/_app.buscar'
@@ -52,6 +53,11 @@ const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppAguardandoRoute = AppAguardandoRouteImport.update({
+  id: '/aguardando',
+  path: '/aguardando',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppAjudaRoute = AppAjudaRouteImport.update({
   id: '/ajuda',
@@ -187,6 +193,7 @@ const AppRelatarIdRoute = AppRelatarIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/aguardando': typeof AppAguardandoRoute
   '/ajuda': typeof AppAjudaRoute
   '/avaliacoes': typeof AppAvaliacoesRoute
   '/buscar': typeof AppBuscarRoute
@@ -217,6 +224,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/aguardando': typeof AppAguardandoRoute
   '/ajuda': typeof AppAjudaRoute
   '/avaliacoes': typeof AppAvaliacoesRoute
   '/buscar': typeof AppBuscarRoute
@@ -249,6 +257,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
+  '/_app/aguardando': typeof AppAguardandoRoute
   '/_app/ajuda': typeof AppAjudaRoute
   '/_app/avaliacoes': typeof AppAvaliacoesRoute
   '/_app/buscar': typeof AppBuscarRoute
@@ -281,6 +290,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/aguardando'
     | '/ajuda'
     | '/avaliacoes'
     | '/buscar'
@@ -311,6 +321,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/aguardando'
     | '/ajuda'
     | '/avaliacoes'
     | '/buscar'
@@ -342,6 +353,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/login'
+    | '/_app/aguardando'
     | '/_app/ajuda'
     | '/_app/avaliacoes'
     | '/_app/buscar'
@@ -399,6 +411,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/aguardando': {
+      id: '/_app/aguardando'
+      path: '/aguardando'
+      fullPath: '/aguardando'
+      preLoaderRoute: typeof AppAguardandoRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/ajuda': {
       id: '/_app/ajuda'
@@ -586,6 +605,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
+  AppAguardandoRoute: typeof AppAguardandoRoute
   AppAjudaRoute: typeof AppAjudaRoute
   AppAvaliacoesRoute: typeof AppAvaliacoesRoute
   AppBuscarRoute: typeof AppBuscarRoute
@@ -614,6 +634,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAguardandoRoute: AppAguardandoRoute,
   AppAjudaRoute: AppAjudaRoute,
   AppAvaliacoesRoute: AppAvaliacoesRoute,
   AppBuscarRoute: AppBuscarRoute,

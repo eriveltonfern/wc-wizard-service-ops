@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Check, CloudOff, Play } from "lucide-react";
 import { ApiError } from "@/lib/api";
 import { finishTicket, getTicket, startTicket } from "@/lib/endpoints";
-import { dataUrlToBlob, enqueueTicketAction, isOffline, useOutbox } from "@/lib/outbox";
+import { STORAGE_ERROR, dataUrlToBlob, enqueueTicketAction, isOffline, useOutbox } from "@/lib/outbox";
 import type { Ticket } from "@/lib/types";
 import { PageHelp } from "@/components/layout/PageHeader";
 import { ErrorState, SkeletonBlock } from "@/components/ui-kit";
@@ -63,25 +63,30 @@ function Body({ t }: { t: Ticket }) {
   const label = `${t.code} · ${t.bathroom.name}`;
   const refresh = () => void qc.invalidateQueries({ queryKey: ["tickets"] });
 
+  // Só mostra "guardado no celular" se gravou de verdade no aparelho.
+  async function queue(item: Parameters<typeof enqueueTicketAction>[0], what: string) {
+    try { await enqueueTicketAction(item); setMode({ kind: "queued", what }); }
+    catch { setError(new ApiError("storage_failed", STORAGE_ERROR, 0)); }
+  }
   async function start() {
     setError(null);
-    if (isOffline()) { enqueueTicketAction({ kind: "ticket_start", ticket_id: t.id, label, idempotency_key: crypto.randomUUID(), client_at: new Date().toISOString() }); setMode({ kind: "queued", what: "O início do atendimento" }); return; }
+    if (isOffline()) { await queue({ kind: "ticket_start", ticket_id: t.id, label, idempotency_key: crypto.randomUUID(), client_at: new Date().toISOString() }, "O início do atendimento"); return; }
     setPending(true);
     try { await startTicket(t.id); refresh(); }
     catch (e) {
       if (e instanceof ApiError) setError(e);
-      else { enqueueTicketAction({ kind: "ticket_start", ticket_id: t.id, label, idempotency_key: crypto.randomUUID(), client_at: new Date().toISOString() }); setMode({ kind: "queued", what: "O início do atendimento" }); }
+      else { await queue({ kind: "ticket_start", ticket_id: t.id, label, idempotency_key: crypto.randomUUID(), client_at: new Date().toISOString() }, "O início do atendimento"); }
     } finally { setPending(false); }
   }
   async function finish() {
     setError(null);
     const item = { kind: "ticket_done" as const, ticket_id: t.id, label, idempotency_key: key.current, client_at: new Date().toISOString(), note: note.trim(), photo };
-    if (isOffline()) { enqueueTicketAction(item); setMode({ kind: "queued", what: "A conclusão do chamado" }); return; }
+    if (isOffline()) { await queue(item, "A conclusão do chamado"); return; }
     setPending(true);
     try { await finishTicket(t.id, { note: note.trim(), photo: photo ? dataUrlToBlob(photo) : null, idempotency_key: key.current }); refresh(); setMode({ kind: "done" }); }
     catch (e) {
       if (e instanceof ApiError) setError(e);
-      else { enqueueTicketAction(item); setMode({ kind: "queued", what: "A conclusão do chamado" }); }
+      else { await queue(item, "A conclusão do chamado"); }
     } finally { setPending(false); }
   }
 

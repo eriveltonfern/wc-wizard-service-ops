@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MoreVertical, Plus, UserPlus } from "lucide-react";
-import { addTeamMember, createTeam, deleteTeam, endTeamMember, listTeamMembers, listTeams, listUsers, moveTeamMember, updateTeam } from "@/lib/endpoints";
+import { addTeamMembers, createTeam, deleteTeam, endTeamMember, listTeamMembers, listTeams, listUsers, moveTeamMember, updateTeam } from "@/lib/endpoints";
 import type { ContractDetail, Member, Team } from "@/lib/types";
 import { fmtPeriod, fmtShort, shiftLabel, teamKindLabel, todayIso } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -148,16 +148,10 @@ function AddMemberDialog({ team, onClose }: { team: Team; onClose: () => void })
   const avail = people.data?.filter((u) => !current.has(u.id)) ?? [];
   const allOn = avail.length > 0 && avail.every((u) => sel.has(u.id));
   const toggle = (id: number) => setSel((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
-  const add = useAction(async () => {
-    const ids = [...sel];
-    if (!ids.length) return addTeamMember(team.id, { user_id: undefined as unknown as number, starts_on: f.starts_on });
-    let last;
-    for (const id of ids) last = await addTeamMember(team.id, { user_id: id, starts_on: f.starts_on });
-    return last!;
-  }, { success: sel.size > 1 ? `${sel.size} pessoas adicionadas à equipe.` : "Pessoa adicionada à equipe.", onSuccess: onClose });
+  const add = useAction(() => addTeamMembers(team.id, { user_ids: [...sel], starts_on: f.starts_on }), { success: sel.size > 1 ? `${sel.size} pessoas adicionadas à equipe.` : "Pessoa adicionada à equipe.", onSuccess: onClose });
   return (
     <FormDialog open onOpenChange={(o) => !o && onClose()} title={`Adicionar pessoas · ${team.name}`} submitLabel={sel.size > 1 ? `Adicionar ${sel.size} pessoas` : "Adicionar"} pending={add.pending} onSubmit={() => void add.run()}>
-      <Field label={`Pessoas de ${teamKindLabel[team.kind]?.toLowerCase()}`} id="member_user" error={add.fields["user_id"]}>
+      <Field label={`Pessoas de ${teamKindLabel[team.kind]?.toLowerCase()}`} id="member_user" error={add.fields["user_ids"] ?? add.fields["user_id"]}>
         {people.isLoading ? <p className="text-sm text-muted-foreground">Carregando…</p>
           : avail.length === 0 ? <p className="text-sm text-muted-foreground">Todas as pessoas ativas já estão nesta equipe.</p>
           : (
