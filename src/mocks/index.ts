@@ -344,6 +344,25 @@ on("POST", "/companies/{id}/reactivate", ({ d, me, p }) => {
   audit(d, me, "company.reactivated", "company", c.id, { status: "inactive" }, { status: "active" });
   return ok(companyDetail(d, c.id));
 });
+on("POST", "/companies/{id}/fiscals", ({ d, me, p, body }) => {
+  requireAdmin(me);
+  const c = find(d.companies, p[0]!);
+  const v = new V(body);
+  const user_id = v.int("user_id", true, 1);
+  const u = user_id ? d.users.find((x) => x.id === user_id) : undefined;
+  if (user_id && !u) v.fail("user_id", MSG.option);
+  else if (u && u.role !== "fiscal") v.fail("user_id", "Esta pessoa não tem o perfil fiscal.");
+  else if (u && u.status !== "active") v.fail("user_id", "Este fiscal está inativo. Reative-o antes.");
+  else if (u && u.company_id === c.id) v.fail("user_id", "Este fiscal já é desta empresa.");
+  v.done();
+  const t = today();
+  for (const l of d.fiscal_links.filter((x) => x.user_id === u!.id && (x.ends_on === null || x.ends_on > t))) l.ends_on = t;
+  const before = { company_id: u!.company_id };
+  u!.company_id = c.id;
+  if (!d.revoked_tokens.includes(`mock-token-${u!.id}`)) d.revoked_tokens.push(`mock-token-${u!.id}`);
+  audit(d, me, "fiscal.company_changed", "user", u!.id, before, { company_id: c.id });
+  return ok(companyDetail(d, c.id), 201);
+});
 
 // Contratos
 function contractInput(d: MockDb, body: Body, existing?: DbContract) {
