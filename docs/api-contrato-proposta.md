@@ -136,3 +136,9 @@ Com o mês fechado, `POST /cleanings` e `POST /cleanings/{id}/cancel` daquele m�
 
 ### POST /closings/{id}/reopen  `{ reason }`
 Só diretoria. 422 sem motivo (`fields.reason`). 200 → Closing (status "open", motivo em `reopenings`).
+
+### Filtros combinados de Relatórios e Histórico
+`GET /stats` e `GET /history/cleanings` aceitam juntos: `month` **ou** `from`/`to`, `company_id`, `contract_id`, `bathroom_id`, `user_id`.
+- `company_id` restringe aos contratos da empresa (dentro do escopo do perfil).
+- Em `/stats`, `user_id` filtra só `by_person`; os totais continuam sendo dos banheiros.
+- `/stats` devolve também `by_company: (StatTotals & { company: {id, name} })[]`.
