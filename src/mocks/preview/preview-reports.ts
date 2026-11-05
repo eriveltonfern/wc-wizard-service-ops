@@ -57,6 +57,7 @@ export function computeStats(d: MockDb, p: PreviewDb, f: StatsFilter, now = new 
   const people = new Map<number, { done: number; on_time: number }>();
   for (const c of p.cleanings) {
     if (c.status !== "valid" || !c.task_id || !f.contractIds.has(c.contract_id) || (f.bathroomId && c.bathroom_id !== f.bathroomId)) continue;
+    if (f.userId && c.user_id !== f.userId) continue;
     const date = c.task_id.split("-").slice(1, 4).join("-");
     if (date < from || date > to) continue;
     const x = people.get(c.user_id) ?? { done: 0, on_time: 0 };
@@ -64,8 +65,17 @@ export function computeStats(d: MockDb, p: PreviewDb, f: StatsFilter, now = new 
     people.set(c.user_id, x);
   }
   const contractRef = (id: number) => { const c = d.contracts.find((x) => x.id === id)!; return { id, code: c.code, name: c.name }; };
+  const byCompany = new Map<number, Totals>();
+  for (const [cid, t] of byContract) {
+    const coid = d.contracts.find((x) => x.id === cid)!.company_id;
+    if (!byCompany.has(coid)) byCompany.set(coid, zero());
+    const acc = byCompany.get(coid)! as Record<string, number>;
+    for (const [k, v] of Object.entries(t)) if (typeof v === "number") acc[k] = (acc[k] ?? 0) + v;
+  }
   return {
     from, to, totals: finish(total),
+    by_company: [...byCompany].map(([id, t]) => ({ company: { id, name: d.companies.find((x) => x.id === id)?.name ?? "—" }, ...finish(t) }))
+      .sort((a, b) => a.company.name.localeCompare(b.company.name, "pt-BR")),
     by_contract: [...byContract].map(([id, t]) => ({ contract: contractRef(id), ...finish(t) })).sort((a, b) => a.contract.code.localeCompare(b.contract.code)),
     by_bathroom: [...byBath].map(([id, t]) => {
       const b = d.bathrooms.find((x) => x.id === id)!;
@@ -97,6 +107,8 @@ export function isClosed(p: PreviewDb, contractId: number, date: string) {
 
 function idsFor(d: MockDb, me: DbUser, q: URLSearchParams): Set<number> | Res {
   const ids = scope(d, me);
+  const coid = num(q.get("company_id"));
+  if (coid !== null) for (const id of [...ids]) if (d.contracts.find((c) => c.id === id)?.company_id !== coid) ids.delete(id);
   const cid = num(q.get("contract_id"));
   if (cid === null) return ids;
   if (!ids.has(cid)) return err(404, "not_found", "Cadastro não encontrado.");
@@ -139,7 +151,7 @@ export function handleReports(method: string, path: string, q: URLSearchParams, 
     if (field) return deny();
     const ids = idsFor(d, me, q); if ("status" in ids) return ids as Res;
     const per = period(q, now); if ("status" in per) return per as Res;
-    return ok(computeStats(d, loadPreview(d), { ...per, contractIds: ids, bathroomId: num(q.get("bathroom_id")) }, now));
+    return ok(computeStats(d, loadPreview(d), { ...per, contractIds: ids, bathroomId: num(q.get("bathroom_id")), userId: num(q.get("user_id")) }, now));
   }
 
   if (method === "GET" && path === "/pending-tasks") {
