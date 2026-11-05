@@ -142,3 +142,34 @@ Só diretoria. 422 sem motivo (`fields.reason`). 200 → Closing (status "open",
 - `company_id` restringe aos contratos da empresa (dentro do escopo do perfil).
 - Em `/stats`, `user_id` filtra só `by_person`; os totais continuam sendo dos banheiros.
 - `/stats` devolve também `by_company: (StatTotals & { company: {id, name} })[]`.
+
+## Ajustes de novembro/2026
+
+### Regras do contrato
+- `monthly_target` (1–100, padrão 95): meta do mês. `/stats` devolve `target` (0–1) em `totals`, `by_company`, `by_contract` e `by_bathroom` (com vários contratos: média ponderada pelo previsto). "Abaixo da meta", "Meta atingida/Não atingida", Relatórios e Fechamento usam esse valor. 422 `monthly_target`: "Informe um valor de 1 a 100."
+- `photo_before`/`photo_after`: `required | optional` (sem `off`).
+- `cleaning_access`: `all` = qualquer pessoa ativa da limpeza que esteja numa equipe de limpeza do contrato; `assigned` = só as pessoas marcadas no banheiro. O checklist de ativação não muda.
+- Com `assigned`, POST /cleanings e GET /bathrooms/{id}/cleaning-form de quem não está marcado → 403 "Você não está entre os responsáveis por este banheiro." GET /me/today e GET /bathrooms (perfil limpeza) só trazem os banheiros que a pessoa pode limpar.
+
+### POST /bathrooms/transfer `{ bathroom_ids, to_contract_id, location_id?, date, reason }` → Bathroom[]
+Admin ou gestor (gestor só entre contratos dele; fora do escopo → 404). Muda contrato e empresa, mantém `qr_token` e todo o histórico; grava `bathroom.transferred` em /audit com o motivo. Responsáveis marcados no contrato antigo são removidos. 422: `reason` obrigatório, `to_contract_id` inválido ou com banheiro de mesmo nome.
+
+### GET/PUT /bathrooms/{id}/cleaners `{ user_ids }` → `{id, name}[]`
+PUT substitui a lista (só pessoas ativas com perfil limpeza). Grava `bathroom.cleaners_changed`.
+
+### GET /users/{id}/bathrooms → `{id, name, location?, contract}[]`
+Banheiros em que a pessoa está marcada (cartão "Banheiros desta pessoa").
+
+### POST /cleaners/transfer `{ from_user_id, to_user_id, bathroom_ids, reason }` → `{ moved }`
+Passa os banheiros marcados de uma pessoa para outra, com motivo (grava em /audit).
+
+### Fotos guardadas por 60 dias
+Rotina diária no servidor apaga os arquivos de foto (limpezas e chamados) com mais de 60 dias e grava `photo_deleted_at`. A limpeza, o checklist, quem fez e a hora ficam para sempre. `Cleaning` ganha `photo_deleted_at?` e `photos_available_until?` (data); `Ticket` ganha `photo_deleted_at?`. Dados de exemplo cobrem 90 dias.
+
+### QR = só avaliação do cliente (rotas públicas, sem login)
+O QR não registra mais limpeza nem chamado; a interface não tem mais "Ler QR".
+- GET /public/q/{token} → `{ bathroom_name, location? }`. Banheiro inativo, contrato não ativo ou QR antigo → 404 "Este QR não está mais ativo."
+- POST /public/q/{token}/ratings `{ score 1–5, problems[], comment? (até 300), device_key }` → 201 `{ id }`. `problems` (sujo, sem_papel, sem_sabonete, mau_cheiro, lixo_cheio, vazamento, outro) só valem para nota até 3. Uma avaliação por aparelho por banheiro a cada 30 minutos; a mais → 429 `too_many_attempts` "Você já avaliou este banheiro agora há pouco." Não pede nome nem e-mail.
+
+### GET /ratings?from=&to=&contract_id=&bathroom_id= → `{ rows, summary }`
+Admin, gestor e fiscal (escopo de sempre). `rows` (até 100, mais recentes primeiro): `{id, score, problems, comment?, created_at, bathroom, location?, contract, company}`. `summary`: `{ average, count, negative_share (nota 1–2), top_problem, worst: [{bathroom, company, average, count}] }`.

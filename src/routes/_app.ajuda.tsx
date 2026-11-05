@@ -24,7 +24,8 @@ const about: Record<string, string> = {
   "/banheiros": "Busca de qualquer banheiro e seu QR.",
   "/empresas": "Empresas contratantes e seus fiscais.",
   "/pessoas": "Pessoas com acesso, equipes e histórico.",
-  "/etiquetas": "Impressão das etiquetas com QR.",
+  "/etiquetas": "Impressão das etiquetas com QR para os usuários avaliarem o banheiro.",
+  "/avaliacoes": "Notas que os usuários dão aos banheiros pelo QR.",
 };
 
 function AjudaPage() {

@@ -43,7 +43,7 @@ POST /bathrooms/{id}/regenerate-qr — Gerar novo QR (o antigo deixa de valer). 
 GET /bathrooms/{id}/status-periods — Períodos de interdição. → 200 StatusPeriod[]
 POST /bathrooms/{id}/status-periods — Registrar interdição (sem sobreposição). body {starts_on: date, ends_on: date, reason: string} → 201 StatusPeriod
 DELETE /status-periods/{id} — Remover interdição. → 204
-GET /q/{token} — Ler QR: banheiro do escopo do usuário. → 200 {bathroom_id: integer, contract_id: integer, name: string, status: string}
+GET /q/{token} — (legado; a interface não usa mais: o QR agora é só para avaliação pública, ver /public/q/{token}) banheiro do escopo do usuário. → 200 {bathroom_id: integer, contract_id: integer, name: string, status: string}
 GET /contracts/{id}/labels — Etiquetas para impressão (banheiros ativos). → 200 Label[]
 GET /contracts/{id}/teams — Equipes do contrato com membros atuais. → 200 Team[]
 POST /contracts/{id}/teams — Criar equipe de limpeza ou manutenção. body {name: string, kind: string, shift: string} → 201 Team
@@ -73,9 +73,9 @@ UserInput = {name: string, email: string, phone?: string, role: string, company_
 Company = {id: integer, name: string, document?: string, contact_name?: string, contact_phone?: string, notes?: string, status: string, contracts_count: integer, fiscals_count: integer}
 CompanyDetail = Company + {contracts: {id: integer, code: string, name: string, status: string, starts_on: date, ends_on?: date}[], fiscals: {id: integer, name: string, email: string, status: string}[]}
 CompanyInput = {name: string, document?: string, contact_name?: string, contact_phone?: string, notes?: string}
-Contract = {id: integer, code: string, name: string, company: {id: integer, name: string}, manager?: {id: integer, name: string}, starts_on: date, ends_on?: date, status: draft|active|suspended|ended, timezone: string, rules: {photo_before: required|optional|off, photo_after: required|optional|off, default_cleanings_per_day: integer, default_weekdays: integer[], shifts: manha|tarde|noite[]}, counts: {bathrooms: integer, teams: integer}}
+Contract = {id: integer, code: string, name: string, company: {id: integer, name: string}, manager?: {id: integer, name: string}, starts_on: date, ends_on?: date, status: draft|active|suspended|ended, timezone: string, rules: {photo_before: required|optional, photo_after: required|optional, default_cleanings_per_day: integer, default_weekdays: integer[], shifts: manha|tarde|noite[], monthly_target: integer (1–100, padrão 95), cleaning_access: all|assigned (padrão all)}, counts: {bathrooms: integer, teams: integer}}
 ContractDetail = Contract + {fiscals: FiscalLink[], checklist: ChecklistItem[], activation: Activation}
-ContractInput = {company_id: integer, code: string, name: string, starts_on: date, ends_on?: date, manager_id?: integer, timezone: string} + {photo_before: required|optional|off, photo_after: required|optional|off, default_cleanings_per_day: integer, default_weekdays: integer[], shifts: manha|tarde|noite[]}
+ContractInput = {company_id: integer, code: string, name: string, starts_on: date, ends_on?: date, manager_id?: integer, timezone: string} + {photo_before: required|optional, photo_after: required|optional, default_cleanings_per_day: integer, default_weekdays: integer[], shifts: manha|tarde|noite[], monthly_target: integer (1–100, padrão 95), cleaning_access: all|assigned (padrão all)}
 Activation = {ready: boolean, missing: manager|bathroom|cleaning_team|fiscal|company[]} — nesta ordem. "fiscal" falta quando o contrato não tem fiscal ativo da empresa do contrato com vínculo vigente (starts_on <= hoje e ends_on vazio ou >= hoje).
 FiscalLink = {id: integer, user_id: integer, name: string, email: string, starts_on: date, ends_on?: date}
 ChecklistItem = {id: integer, label: string, position: integer, active: boolean}
@@ -88,3 +88,9 @@ Label = {bathroom_id: integer, name: string, location?: string, url: string}
 Team = {id: integer, contract_id: integer, kind: limpeza|manutencao, name: string, shift?: string, status: string, members: Member[]}
 Member = {id: integer, team_id: integer, user_id: integer, name: string, role: string, starts_on: date, ends_on?: date, removal_reason?: string}
 AuditEvent = {id: integer, action: string, entity: string, entity_id: integer, before?: object, after?: object, reason?: string, created_at: string, actor?: {id: integer, name: string}}
+
+## Ajustes (novembro/2026) — detalhes em docs/api-contrato-proposta.md
+- `rules.photo_before`/`photo_after`: só `required` ou `optional` (a opção `off` saiu).
+- `rules.monthly_target`: meta de cumprimento do mês em % (1–100, padrão 95). Toda tela usa a meta do contrato.
+- `rules.cleaning_access`: `all` (qualquer pessoa da limpeza da equipe do contrato) ou `assigned` (só as pessoas marcadas em cada banheiro).
+- Novas rotas: POST /bathrooms/transfer, GET/PUT /bathrooms/{id}/cleaners, GET /users/{id}/bathrooms, POST /cleaners/transfer, GET /public/q/{token}, POST /public/q/{token}/ratings, GET /ratings.
