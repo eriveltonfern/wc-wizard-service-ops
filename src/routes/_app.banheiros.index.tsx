@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { PageHelp, PageHeader } from "@/components/layout/PageHeader";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
-import { Plus, Search } from "lucide-react";
+import { ArrowRightLeft, Plus, Search, Users } from "lucide-react";
+import { BulkCleanersDialog, TransferDialog } from "@/components/bathrooms/manage";
+import { Checkbox } from "@/components/ui/checkbox";
 import { listBathrooms, listContracts } from "@/lib/endpoints";
 import { canManageContracts, meQuery } from "@/lib/auth";
 import { bathroomKindLabel, hasOwnPlan, planLabel } from "@/lib/format";
@@ -63,10 +65,14 @@ function BathroomsPage() {
   const rows = query.data?.rows ?? [];
   const total = query.data?.total ?? 0;
   const limit = query.data?.limit ?? 50;
+  const [sel, setSel] = useState<number[]>([]);
+  const [bulk, setBulk] = useState<"transfer" | "cleaners" | null>(null);
+  const toggle = (id: number) => setSel((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+  const allOn = rows.length > 0 && rows.every((b) => sel.includes(b.id));
 
   return (
     <div className="space-y-5">
-      <PageHelp>Encontre qualquer banheiro digitando o nome, o local, o contrato ou a empresa (não precisa de acento). Filtre por contrato ou situação e clique no banheiro para ver o QR, as interdições e as ações.</PageHelp>
+      <PageHelp>Encontre qualquer banheiro digitando o nome, o local, o contrato ou a empresa (não precisa de acento). Filtre por contrato ou situação e clique no banheiro para ver o QR, as interdições e as ações. Marque vários para transferir de contrato ou definir responsáveis de uma vez.</PageHelp>
       <PageHeader title="Banheiros" subtitle="Encontre qualquer banheiro de todos os contratos." actions={canManage && <Button className="min-h-11" onClick={() => setCreating(true)}><Plus className="h-4 w-4" />Novo banheiro</Button>} />
 
       <div className="space-y-3 rounded-[10px] border bg-card p-4">
@@ -96,15 +102,24 @@ function BathroomsPage() {
             : <EmptyBlock title="Nenhum banheiro cadastrado ainda.">{canManage && <Button className="min-h-11" onClick={() => setCreating(true)}><Plus className="h-4 w-4" />Novo banheiro</Button>}</EmptyBlock>
         ) : (
           <>
+            {canManage && sel.length > 0 && (
+              <div role="toolbar" aria-label="Ações em lote" className="sticky top-16 z-10 flex flex-wrap items-center gap-2 rounded-[10px] border border-info-border bg-info-soft px-4 py-2.5">
+                <span className="text-sm font-semibold text-ink">{sel.length} selecionado{sel.length === 1 ? "" : "s"}</span>
+                <Button className="min-h-10" onClick={() => setBulk("transfer")}><ArrowRightLeft className="h-4 w-4" />Transferir {sel.length} banheiro{sel.length === 1 ? "" : "s"}</Button>
+                <Button variant="outline" className="min-h-10" onClick={() => setBulk("cleaners")}><Users className="h-4 w-4" />Definir responsáveis</Button>
+                <Button variant="ghost" className="min-h-10" onClick={() => setSel([])}>Limpar seleção</Button>
+              </div>
+            )}
             {total > limit && <p role="status" className="rounded-md border border-pending/30 bg-pending-soft px-3 py-2 text-sm font-medium text-foreground">Mostrando {limit} de {total}. Refine a busca.</p>}
             <div className="hidden overflow-x-auto rounded-[10px] border bg-card md:block">
               <table className="w-full text-sm">
                 <thead className="border-b bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
-                  <tr><th className="px-4 py-3">Banheiro</th><th className="px-4 py-3">Local</th><th className="px-4 py-3">Empresa · Contrato</th><th className="px-4 py-3">Tipo</th><th className="px-4 py-3">Andar</th><th className="px-4 py-3">Plano</th><th className="px-4 py-3">Situação</th></tr>
+                  <tr>{canManage && <th className="w-10 px-4 py-3"><Checkbox aria-label="Selecionar todos" checked={allOn} onCheckedChange={(v) => setSel(v ? rows.map((b) => b.id) : [])} /></th>}<th className="px-4 py-3">Banheiro</th><th className="px-4 py-3">Local</th><th className="px-4 py-3">Empresa · Contrato</th><th className="px-4 py-3">Tipo</th><th className="px-4 py-3">Andar</th><th className="px-4 py-3">Plano</th><th className="px-4 py-3">Situação</th></tr>
                 </thead>
                 <tbody className="divide-y">
                   {rows.map((b) => (
                     <tr key={b.id} className="hover:bg-muted/40">
+                      {canManage && <td className="px-4 py-3"><Checkbox aria-label={`Selecionar ${b.name}`} checked={sel.includes(b.id)} onCheckedChange={() => toggle(b.id)} /></td>}
                       <td className="px-4 py-3"><Link to="/banheiros/$id" params={{ id: String(b.id) }} className="text-base font-semibold text-primary hover:underline">{b.name}</Link></td>
                       <td className="px-4 py-3 text-muted-foreground">{b.location?.name ?? "—"}</td>
                       <td className="px-4 py-3"><Link to="/contratos/$id" params={{ id: String(b.contract.id) }} className="hover:underline"><span className="text-muted-foreground">{b.company.name} · </span>{b.contract.code} {b.contract.name}</Link></td>
@@ -121,6 +136,7 @@ function BathroomsPage() {
               {rows.map((b) => (
                 <li key={b.id} className="rounded-[10px] border bg-card p-4">
                   <div className="flex items-start justify-between gap-2">
+                    {canManage && <Checkbox className="mt-3.5" aria-label={`Selecionar ${b.name}`} checked={sel.includes(b.id)} onCheckedChange={() => toggle(b.id)} />}
                     <Link to="/banheiros/$id" params={{ id: String(b.id) }} className="flex min-h-11 items-center text-lg font-semibold text-primary">{b.name}</Link>
                     <StatusBadge status={b.status} />
                   </div>
@@ -133,6 +149,8 @@ function BathroomsPage() {
           </>
         )}
 
+      {bulk === "transfer" && <TransferDialog ids={sel} currentContractIds={[...new Set(rows.filter((b) => sel.includes(b.id)).map((b) => b.contract_id))]} onClose={() => setBulk(null)} onDone={() => setSel([])} />}
+      {bulk === "cleaners" && <BulkCleanersDialog ids={sel} onClose={() => setBulk(null)} onDone={() => setSel([])} />}
       {creating && <NewBathroomDialog initialContract={search.contrato} onClose={() => setCreating(false)} />}
     </div>
   );
