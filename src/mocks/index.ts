@@ -982,7 +982,7 @@ export function handleMock(method: string, rawPath: string, body: unknown, token
       }
     }
     const preview = handlePreview(method, path!, query, b, me, d);
-    if (preview) return preview;
+    if (preview) { if (method !== "GET" && preview.status < 300) save(); return preview; }
     for (const [m, re, h] of routes) {
       if (m !== method) continue;
       const match = path!.match(re);
