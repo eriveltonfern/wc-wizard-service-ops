@@ -3,21 +3,28 @@
 import type { DbUser, MockDb } from "../data";
 import {
   type PreviewDb, type PvCleaning, type PvClosing, SHIFT_END_LABEL, SHIFT_ORDER, type ShiftKey, addDays, dayClose, interdicted, iso, loadPreview,
-  opDate, savePreview, shiftWindow, tasksFor,
+  opDate, savePreview, shiftWindow, tasksFor, HISTORY_DAYS,
 } from "./preview-data";
 import { type Body, type Res, cleaningView, err, num, ok, scope } from "./preview-handlers";
 
 export type Totals = {
   expected: number; done: number; not_done: number; pending: number; late_pending: number; cancelled: number;
   extras: number; on_time: number; late_done: number; compliance: number | null;
+  /** Meta (0–1): a do contrato; somando contratos, média ponderada pelo previsto. Guardamos a soma meta×previsto em target_w. */
+  target: number; target_w?: number;
 };
-const zero = (): Totals => ({ expected: 0, done: 0, not_done: 0, pending: 0, late_pending: 0, cancelled: 0, extras: 0, on_time: 0, late_done: 0, compliance: null });
-const finish = (t: Totals) => ({ ...t, compliance: t.expected ? t.done / t.expected : null });
+const zero = (): Totals => ({ expected: 0, done: 0, not_done: 0, pending: 0, late_pending: 0, cancelled: 0, extras: 0, on_time: 0, late_done: 0, compliance: null, target: 0.95, target_w: 0 });
+/** Meta mensal do contrato (rules.monthly_target, padrão 95%). */
+export const targetOf = (c: { rules: { monthly_target?: number } } | undefined) => (c?.rules.monthly_target ?? 95) / 100;
+const finish = (t: Totals, fallback = 0.95) => {
+  const { target_w, ...rest } = t;
+  return { ...rest, compliance: t.expected ? t.done / t.expected : null, target: t.expected && target_w ? Math.round((target_w / t.expected) * 1000) / 1000 : fallback };
+};
 
 export type StatsFilter = { from: string; to: string; contractIds: Set<number>; bathroomId?: number | null; userId?: number | null };
 export const cleaningDate = (c: PvCleaning) => opDate(new Date(c.client_finished_at));
-/** Os dados de exemplo cobrem os últimos 30 dias. */
-export const dataStart = (now: Date) => addDays(opDate(now), -30);
+/** Os dados de exemplo cobrem os últimos 90 dias. */
+export const dataStart = (now: Date) => addDays(opDate(now), -HISTORY_DAYS);
 
 /**
  * Previsto = tarefas não canceladas · Realizado = tarefas feitas · Não feitas = dia passou sem limpeza ·
@@ -42,7 +49,7 @@ export function computeStats(d: MockDb, p: PreviewDb, f: StatsFilter, now = new 
       const cancelled = !done && (p.cancelled_tasks.includes(t.id) || interdicted(d, t.bathroom.id, date));
       bump(t.contract.id, t.bathroom.id, date, (x) => {
         if (cancelled) { x.cancelled++; return; }
-        x.expected++;
+        x.expected++; x.target_w = (x.target_w ?? 0) + targetOf(t.contract);
         if (done) { x.done++; if (done.out_of_shift) x.late_done++; else x.on_time++; }
         else if (now >= dayClose(date)) x.not_done++;
         else { x.pending++; if (now >= shiftWindow(date, t.shift)[1]) x.late_pending++; }
@@ -73,16 +80,16 @@ export function computeStats(d: MockDb, p: PreviewDb, f: StatsFilter, now = new 
     for (const [k, v] of Object.entries(t)) if (typeof v === "number") acc[k] = (acc[k] ?? 0) + v;
   }
   return {
-    from, to, totals: finish(total),
+    from, to, totals: finish(total, f.contractIds.size === 1 ? targetOf(d.contracts.find((c) => f.contractIds.has(c.id))) : 0.95),
     by_company: [...byCompany].map(([id, t]) => ({ company: { id, name: d.companies.find((x) => x.id === id)?.name ?? "—" }, ...finish(t) }))
       .sort((a, b) => a.company.name.localeCompare(b.company.name, "pt-BR")),
-    by_contract: [...byContract].map(([id, t]) => ({ contract: contractRef(id), ...finish(t) })).sort((a, b) => a.contract.code.localeCompare(b.contract.code)),
+    by_contract: [...byContract].map(([id, t]) => ({ contract: contractRef(id), ...finish(t, targetOf(d.contracts.find((c) => c.id === id))) })).sort((a, b) => a.contract.code.localeCompare(b.contract.code)),
     by_bathroom: [...byBath].map(([id, t]) => {
       const b = d.bathrooms.find((x) => x.id === id)!;
       const c = d.contracts.find((x) => x.id === b.contract_id)!;
       const co = d.companies.find((x) => x.id === c.company_id);
       return { bathroom: { id, name: b.name }, location: d.locations.find((l) => l.id === b.location_id)?.name, contract: contractRef(c.id),
-        company: { id: co?.id ?? 0, name: co?.name ?? "" }, ...finish(t) };
+        company: { id: co?.id ?? 0, name: co?.name ?? "" }, ...finish(t, targetOf(c)) };
     }).sort((a, b) => (a.compliance ?? 1) - (b.compliance ?? 1) || a.bathroom.name.localeCompare(b.bathroom.name, "pt-BR")),
     by_day: [...byDay].map(([date, t]) => ({ date: date as string, expected: t.expected, done: t.done, not_done: t.not_done, extras: t.extras }))
       .sort((a, b) => a.date.localeCompare(b.date)),
@@ -135,7 +142,7 @@ function closingView(d: MockDb, me: DbUser, p: PreviewDb, contractId: number, mo
   const name = (id: number) => d.users.find((u) => u.id === id)?.name ?? "—";
   return {
     id: row?.id ?? null, contract_id: contractId, month, status: closed ? "closed" : "open", ended,
-    totals: closed ? row!.totals : computeStats(d, p, { from, to, contractIds: new Set([contractId]) }, now).totals,
+    totals: closed ? { ...row!.totals, target: row!.totals.target ?? targetOf(c) } : computeStats(d, p, { from, to, contractIds: new Set([contractId]) }, now).totals,
     closed_at: closed ? row!.closed_at : undefined, closed_by: closed ? { id: row!.closed_by, name: name(row!.closed_by) } : undefined,
     reopenings: (row?.reopenings ?? []).map((r) => ({ at: r.at, by: { id: r.by, name: name(r.by) }, reason: r.reason })),
     can: { close: canManage && !closed && ended, reopen: me.role === "admin" && closed },

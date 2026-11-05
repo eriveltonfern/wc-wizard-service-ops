@@ -2,7 +2,8 @@ import { useState } from "react";
 import { PageHelp } from "@/components/layout/PageHeader";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
-import { ArrowLeft, Printer, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRightLeft, Printer, Trash2 } from "lucide-react";
+import { CleanersCard, TransferDialog } from "@/components/bathrooms/manage";
 import { getBathroom, getContract, inactivateBathroom, reactivateBathroom } from "@/lib/endpoints";
 import { ApiError } from "@/lib/api";
 import { canManageContracts, meQuery } from "@/lib/auth";
@@ -26,7 +27,7 @@ export const Route = createFileRoute("/_app/banheiros/$id")({
   component: BathroomPage,
 });
 
-type Dlg = "edit" | "qr" | "periods" | "delete" | null;
+type Dlg = "edit" | "qr" | "periods" | "delete" | "transfer" | null;
 
 function BathroomPage() {
   const { id } = Route.useParams();
@@ -36,7 +37,7 @@ function BathroomPage() {
   const canManage = canManageContracts(me.role);
   const q = useQuery({ queryKey: ["bathroom", bid], queryFn: () => getBathroom(bid), retry: false });
   const [dlg, setDlg] = useState<Dlg>(null);
-  const contract = useQuery({ queryKey: ["contract", q.data?.contract_id], queryFn: () => getContract(q.data!.contract_id), enabled: dlg === "edit" && !!q.data });
+  const contract = useQuery({ queryKey: ["contract", q.data?.contract_id], queryFn: () => getContract(q.data!.contract_id), enabled: !!q.data });
   const toggle = useAction(() => (q.data!.status === "active" ? inactivateBathroom : reactivateBathroom)(bid), { success: "Situação do banheiro atualizada." });
 
   const back = <Link to="/banheiros" className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-primary hover:underline"><ArrowLeft className="h-4 w-4" />Voltar para banheiros</Link>;
@@ -52,7 +53,7 @@ function BathroomPage() {
   return (
     <div className="space-y-5">
       {back}
-      <PageHelp>Dados do banheiro, QR atual e interdições. Gerar novo QR faz a etiqueta antiga parar de funcionar.</PageHelp>
+      <PageHelp>Dados do banheiro, QR atual e interdições. O QR serve para os usuários avaliarem o banheiro. Gerar novo QR faz a etiqueta antiga parar de funcionar. "Transferir" passa o banheiro para outro contrato mantendo o mesmo QR e o histórico.</PageHelp>
       <header className="rounded-[10px] border bg-card p-5">
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-extrabold tracking-tight text-ink">{b.name}</h1>
@@ -72,6 +73,7 @@ function BathroomPage() {
             <Button variant="outline" className="min-h-11" onClick={() => setDlg("qr")}>Gerar novo QR</Button>
             <Button variant="outline" className="min-h-11" onClick={() => setDlg("periods")}>Interdições</Button>
             {b.status === "active" && <Button asChild variant="outline" className="min-h-11"><Link to="/etiquetas" search={{ contrato: b.contract_id, banheiro: b.id }}><Printer className="h-4 w-4" />Imprimir etiqueta</Link></Button>}
+            <Button variant="outline" className="min-h-11" onClick={() => setDlg("transfer")}><ArrowRightLeft className="h-4 w-4" />Transferir</Button>
             <Button variant="outline" className="min-h-11 text-danger" onClick={() => setDlg("delete")}><Trash2 className="h-4 w-4" />Excluir</Button>
           </div>
         )}
@@ -96,6 +98,8 @@ function BathroomPage() {
         </section>
       </div>
 
+      {contract.data?.rules.cleaning_access === "assigned" && <CleanersCard bathroomId={b.id} canManage={canManage} />}
+
       <section className="rounded-[10px] border bg-card p-5">
         <h2 className="text-lg font-semibold text-foreground">Interdições</h2>
         {b.status_periods.length === 0 ? <p className="mt-2 text-sm text-muted-foreground">Nenhuma interdição registrada.</p> : (
@@ -106,6 +110,7 @@ function BathroomPage() {
       </section>
 
       {dlg === "edit" && (contract.data ? <BathroomForm contract={contract.data} bathroom={b} onClose={close} /> : null)}
+      {dlg === "transfer" && <TransferDialog ids={[b.id]} currentContractIds={[b.contract_id]} onClose={close} />}
       {dlg === "qr" && <RegenerateQr b={b} onClose={close} />}
       {dlg === "periods" && <PeriodsDialog b={b} onClose={close} />}
       {dlg === "delete" && <DeleteBathroom b={b} onClose={close} onDeleted={() => void navigate({ to: "/banheiros" })} />}

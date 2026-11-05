@@ -73,7 +73,7 @@ function AppLayout() {
       {items.map((i) => {
         const best = items.filter((x) => path === x.to || path.startsWith(x.to + "/")).sort((a, b) => b.to.length - a.to.length)[0];
         const active = best?.to === i.to;
-        const center = i.to === "/ler-qr";
+        const center = false;
         return (
           <Link key={i.to} to={i.to} aria-current={active ? "page" : undefined}
             className={cn("flex min-h-16 flex-col items-center justify-center gap-1 text-xs font-semibold text-muted-foreground",

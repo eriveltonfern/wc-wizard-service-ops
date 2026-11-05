@@ -24,12 +24,15 @@ const about: Record<string, string> = {
   "/banheiros": "Busca de qualquer banheiro e seu QR.",
   "/empresas": "Empresas contratantes e seus fiscais.",
   "/pessoas": "Pessoas com acesso, equipes e histórico.",
-  "/etiquetas": "Impressão das etiquetas com QR.",
+  "/etiquetas": "Impressão das etiquetas com QR para os usuários avaliarem o banheiro.",
+  "/avaliacoes": "Notas que os usuários dão aos banheiros pelo QR.",
 };
 
 function AjudaPage() {
   const { data: me } = useSuspenseQuery(meQuery);
   const items = navByRole[me.role].filter((i) => about[i.to]);
+  const d = new Date(Date.now() + 60 * 86400000);
+  const until = `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`;
   return (
     <div className="space-y-6">
       <PageHelp>Em toda tela, clique em "Ajuda desta tela" (ou no "?" no topo) para ver como ela funciona.</PageHelp>
@@ -43,6 +46,13 @@ function AjudaPage() {
               <span className="text-muted-foreground">· {about[i.to]}</span>
             </li>
           ))}
+        </ul>
+      </DataCard>
+      <DataCard title="Regras do sistema">
+        <ul className="list-disc space-y-1.5 py-3 pl-9 pr-4 text-sm text-ink">
+          <li>As fotos das limpezas e dos chamados ficam guardadas por 60 dias. Depois disso só a imagem é apagada; a limpeza, o checklist, quem fez e a hora continuam no histórico. Fotos de uma limpeza feita hoje ficam disponíveis até {until}.</li>
+          <li>O QR da etiqueta serve só para os usuários avaliarem o banheiro. A limpeza escolhe o banheiro pela lista do dia ou pela busca.</li>
+          <li>Cada contrato tem a sua meta de cumprimento do mês (padrão 95%).</li>
         </ul>
       </DataCard>
     </div>

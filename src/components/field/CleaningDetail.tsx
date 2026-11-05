@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { approveCleaning, cancelCleaning, getCleaning } from "@/lib/endpoints";
 import { fmtDate } from "@/lib/format";
 import type { CancelEffect, Cleaning } from "@/lib/types";
-import { ErrorState, Pill, SkeletonBlock } from "@/components/ui-kit";
+import { ErrorState, PhotoDeleted, Pill, SkeletonBlock } from "@/components/ui-kit";
 import { fmtTime, shiftTaskLabel } from "@/components/field/kit";
 import { PendingButton, ReasonDialog, useAction } from "@/components/contracts/kit";
 import { fmtDateTime } from "@/components/tickets/kit";
@@ -68,10 +68,15 @@ export function CleaningDetail({ id, onClose, readOnly }: { id: number; onClose:
           {c.status === "cancelled" && <Pill tone="danger">Cancelada{c.cancel_reason ? `: ${c.cancel_reason}` : ""}</Pill>}
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-3">
-        <Photo src={c.photo_before_url} label="Antes" />
-        <Photo src={c.photo_after_url} label="Depois" />
-      </div>
+      {c.photo_deleted_at ? <PhotoDeleted /> : (
+        <div className="space-y-1">
+          <div className="grid grid-cols-2 gap-3">
+            <Photo src={c.photo_before_url} label="Antes" />
+            <Photo src={c.photo_after_url} label="Depois" />
+          </div>
+          {c.photos_available_until && <p className="text-xs text-muted-foreground">Fotos disponíveis até {fmtDate(c.photos_available_until).slice(0, 5)}.</p>}
+        </div>
+      )}
       {c.repeated_with && (
         <section className="space-y-2 rounded-[10px] border border-danger/30 bg-danger-soft p-3">
           <p className="text-sm font-bold text-danger">Mesma foto de outra limpeza</p>

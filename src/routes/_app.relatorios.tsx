@@ -160,7 +160,7 @@ function DrillRow({ title, detail, t, onClick }: { title: string; detail?: strin
           {detail && <span className="block truncate text-muted-foreground">{detail}</span>}
           {t && <span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-secondary"><span className={cn("block h-full rounded-full", barTone(t.compliance))} style={{ width: `${Math.round((t.compliance ?? 0) * 100)}%` }} /></span>}
         </span>
-        {t && <Pill tone={complianceTone(t.compliance)}>{pct(t.compliance)}</Pill>}
+        {t && <Pill tone={complianceTone(t.compliance, t.target)}>{pct(t.compliance)}</Pill>}
         <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
       </button>
     </li>
@@ -177,11 +177,11 @@ function SortTable({ title, rows, searchable, historySearch }: { title: string; 
   const [onlyBelow, setOnlyBelow] = useState(false);
   const norm = (v: string) => v.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
   const list = useMemo(() => {
-    const out = rows.filter((r) => (!text || norm(`${r.name} ${r.sub}`).includes(norm(text))) && (!onlyBelow || (r.t.expected > 0 && !metGoal(r.t.compliance))));
+    const out = rows.filter((r) => (!text || norm(`${r.name} ${r.sub}`).includes(norm(text))) && (!onlyBelow || (r.t.expected > 0 && !metGoal(r.t.compliance, r.t.target))));
     const val = (r: Row) => (sort.k === "name" ? r.name : (r.t[sort.k] ?? -1));
     return out.sort((a, b) => { const x = val(a), y = val(b); const c = typeof x === "string" ? x.localeCompare(y as string, "pt-BR") : (x as number) - (y as number); return sort.asc ? c : -c; });
   }, [rows, text, onlyBelow, sort]);
-  const below = rows.filter((r) => r.t.expected > 0 && !metGoal(r.t.compliance)).length;
+  const below = rows.filter((r) => r.t.expected > 0 && !metGoal(r.t.compliance, r.t.target)).length;
   const Th = ({ k, children, right }: { k: SortKey; children: string; right?: boolean }) => (
     <th className={cn("px-4 py-2", right && "text-right")} aria-sort={sort.k === k ? (sort.asc ? "ascending" : "descending") : "none"}>
       <button type="button" className="inline-flex items-center gap-1 font-semibold uppercase hover:text-ink" onClick={() => setSort({ k, asc: sort.k === k ? !sort.asc : k === "name" || k === "compliance" })}>
@@ -220,7 +220,7 @@ function SortTable({ title, rows, searchable, historySearch }: { title: string; 
                   <td className="px-4 py-2.5 text-right tabular-nums">{r.t.done}</td>
                   <td className={cn("px-4 py-2.5 text-right tabular-nums", r.t.not_done > 0 && "font-semibold text-danger")}>{r.t.not_done}</td>
                   <td className="px-4 py-2.5 text-right tabular-nums text-muted-foreground">{r.t.extras}</td>
-                  <td className="px-4 py-2.5 text-right"><Pill tone={complianceTone(r.t.compliance)}>{pct(r.t.compliance)}</Pill></td>
+                  <td className="px-4 py-2.5 text-right"><Pill tone={complianceTone(r.t.compliance, r.t.target)}>{pct(r.t.compliance)}</Pill></td>
                   <td className="px-2 text-muted-foreground print:hidden">{(r.onClick || r.to) && <ChevronRight className="h-4 w-4" aria-hidden />}</td>
                 </tr>
               ))}
@@ -228,7 +228,7 @@ function SortTable({ title, rows, searchable, historySearch }: { title: string; 
           </table>
         </div>
       )}
-      <p className="border-t px-4 py-2 text-xs text-muted-foreground">Meta: 95%. Extras não entram no cumprimento. {searchable ? "Clique no banheiro para ver as limpezas dele." : "Clique na linha para aprofundar."}</p>
+      <p className="border-t px-4 py-2 text-xs text-muted-foreground">Meta de cada contrato (aba Regras). Extras não entram no cumprimento. {searchable ? "Clique no banheiro para ver as limpezas dele." : "Clique na linha para aprofundar."}</p>
     </DataCard>
   );
 }

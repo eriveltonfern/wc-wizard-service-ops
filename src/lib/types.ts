@@ -3,7 +3,8 @@ export type ISODate = string; // "AAAA-MM-DD"
 
 export type Role = "admin" | "gestor" | "fiscal" | "limpeza" | "manutencao";
 export type ContractStatus = "draft" | "active" | "suspended" | "ended";
-export type PhotoRule = "required" | "optional" | "off";
+export type PhotoRule = "required" | "optional";
+export type CleaningAccess = "all" | "assigned";
 export type Shift = "manha" | "tarde" | "noite";
 export type TeamKind = "limpeza" | "manutencao";
 export type BathroomKind = "masculino" | "feminino" | "unissex" | "pcd";
@@ -43,6 +44,8 @@ export type ContractRules = {
   default_cleanings_per_day: number;
   default_weekdays: number[]; // 1 = segunda ... 7 = domingo
   shifts: Shift[];
+  monthly_target: number; // % de 1 a 100
+  cleaning_access: CleaningAccess;
 };
 export type Contract = {
   id: number; code: string; name: string;
@@ -120,6 +123,8 @@ export type Cleaning = {
   registered_at: string; client_finished_at: string;
   marks: CleaningMark[]; status: "valid" | "cancelled"; cancel_reason?: string | undefined;
   photo_before_url?: string | undefined; photo_after_url?: string | undefined;
+  /** Fotos guardadas por 60 dias: depois disso só a imagem é apagada. */
+  photo_deleted_at?: string | undefined; photos_available_until?: ISODate | undefined;
   checklist: { item_id: number; label: string; answer: ChecklistAnswer; open_ticket: boolean }[];
   notes?: string | undefined;
   ticket_suggestions?: { item_id: number; label: string; category: TicketCategory; description: string }[] | undefined;
@@ -157,6 +162,7 @@ export type Ticket = {
   started_at?: string | undefined; done_at?: string | undefined; done_note?: string | undefined;
   cancel_reason?: string | undefined; cleaning_id?: number | undefined;
   photo_open_url?: string | undefined; photo_done_url?: string | undefined;
+  photo_deleted_at?: string | undefined;
   events: { id: number; kind: TicketEventKind; actor: TicketPerson; at: string; text?: string | undefined }[];
   can: { start: boolean; done: boolean; assign: boolean; cancel: boolean; priority: boolean; comment: boolean };
   assignable?: { id: number; name: string }[] | undefined;
@@ -178,6 +184,8 @@ export type CancelEffect = { kind: "pending" | "not_done"; task_date: ISODate } 
 export type StatTotals = {
   expected: number; done: number; not_done: number; pending: number; late_pending: number; cancelled: number;
   extras: number; on_time: number; late_done: number; compliance: number | null;
+  /** Meta do contrato (0–1). Com vários contratos: média ponderada pelo previsto. */
+  target: number;
 };
 type Ref = { id: number; code: string; name: string };
 export type Stats = {
@@ -202,3 +210,24 @@ export type Closing = {
   reopenings: { at: string; by: { id: number; name: string }; reason: string }[];
   can: { close: boolean; reopen: boolean };
 };
+
+// ---------- Banheiros: transferência e responsáveis ----------
+export type BathroomTransferInput = { bathroom_ids: number[]; to_contract_id: number; location_id?: number | undefined; date: ISODate; reason: string };
+export type Cleaner = { id: number; name: string };
+export type CleanerTransferInput = { from_user_id: number; to_user_id: number; bathroom_ids: number[]; reason: string };
+export type UserBathroom = { id: number; name: string; location?: string | undefined; contract: { id: number; code: string; name: string } };
+
+// ---------- Avaliações do cliente (QR público) ----------
+export type RatingProblem = "sujo" | "sem_papel" | "sem_sabonete" | "mau_cheiro" | "lixo_cheio" | "vazamento" | "outro";
+export type PublicQr = { bathroom_name: string; location?: string | undefined };
+export type RatingInput = { score: number; problems: RatingProblem[]; comment?: string | undefined; device_key: string };
+export type Rating = {
+  id: number; score: number; problems: RatingProblem[]; comment?: string | undefined; created_at: string;
+  bathroom: { id: number; name: string }; location?: string | undefined;
+  contract: { id: number; code: string; name: string }; company: { id: number; name: string };
+};
+export type RatingSummary = {
+  average: number | null; count: number; negative_share: number | null; top_problem: RatingProblem | null;
+  worst: { bathroom: { id: number; name: string }; company: { id: number; name: string }; average: number; count: number }[];
+};
+export type RatingList = { rows: Rating[]; summary: RatingSummary };

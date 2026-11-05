@@ -16,12 +16,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { ContractCtx } from "./ctx";
+import { TransferDialog } from "@/components/bathrooms/manage";
 import {
   ConfirmDialog, DateInput, EmptyBlock, ErrorBlock, Field, FormDialog, FormError, HistoryNotice, LoadingBlock, NativeSelect,
   PendingButton, StatusBadge, WeekdayChips, useAction,
 } from "./kit";
 
-type Dlg = { kind: "form"; b?: Bathroom } | { kind: "qr" | "periods" | "delete"; b: Bathroom } | { kind: "locations" } | null;
+type Dlg = { kind: "form"; b?: Bathroom } | { kind: "qr" | "periods" | "delete" | "transfer"; b: Bathroom } | { kind: "locations" } | null;
 
 export function BathroomsTab({ contract: c, ctx }: { contract: ContractDetail; ctx: ContractCtx }) {
   const [q, setQ] = useState("");
@@ -84,6 +85,7 @@ export function BathroomsTab({ contract: c, ctx }: { contract: ContractDetail; c
                             <DropdownMenuItem className="min-h-11" onSelect={() => setDlg({ kind: "qr", b })}>Gerar novo QR</DropdownMenuItem>
                             {b.status === "active" && <DropdownMenuItem asChild className="min-h-11"><Link to="/etiquetas" search={{ contrato: c.id, banheiro: b.id }}>Imprimir etiqueta</Link></DropdownMenuItem>}
                             <DropdownMenuItem className="min-h-11" onSelect={() => setDlg({ kind: "periods", b })}>Interdições</DropdownMenuItem>
+                            <DropdownMenuItem className="min-h-11" onSelect={() => setDlg({ kind: "transfer", b })}>Transferir</DropdownMenuItem>
                             <DropdownMenuItem className="min-h-11 text-danger" onSelect={() => setDlg({ kind: "delete", b })}>Excluir</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -100,6 +102,7 @@ export function BathroomsTab({ contract: c, ctx }: { contract: ContractDetail; c
       {dlg?.kind === "qr" && <RegenerateQr b={dlg.b} onClose={close} />}
       {dlg?.kind === "periods" && <PeriodsDialog b={dlg.b} onClose={close} />}
       {dlg?.kind === "delete" && <DeleteBathroom b={dlg.b} onClose={close} />}
+      {dlg?.kind === "transfer" && <TransferDialog ids={[dlg.b.id]} currentContractIds={[c.id]} onClose={close} />}
       {dlg?.kind === "locations" && <LocationsDialog contractId={c.id} onClose={close} />}
     </div>
   );

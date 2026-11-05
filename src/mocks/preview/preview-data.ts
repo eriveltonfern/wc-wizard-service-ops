@@ -11,6 +11,7 @@ export type PvCleaning = {
   notes: string | null;
   status: "valid" | "cancelled"; cancel_reason: string | null; idempotency_key: string | null;
   reviewed_by: number | null; reviewed_at: string | null; review_outcome: "ok" | "cancelled" | null;
+  photo_deleted_at?: string | null;
 };
 export type TicketCategory = "hidraulica" | "eletrica" | "estrutura" | "abastecimento" | "outros";
 export type TicketPriority = "baixa" | "normal" | "urgente";
@@ -20,17 +21,23 @@ export type PvTicket = {
   id: number; contract_id: number; bathroom_id: number; category: TicketCategory; priority: TicketPriority; status: TicketStatus;
   description: string; opened_by: number; opened_at: string; assignee_id: number | null; started_at: string | null;
   done_at: string | null; done_note: string | null; cancel_reason: string | null; cleaning_id: number | null;
-  photo_open: string | null; photo_done: string | null; idempotency_key: string | null;
+  photo_open: string | null; photo_done: string | null; idempotency_key: string | null; photo_deleted_at?: string | null;
   events: { id: number; kind: TicketEventKind; actor_id: number; at: string; text: string | null }[];
 };
 export type PvClosing = {
   id: number; contract_id: number; month: string; status: "closed" | "open"; totals: import("./preview-reports").Totals;
   closed_at: string; closed_by: number; reopenings: { at: string; by: number; reason: string }[];
 };
-export type PreviewDb = { version: number; generated_on: string; cleanings: PvCleaning[]; cancelled_tasks: string[]; tickets: PvTicket[]; closings: PvClosing[] };
+export type RatingProblem = "sujo" | "sem_papel" | "sem_sabonete" | "mau_cheiro" | "lixo_cheio" | "vazamento" | "outro";
+export type PvRating = { id: number; bathroom_id: number; score: number; problems: RatingProblem[]; comment: string | null; created_at: string; device_key: string };
+export type PreviewDb = { version: number; generated_on: string; cleanings: PvCleaning[]; cancelled_tasks: string[]; tickets: PvTicket[]; closings: PvClosing[]; ratings: PvRating[] };
+
+/** Dias de histórico nos dados de exemplo e prazo de guarda das fotos. */
+export const HISTORY_DAYS = 90;
+export const PHOTO_DAYS = 60;
 
 const KEY = "wccheck.previewdb";
-const VERSION = 3;
+const VERSION = 4;
 let pdb: PreviewDb | null = null;
 
 // ---------- datas e turnos (hora oficial = relógio deste "servidor") ----------
@@ -85,6 +92,30 @@ export function cleanersOf(d: MockDb, contractId: number, date: string) {
   const teams = d.teams.filter((t) => t.contract_id === contractId && t.kind === "limpeza" && t.status === "active").map((t) => t.id);
   return [...new Set(d.members.filter((m) => teams.includes(m.team_id) && isCurrent(m, date)).map((m) => m.user_id))];
 }
+/**
+ * Quem pode limpar este banheiro (regra do contrato):
+ * "all" = qualquer pessoa ativa da limpeza que esteja numa equipe de limpeza do contrato; "assigned" = só as pessoas marcadas no banheiro.
+ */
+export function canClean(d: MockDb, userId: number, b: DbBathroom, c: DbContract) {
+  const u = d.users.find((x) => x.id === userId);
+  if (!u || u.role !== "limpeza" || u.status !== "active") return false;
+  if (c.rules.cleaning_access === "assigned") return (d.bathroom_cleaners ?? []).some((x) => x.bathroom_id === b.id && x.user_id === userId);
+  return cleanersOf(d, c.id, opDate(new Date())).includes(userId);
+}
+/** Pessoas que limpam o banheiro nos dados de exemplo (equipe do contrato, filtrada pela regra de acesso). */
+function workersFor(d: MockDb, b: DbBathroom, c: DbContract, date: string) {
+  const team = cleanersOf(d, c.id, date);
+  if (c.rules.cleaning_access !== "assigned") return team;
+  return (d.bathroom_cleaners ?? []).filter((x) => x.bathroom_id === b.id).map((x) => x.user_id);
+}
+/** Rotina diária do servidor: apaga os arquivos de foto com mais de 60 dias e grava photo_deleted_at. */
+export function purgePhotos(p: PreviewDb, now = new Date()) {
+  const limit = now.getTime() - PHOTO_DAYS * 86400000;
+  for (const c of p.cleanings) if (!c.photo_deleted_at && new Date(c.registered_at).getTime() < limit && (c.photo_before || c.photo_after)) c.photo_deleted_at = now.toISOString();
+  for (const t of p.tickets) if (!t.photo_deleted_at && new Date(t.opened_at).getTime() < limit && (t.photo_open || t.photo_done)) t.photo_deleted_at = now.toISOString();
+}
+/** Data até quando as fotos ficam disponíveis. */
+export const photosUntil = (registeredAt: string) => iso(new Date(new Date(registeredAt).getTime() + PHOTO_DAYS * 86400000));
 
 // ---------- fotos de exemplo (SVG gerado aqui, nada da internet) ----------
 export function photoSvg(label: string) {
@@ -117,8 +148,8 @@ export function generate(d: MockDb, now = new Date()): PreviewDb {
     const same = cleanings.filter((x) => x.contract_id === t.contract.id && x.photo_before);
     const repeated = r() < 0.025 && same.length > 0;
     const prev = repeated ? same[Math.floor(r() * same.length)]! : null;
-    const before = t.contract.rules.photo_before === "off" ? null : prev?.photo_before ?? `ex-${++fp}`;
-    const after = t.contract.rules.photo_after === "off" || (t.contract.rules.photo_after === "optional" && r() < 0.15) ? null : `ex-${++fp}`;
+    const before = t.contract.rules.photo_before === "optional" && r() < 0.15 ? null : prev?.photo_before ?? `ex-${++fp}`;
+    const after = t.contract.rules.photo_after === "optional" && r() < 0.15 ? null : `ex-${++fp}`;
     const cancelledByManager = r() < 0.015;
     const client = offline ? new Date(when.getTime() - (40 + Math.floor(r() * 140)) * 60000) : new Date(when.getTime() - Math.floor(r() * 50) * 1000);
     cleanings.push({
@@ -133,10 +164,10 @@ export function generate(d: MockDb, now = new Date()): PreviewDb {
     });
   };
 
-  for (let back = 30; back >= 0; back--) {
+  for (let back = HISTORY_DAYS; back >= 0; back--) {
     const date = addDays(today, -back);
     for (const t of tasksFor(d, date)) {
-      const people = cleanersOf(d, t.contract.id, date);
+      const people = workersFor(d, t.bathroom, t.contract, date);
       if (!people.length || interdicted(d, t.bathroom.id, date)) continue;
       const who = people[Math.floor(r() * people.length)]!;
       const [s, e] = shiftWindow(date, t.shift);
@@ -156,14 +187,17 @@ export function generate(d: MockDb, now = new Date()): PreviewDb {
     if (back > 0) for (const c of d.contracts.filter((x) => x.status === "active")) {
       if (r() > 0.12) continue;
       const bs = d.bathrooms.filter((b) => b.contract_id === c.id && b.status === "active");
-      const people = cleanersOf(d, c.id, date);
-      if (!bs.length || !people.length) continue;
-      add({ bathroom: bs[Math.floor(r() * bs.length)]!, contract: c }, people[Math.floor(r() * people.length)]!, atHour(date, 9 + Math.floor(r() * 8), Math.floor(r() * 60)), null, false);
+      const bx = bs[Math.floor(r() * Math.max(1, bs.length))];
+      const people = bx ? workersFor(d, bx, c, date) : [];
+      if (!bx || !people.length) continue;
+      add({ bathroom: bx, contract: c }, people[Math.floor(r() * people.length)]!, atHour(date, 9 + Math.floor(r() * 8), Math.floor(r() * 60)), null, false);
     }
   }
   cleanings.sort((a, b) => a.registered_at.localeCompare(b.registered_at)).forEach((c, i) => (c.id = i + 1));
   markReviews(d, cleanings);
-  return { version: VERSION, generated_on: today, cleanings, cancelled_tasks: cancelled, tickets: genTickets(d, now, r), closings: [] };
+  const out: PreviewDb = { version: VERSION, generated_on: today, cleanings, cancelled_tasks: cancelled, tickets: genTickets(d, now, r), closings: [], ratings: genRatings(d, now, r) };
+  purgePhotos(out, now);
+  return out;
 }
 
 /** Deixa ~8 limpezas com marca para conferir (espalhadas por contrato e marca); as demais já foram conferidas pelo gestor. */
@@ -214,7 +248,7 @@ function genTickets(d: MockDb, now: Date, r: () => number): PvTicket[] {
     [1, "open", 1.2], [1, "open", 5], [3, "open", 3], [2, "open", 26], [1, "open", 50],
     [1, "in_progress", 3.5], [3, "in_progress", 7], [1, "in_progress", 22],
     [1, "done", 30], [1, "done", 70], [3, "done", 52], [3, "done", 120], [1, "done", 150],
-    [1, "cancelled", 40], [1, "done", 240],
+    [1, "cancelled", 40], [1, "done", 240], [3, "done", 24 * 75],
   ];
   const out: PvTicket[] = [];
   plan.forEach(([cid, status, hoursAgo], i) => {
@@ -259,6 +293,28 @@ function genTickets(d: MockDb, now: Date, r: () => number): PvTicket[] {
   return out;
 }
 
+const PROBLEMS: RatingProblem[] = ["sujo", "sem_papel", "sem_sabonete", "mau_cheiro", "lixo_cheio", "vazamento", "outro"];
+const COMMENTS = ["Faltou papel na cabine do meio.", "Piso molhado perto da pia.", "Cheiro forte no fim da tarde.", "Torneira vazando.", "Lixeira transbordando."];
+/** ~200 avaliações do cliente espalhadas nos últimos 90 dias, nos banheiros de contratos ativos. */
+function genRatings(d: MockDb, now: Date, r: () => number): PvRating[] {
+  const bs = d.bathrooms.filter((b) => b.status === "active" && d.contracts.find((c) => c.id === b.contract_id)?.status === "active");
+  if (!bs.length) return [];
+  const out: PvRating[] = [];
+  for (let i = 0; i < 200; i++) {
+    const b = bs[Math.floor(r() * bs.length)]!;
+    // alguns banheiros têm nota pior, para o ranking fazer sentido
+    const bias = b.id % 4 === 2 ? -1.3 : b.id % 5 === 0 ? -0.6 : 0;
+    const score = Math.max(1, Math.min(5, Math.round(4.1 + bias + (r() - 0.5) * 3)));
+    const problems = score <= 3 ? PROBLEMS.filter(() => r() < 0.22).slice(0, 3) : [];
+    if (score <= 3 && !problems.length) problems.push(PROBLEMS[Math.floor(r() * 5)]!);
+    const hoursAgo = i < 4 ? 2 + i * 4 : r() * HISTORY_DAYS * 24;
+    out.push({ id: 0, bathroom_id: b.id, score: i < 4 ? 1 + (i % 2) : score, problems: i < 4 ? [i % 2 ? "vazamento" : "sujo"] : problems,
+      comment: r() < 0.3 || i < 4 ? (score >= 4 && i >= 4 ? "Muito limpo, parabéns!" : COMMENTS[Math.floor(r() * COMMENTS.length)]!) : null,
+      created_at: new Date(now.getTime() - hoursAgo * 3600000).toISOString(), device_key: `ex-${i}` });
+  }
+  return out.sort((a, z) => a.created_at.localeCompare(z.created_at)).map((x, i) => ({ ...x, id: i + 1 }));
+}
+
 export const loadedPreview = () => pdb;
 
 export function loadPreview(d: MockDb): PreviewDb {
@@ -271,6 +327,8 @@ export function loadPreview(d: MockDb): PreviewDb {
   } catch {
     pdb = generate(d);
   }
+  pdb.ratings ??= [];
+  purgePhotos(pdb);
   savePreview();
   return pdb;
 }

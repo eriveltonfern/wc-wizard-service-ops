@@ -10,9 +10,9 @@ import { fmtDateTime } from "@/components/tickets/kit";
 import { Button } from "@/components/ui/button";
 
 export const pct = (v: number | null | undefined) => (v === null || v === undefined ? "—" : `${Math.round(v * 1000) / 10}%`.replace(".", ","));
-/** Abaixo de 80% perigo, 80–95% atenção, acima de 95% ok. */
-export const complianceTone = (v: number | null | undefined): Tone => (v === null || v === undefined ? "neutral" : v < 0.8 ? "danger" : v < 0.95 ? "warning" : "success");
-export const metGoal = (v: number | null | undefined) => v !== null && v !== undefined && v >= 0.95;
+/** Meta vem do contrato (t.target, 0–1). Atingiu = ok; até 15 pontos abaixo = atenção; mais que isso = perigo. */
+export const complianceTone = (v: number | null | undefined, target = 0.95): Tone => (v === null || v === undefined ? "neutral" : v < target - 0.15 ? "danger" : v < target ? "warning" : "success");
+export const metGoal = (v: number | null | undefined, target = 0.95) => v !== null && v !== undefined && v >= target;
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 export const MONTHS = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
 export const monthLabel = (m: string) => { const [y, mo] = m.split("-").map(Number); return `${MONTHS[mo! - 1]} de ${y}`; };
@@ -23,8 +23,8 @@ export function GoalPills({ t }: { t: StatTotals }) {
     <>
       {t.pending > 0 && <Pill tone="info">faltam {t.pending}</Pill>}
       {t.not_done > 0 && <Pill tone="danger">{plural(t.not_done, "vencida", "vencidas")}</Pill>}
-      {metGoal(t.compliance) ? <Pill tone="success">Meta atingida</Pill> : <Pill tone="warning">Meta não atingida</Pill>}
-      <Pill tone={complianceTone(t.compliance)}>{pct(t.compliance)}</Pill>
+      {metGoal(t.compliance, t.target) ? <Pill tone="success">Meta atingida</Pill> : <Pill tone="warning">Meta não atingida</Pill>}
+      <Pill tone={complianceTone(t.compliance, t.target)}>{pct(t.compliance)}</Pill>
     </>
   );
 }
@@ -33,7 +33,7 @@ export function GoalPills({ t }: { t: StatTotals }) {
 export function ComplianceKpis({ t }: { t: StatTotals }) {
   return (
     <KpiGrid>
-      <KpiCard label="Cumprimento" tone={complianceTone(t.compliance)} value={pct(t.compliance)} caption="realizadas ÷ previstas" />
+      <KpiCard label="Cumprimento" tone={complianceTone(t.compliance, t.target)} value={pct(t.compliance)} caption={`realizadas ÷ previstas · meta ${pct(t.target)}`} />
       <KpiCard label="Realizadas × previstas" tone="info" value={`${t.done} / ${t.expected}`} caption={`${t.pending} ainda pendente${t.pending === 1 ? "" : "s"}`} />
       <KpiCard label="Não feitas" tone={t.not_done ? "danger" : "success"} value={t.not_done} caption="o dia passou sem limpeza" />
       <KpiCard label="Extras" tone="neutral" value={t.extras} caption="não entram no %" />

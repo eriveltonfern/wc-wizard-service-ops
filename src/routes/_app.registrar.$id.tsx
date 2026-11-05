@@ -55,9 +55,9 @@ function Wizard({ form }: { form: CleaningForm }) {
   const router = useRouter();
   const qc = useQueryClient();
   const steps: StepKey[] = [
-    ...(form.rules.photo_before !== "off" ? (["before"] as const) : []),
+    ...(["before"] as const),
     "checklist",
-    ...(form.rules.photo_after !== "off" ? (["after"] as const) : []),
+    ...(["after"] as const),
     "review",
   ];
   const [step, setStep] = useState(0);
@@ -184,10 +184,10 @@ function Wizard({ form }: { form: CleaningForm }) {
       )}
       {current === "review" && (
         <div className="space-y-4">
-          {(form.rules.photo_before !== "off" || form.rules.photo_after !== "off") && (
+          {(
             <div className="grid grid-cols-2 gap-3">
-              {form.rules.photo_before !== "off" && <Thumb label="Antes" src={photos.before} />}
-              {form.rules.photo_after !== "off" && <Thumb label="Depois" src={photos.after} />}
+              {<Thumb label="Antes" src={photos.before} />}
+              {<Thumb label="Depois" src={photos.after} />}
             </div>
           )}
           <section className="rounded-[10px] border bg-card">

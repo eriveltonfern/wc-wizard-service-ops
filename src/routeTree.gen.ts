@@ -13,12 +13,12 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppAjudaRouteImport } from './routes/_app.ajuda'
+import { Route as AppAvaliacoesRouteImport } from './routes/_app.avaliacoes'
 import { Route as AppBuscarRouteImport } from './routes/_app.buscar'
 import { Route as AppConferenciaRouteImport } from './routes/_app.conferencia'
 import { Route as AppEtiquetasRouteImport } from './routes/_app.etiquetas'
 import { Route as AppHistoricoRouteImport } from './routes/_app.historico'
 import { Route as AppHojeRouteImport } from './routes/_app.hoje'
-import { Route as AppLerQrRouteImport } from './routes/_app.ler-qr'
 import { Route as AppPainelRouteImport } from './routes/_app.painel'
 import { Route as AppPendenciasRouteImport } from './routes/_app.pendencias'
 import { Route as AppRelatoriosRouteImport } from './routes/_app.relatorios'
@@ -58,6 +58,11 @@ const AppAjudaRoute = AppAjudaRouteImport.update({
   path: '/ajuda',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAvaliacoesRoute = AppAvaliacoesRouteImport.update({
+  id: '/avaliacoes',
+  path: '/avaliacoes',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppBuscarRoute = AppBuscarRouteImport.update({
   id: '/buscar',
   path: '/buscar',
@@ -81,11 +86,6 @@ const AppHistoricoRoute = AppHistoricoRouteImport.update({
 const AppHojeRoute = AppHojeRouteImport.update({
   id: '/hoje',
   path: '/hoje',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppLerQrRoute = AppLerQrRouteImport.update({
-  id: '/ler-qr',
-  path: '/ler-qr',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPainelRoute = AppPainelRouteImport.update({
@@ -188,12 +188,12 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/ajuda': typeof AppAjudaRoute
+  '/avaliacoes': typeof AppAvaliacoesRoute
   '/buscar': typeof AppBuscarRoute
   '/conferencia': typeof AppConferenciaRoute
   '/etiquetas': typeof AppEtiquetasRoute
   '/historico': typeof AppHistoricoRoute
   '/hoje': typeof AppHojeRoute
-  '/ler-qr': typeof AppLerQrRoute
   '/painel': typeof AppPainelRoute
   '/pendencias': typeof AppPendenciasRoute
   '/relatorios': typeof AppRelatoriosRoute
@@ -218,12 +218,12 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/ajuda': typeof AppAjudaRoute
+  '/avaliacoes': typeof AppAvaliacoesRoute
   '/buscar': typeof AppBuscarRoute
   '/conferencia': typeof AppConferenciaRoute
   '/etiquetas': typeof AppEtiquetasRoute
   '/historico': typeof AppHistoricoRoute
   '/hoje': typeof AppHojeRoute
-  '/ler-qr': typeof AppLerQrRoute
   '/painel': typeof AppPainelRoute
   '/pendencias': typeof AppPendenciasRoute
   '/relatorios': typeof AppRelatoriosRoute
@@ -250,12 +250,12 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/_app/ajuda': typeof AppAjudaRoute
+  '/_app/avaliacoes': typeof AppAvaliacoesRoute
   '/_app/buscar': typeof AppBuscarRoute
   '/_app/conferencia': typeof AppConferenciaRoute
   '/_app/etiquetas': typeof AppEtiquetasRoute
   '/_app/historico': typeof AppHistoricoRoute
   '/_app/hoje': typeof AppHojeRoute
-  '/_app/ler-qr': typeof AppLerQrRoute
   '/_app/painel': typeof AppPainelRoute
   '/_app/pendencias': typeof AppPendenciasRoute
   '/_app/relatorios': typeof AppRelatoriosRoute
@@ -282,12 +282,12 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/ajuda'
+    | '/avaliacoes'
     | '/buscar'
     | '/conferencia'
     | '/etiquetas'
     | '/historico'
     | '/hoje'
-    | '/ler-qr'
     | '/painel'
     | '/pendencias'
     | '/relatorios'
@@ -312,12 +312,12 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/ajuda'
+    | '/avaliacoes'
     | '/buscar'
     | '/conferencia'
     | '/etiquetas'
     | '/historico'
     | '/hoje'
-    | '/ler-qr'
     | '/painel'
     | '/pendencias'
     | '/relatorios'
@@ -343,12 +343,12 @@ export interface FileRouteTypes {
     | '/_app'
     | '/login'
     | '/_app/ajuda'
+    | '/_app/avaliacoes'
     | '/_app/buscar'
     | '/_app/conferencia'
     | '/_app/etiquetas'
     | '/_app/historico'
     | '/_app/hoje'
-    | '/_app/ler-qr'
     | '/_app/painel'
     | '/_app/pendencias'
     | '/_app/relatorios'
@@ -407,6 +407,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAjudaRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/avaliacoes': {
+      id: '/_app/avaliacoes'
+      path: '/avaliacoes'
+      fullPath: '/avaliacoes'
+      preLoaderRoute: typeof AppAvaliacoesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/buscar': {
       id: '/_app/buscar'
       path: '/buscar'
@@ -440,13 +447,6 @@ declare module '@tanstack/react-router' {
       path: '/hoje'
       fullPath: '/hoje'
       preLoaderRoute: typeof AppHojeRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/ler-qr': {
-      id: '/_app/ler-qr'
-      path: '/ler-qr'
-      fullPath: '/ler-qr'
-      preLoaderRoute: typeof AppLerQrRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/painel': {
@@ -587,12 +587,12 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppAjudaRoute: typeof AppAjudaRoute
+  AppAvaliacoesRoute: typeof AppAvaliacoesRoute
   AppBuscarRoute: typeof AppBuscarRoute
   AppConferenciaRoute: typeof AppConferenciaRoute
   AppEtiquetasRoute: typeof AppEtiquetasRoute
   AppHistoricoRoute: typeof AppHistoricoRoute
   AppHojeRoute: typeof AppHojeRoute
-  AppLerQrRoute: typeof AppLerQrRoute
   AppPainelRoute: typeof AppPainelRoute
   AppPendenciasRoute: typeof AppPendenciasRoute
   AppRelatoriosRoute: typeof AppRelatoriosRoute
@@ -615,12 +615,12 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppAjudaRoute: AppAjudaRoute,
+  AppAvaliacoesRoute: AppAvaliacoesRoute,
   AppBuscarRoute: AppBuscarRoute,
   AppConferenciaRoute: AppConferenciaRoute,
   AppEtiquetasRoute: AppEtiquetasRoute,
   AppHistoricoRoute: AppHistoricoRoute,
   AppHojeRoute: AppHojeRoute,
-  AppLerQrRoute: AppLerQrRoute,
   AppPainelRoute: AppPainelRoute,
   AppPendenciasRoute: AppPendenciasRoute,
   AppRelatoriosRoute: AppRelatoriosRoute,

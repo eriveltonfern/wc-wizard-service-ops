@@ -63,8 +63,9 @@ function ticketView(d: MockDb, me: DbUser, t: PvTicket, withAssignable = false) 
     opened_by: user(t.opened_by)!, opened_at: t.opened_at,
     assignee: user(t.assignee_id), started_at: t.started_at ?? undefined, done_at: t.done_at ?? undefined,
     done_note: t.done_note ?? undefined, cancel_reason: t.cancel_reason ?? undefined, cleaning_id: t.cleaning_id ?? undefined,
-    photo_open_url: t.photo_open ? photoSvg("Foto do problema") : undefined,
-    photo_done_url: t.photo_done ? photoSvg("Foto do reparo") : undefined,
+    photo_open_url: t.photo_open && !t.photo_deleted_at ? photoSvg("Foto do problema") : undefined,
+    photo_done_url: t.photo_done && !t.photo_deleted_at ? photoSvg("Foto do reparo") : undefined,
+    photo_deleted_at: t.photo_deleted_at ?? undefined,
     events: t.events.map((e) => ({ id: e.id, kind: e.kind, actor: user(e.actor_id) ?? { id: e.actor_id, name: "—", role: "admin" }, at: e.at, text: e.text ?? undefined })),
     can: {
       start: tech && t.status === "open",

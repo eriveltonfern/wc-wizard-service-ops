@@ -12,7 +12,7 @@ import { shrinkPhoto } from "@/lib/photo";
 import { fmtDate } from "@/lib/format";
 import type { Bathroom, Ticket, TicketCategory, TicketPriority, TicketStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { Pill } from "@/components/ui-kit";
+import { PhotoDeleted, Pill } from "@/components/ui-kit";
 import { Field, FormError, NativeSelect, PendingButton, ReasonDialog, useAction } from "@/components/contracts/kit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -124,6 +124,7 @@ export function TicketDetailView({ t, children }: { t: Ticket; children?: ReactN
           <div className="mt-2 flex flex-wrap gap-1.5"><TicketStatusPill status={t.status} /><PriorityPill priority={t.priority} /></div>
         </div>
       </div>
+      {t.photo_deleted_at && <PhotoDeleted />}
       {t.photo_open_url && <img src={t.photo_open_url} alt="Foto da abertura do chamado" className="aspect-[4/3] w-full rounded-[10px] border object-cover" />}
       <div className="rounded-[10px] border bg-card p-4 text-sm">
         <p className="text-ink">{t.description}</p>

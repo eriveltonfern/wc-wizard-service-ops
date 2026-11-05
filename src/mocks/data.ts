@@ -25,18 +25,21 @@ export type DbAudit = {
   after: Record<string, unknown> | null; reason: string | null; created_at: string; actor_id: number | null;
 };
 
-export const SEED_VERSION = 3;
+export const SEED_VERSION = 4;
+export type DbBathroomCleaner = { bathroom_id: number; user_id: number };
 export type MockDb = {
   version?: number;
   users: DbUser[]; companies: DbCompany[]; contracts: DbContract[]; fiscal_links: DbFiscalLink[];
   checklist: DbChecklist[]; locations: DbLocation[]; bathrooms: DbBathroom[]; status_periods: DbStatusPeriod[];
   teams: DbTeam[]; members: DbMember[]; audit: DbAudit[]; revoked_tokens: string[];
+  bathroom_cleaners: DbBathroomCleaner[];
 };
 
 export const DEFAULT_CHECKLIST = ["Piso limpo", "Papel higiênico abastecido", "Sabonete abastecido", "Lixeiras esvaziadas", "Pias e vasos limpos"];
 export const defaultRules = (): ContractRules => ({
   photo_before: "required", photo_after: "required",
   default_cleanings_per_day: 1, default_weekdays: [1, 2, 3, 4, 5, 6, 7], shifts: ["manha", "tarde", "noite"],
+  monthly_target: 95, cleaning_access: "all",
 });
 
 const PW = "wccheck123";
@@ -71,9 +74,9 @@ export function seed(): MockDb {
   const c1 = c(1, 1, "CT-2026-001", "Serra Azul – Mina Norte", "2026-01-10");
   c1.rules = { ...c1.rules, default_cleanings_per_day: 3, photo_after: "optional" };
   const c2 = c(2, 1, "CT-2026-002", "Serra Azul – Planta de Beneficiamento", "2026-03-01");
-  c2.rules = { ...c2.rules, default_cleanings_per_day: 2, shifts: ["manha", "tarde"] };
+  c2.rules = { ...c2.rules, default_cleanings_per_day: 2, shifts: ["manha", "tarde"], photo_before: "optional" };
   const c3 = { ...c(3, 2, "CT-2026-003", "Parque Central – Áreas comuns", "2026-05-15"), manager_id: 12 };
-  c3.rules = { ...c3.rules, default_cleanings_per_day: 2 };
+  c3.rules = { ...c3.rules, default_cleanings_per_day: 2, monthly_target: 90, cleaning_access: "assigned" };
   const contracts = [
     c1,
     c2,
@@ -134,5 +137,7 @@ export function seed(): MockDb {
     { id: 1, action: "team_member.moved", entity: "user", entity_id: 7, before: { team_id: 1 }, after: { team_id: 3 },
       reason: "Remanejado para a Planta", created_at: "2026-03-01T08:00:00-03:00", actor_id: 2 },
   ];
-  return { version: SEED_VERSION, users, companies, contracts, fiscal_links, checklist, locations, bathrooms, status_periods: [], teams, members, audit, revoked_tokens: [] };
+  return { version: SEED_VERSION, users, companies, contracts, fiscal_links, checklist, locations, bathrooms, status_periods: [], teams, members, audit, revoked_tokens: [],
+    // Parque Central (contrato 3) usa "Pessoas escolhidas por banheiro": cada pessoa cuida de alguns banheiros.
+    bathroom_cleaners: [[8, 8], [8, 9], [9, 8], [9, 9], [10, 9], [10, 10], [11, 10], [12, 10], [12, 8]].map(([bathroom_id, user_id]) => ({ bathroom_id: bathroom_id!, user_id: user_id! })) };
 }

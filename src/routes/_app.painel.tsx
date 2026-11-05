@@ -3,13 +3,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQueries, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { meQuery } from "@/lib/auth";
 import { CheckCircle2 } from "lucide-react";
-import { getContractActivation, getStats, listBathrooms, listCompanies, listContracts, listTickets } from "@/lib/endpoints";
+import { getContractActivation, getStats, listBathrooms, listCompanies, listContracts, listRatings, listTickets } from "@/lib/endpoints";
 import type { ActivationMissing } from "@/lib/types";
 import { PageHeader, PageHelp } from "@/components/layout/PageHeader";
 import { AttentionList, AttentionRow, DataCard, ErrorState, KpiCard, KpiGrid, Pill, SkeletonBlock } from "@/components/ui-kit";
 import { PreviewBanner } from "@/components/field/kit";
 import { GoalPills, complianceTone, metGoal, pct } from "@/components/reports/kit";
-import { todayIso } from "@/lib/format";
+import { RATING_PROBLEM_LABEL, todayIso } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/painel")({
@@ -38,7 +38,7 @@ function PainelPage() {
   const { data: me } = useSuspenseQuery(meQuery);
   const isAdmin = me.role === "admin";
   const readOnly = me.role === "fiscal";
-  const [cat, setCat] = useState<"" | "chamados" | "empresas" | "banheiros" | "contratos">("");
+  const [cat, setCat] = useState<"" | "chamados" | "avaliacoes" | "empresas" | "banheiros" | "contratos">("");
   const [period, setPeriod] = useState<"hoje" | "mes">("mes");
   const today = todayIso();
   const filter = period === "hoje" ? { from: today, to: today } : { month: today.slice(0, 7) };
@@ -50,6 +50,9 @@ function PainelPage() {
   const active = useQuery({ queryKey: ["bathrooms", "active-count"], queryFn: () => listBathrooms({ status: "active" }) });
   const urgent = useQuery({ queryKey: ["tickets", "urgent"], queryFn: () => listTickets({ status: "active", priority: "urgente" }) });
   const urgentRows = urgent.data ?? [];
+  const yesterday = new Date(Date.now() - 86400000);
+  const ratings = useQuery({ queryKey: ["ratings", "negative-24h", today], queryFn: () => listRatings({ from: `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, "0")}-${String(yesterday.getDate()).padStart(2, "0")}`, to: today }) });
+  const badRatings = (ratings.data?.rows ?? []).filter((r) => r.score <= 2 && Date.now() - new Date(r.created_at).getTime() < 86400000);
   const all = contracts.data ?? [];
   const drafts = readOnly ? [] : all.filter((c) => c.status === "draft");
   const suspended = readOnly ? [] : all.filter((c) => c.status === "suspended");
@@ -59,30 +62,34 @@ function PainelPage() {
 
   const t = stats.data?.totals;
   const td = todayStats.data?.totals;
-  const below = (stats.data?.by_bathroom ?? []).filter((b) => b.expected > 0 && !metGoal(b.compliance));
+  const below = (stats.data?.by_bathroom ?? []).filter((b) => b.expected > 0 && !metGoal(b.compliance, b.target));
   const num = (loading: boolean, error: boolean, v: ReactNode) => (loading ? "…" : error ? "—" : v ?? "—");
   const LIMIT = 8;
-  type Cat = "chamados" | "empresas" | "banheiros" | "contratos";
+  type Cat = "chamados" | "avaliacoes" | "empresas" | "banheiros" | "contratos";
   type Row = { key: string; cat: Cat; node: ReactNode };
   const rows: Row[] = [
     ...urgentRows.map((tk) => ({ key: `tk-${tk.id}`, cat: "chamados" as Cat, node: (
       <AttentionRow key={`tk-${tk.id}`} to="/chamados" search={{ chamado: tk.id }} name={`Chamado urgente · ${tk.bathroom.name}`}
         detail={`${tk.description} · ${tk.company.name} · ${tk.contract.code}`}
         pills={<><Pill tone="danger">Urgente</Pill><Pill tone={tk.status === "open" ? "info" : "warning"}>{tk.status === "open" ? "Aberto" : "Em andamento"}</Pill></>} />) })),
+    ...badRatings.map((r) => ({ key: `r-${r.id}`, cat: "avaliacoes" as Cat, node: (
+      <AttentionRow key={`r-${r.id}`} to="/avaliacoes" search={{ dias: 7, banheiro: r.bathroom.id }} name={`Avaliação ruim · ${r.bathroom.name}`}
+        detail={`${r.problems.map((p) => RATING_PROBLEM_LABEL[p]).join(", ") || "Sem problema marcado"}${r.comment ? ` · “${r.comment}”` : ""} · ${r.company.name}`}
+        pills={<Pill tone="danger">Nota {r.score}</Pill>} />) })),
     ...noFiscal.map((co) => ({ key: `co-${co.id}`, cat: "empresas" as Cat, node: (
       <AttentionRow key={`co-${co.id}`} to="/empresas/$id" params={{ id: String(co.id) }} name={co.name}
         detail={`Empresa · ${co.contracts_count} contrato${co.contracts_count === 1 ? "" : "s"}`} pills={<Pill tone="danger">Sem fiscal</Pill>} />) })),
     ...below.map((b) => ({ key: `b-${b.bathroom.id}`, cat: "banheiros" as Cat, node: (
       <AttentionRow key={`b-${b.bathroom.id}`} to="/banheiros/$id" params={{ id: String(b.bathroom.id) }} name={b.bathroom.name}
         detail={`${b.location ? `${b.location} · ` : ""}${b.company.name} · ${b.contract.code}`}
-        progress={{ value: (b.compliance ?? 0) * 100, tone: complianceTone(b.compliance) }} pills={<GoalPills t={b} />} />) })),
+        progress={{ value: (b.compliance ?? 0) * 100, tone: complianceTone(b.compliance, b.target) }} pills={<GoalPills t={b} />} />) })),
     ...drafts.map((c, i) => ({ key: `c-${c.id}`, cat: "contratos" as Cat, node: (
       <AttentionRow key={c.id} to="/contratos/$id" params={{ id: String(c.id) }} name={c.name} detail={`${c.code} · ${c.company.name}`}
         pills={<><Pill tone="info">Rascunho</Pill>{activations[i]?.data?.missing.map((m) => missingPill[m] && <Pill key={m} tone="warning">{missingPill[m]}</Pill>)}</>} />) })),
     ...suspended.map((c) => ({ key: `s-${c.id}`, cat: "contratos" as Cat, node: (
       <AttentionRow key={c.id} to="/contratos/$id" params={{ id: String(c.id) }} name={c.name} detail={`${c.code} · ${c.company.name}`} pills={<Pill tone="warning">Suspenso</Pill>} />) })),
   ];
-  const cats = ([["chamados", "Chamados urgentes"], ["empresas", "Empresas"], ["banheiros", "Banheiros"], ["contratos", "Contratos"]] as const)
+  const cats = ([["chamados", "Chamados urgentes"], ["avaliacoes", "Avaliações ruins"], ["empresas", "Empresas"], ["banheiros", "Banheiros"], ["contratos", "Contratos"]] as const)
     .map(([k, label]) => ({ k, label, n: rows.filter((r) => r.cat === k).length })).filter((c) => c.n > 0);
   const shown = cat ? rows.filter((r) => r.cat === cat) : rows;
   const periodLabel = period === "hoje" ? "de hoje" : "do mês";
@@ -93,7 +100,7 @@ function PainelPage() {
       <PageHelp>
         {readOnly ? "Os números mostram o cumprimento dos contratos que você acompanha. É só para leitura." : "Os números do topo mostram o cumprimento das limpezas."}{" "}
         Cumprimento = limpezas feitas ÷ limpezas previstas. Limpezas extras aparecem à parte e não entram no percentual. Use "Hoje" ou "Este mês" para trocar o período.
-        Em "Precisa de atenção" ficam os chamados urgentes, as empresas sem fiscal, os banheiros abaixo da meta (95%) e os contratos parados.
+        Em "Precisa de atenção" ficam os chamados urgentes, as avaliações com nota 1–2 das últimas 24 horas, as empresas sem fiscal, os banheiros abaixo da meta do contrato e os contratos parados.
       </PageHelp>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <PageHeader title={readOnly ? "Painel do contrato" : "Painel"} subtitle="O que precisa da sua atenção agora." />
@@ -106,12 +113,12 @@ function PainelPage() {
       </div>
 
       <KpiGrid>
-        <KpiCard label="Cumprimento geral" tone={complianceTone(t?.compliance)} value={num(stats.isLoading, stats.isError, pct(t?.compliance))}
+        <KpiCard label="Cumprimento geral" tone={complianceTone(t?.compliance, t?.target)} value={num(stats.isLoading, stats.isError, pct(t?.compliance))}
           caption={t ? `${t.done} de ${t.expected} limpezas da meta ${periodLabel}` : " "} />
         <KpiCard label="Limpezas pendentes" tone={td?.late_pending ? "warning" : "info"} value={num(todayStats.isLoading, todayStats.isError, td?.pending)}
           caption={td ? `hoje · ${td.late_pending} atrasada${td.late_pending === 1 ? "" : "s"}` : " "} {...(readOnly ? {} : { to: "/pendencias" })} />
         <KpiCard label="Abaixo da meta" tone={below.length ? "danger" : "success"} value={num(stats.isLoading, stats.isError, below.length)}
-          caption={`banheiros abaixo de 95% ${periodLabel}`} />
+          caption={`banheiros abaixo da meta do contrato ${periodLabel}`} />
         <KpiCard label="Banheiros ativos" tone="neutral" value={num(active.isLoading, active.isError, active.data?.total)} caption="no seu escopo" to="/banheiros" />
       </KpiGrid>
 
@@ -147,8 +154,8 @@ function PainelPage() {
                   {[...stats.data.by_contract].sort((a, b) => (a.compliance ?? 1) - (b.compliance ?? 1)).map((c) => (
                     <AttentionRow key={c.contract.id} to="/contratos/$id" params={{ id: String(c.contract.id) }} name={c.contract.name}
                       detail={`${c.contract.code} · ${c.done} de ${c.expected}${c.extras ? ` · ${c.extras} extra${c.extras === 1 ? "" : "s"}` : ""}`}
-                      progress={{ value: (c.compliance ?? 0) * 100, tone: complianceTone(c.compliance) }}
-                      pills={<Pill tone={complianceTone(c.compliance)}>{pct(c.compliance)}</Pill>} />
+                      progress={{ value: (c.compliance ?? 0) * 100, tone: complianceTone(c.compliance, c.target) }}
+                      pills={<Pill tone={complianceTone(c.compliance, c.target)}>{pct(c.compliance)}</Pill>} />
                   ))}
                 </ul>
               )}
