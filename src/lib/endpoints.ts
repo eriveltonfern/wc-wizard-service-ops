@@ -4,7 +4,7 @@ import type {
   Stats, StatsFilter, PendingTask, HistorySituation, CleaningHistory, AuditEntry, Closing,
   Activation, AuditEvent, CancelEffect, ReviewFlag, ReviewList, Ticket, TicketFilters, TicketInput, TicketPriority, TicketSummary, Bathroom, Cleaning, CleaningForm, CleaningInput, MeToday, Task, BathroomDetail, BathroomInput, ChecklistItem, Company, CompanyDetail,
   CompanyInput, Contract, ContractDetail, ContractInput, FiscalLink, Health, ISODate, Label, Location,
-  LoginInput, Member, Membership, QrLookup, StatusPeriod, Team, User, UserDetail, UserInput,
+  LoginInput, Member, BathroomTransferInput, Cleaner, CleanerTransferInput, UserBathroom, PublicQr, RatingInput, RatingList, Membership, QrLookup, StatusPeriod, Team, User, UserDetail, UserInput,
 } from "./types";
 
 type Params = Record<string, string | number | boolean | undefined | null>;
@@ -163,3 +163,16 @@ export const listAudit = (p?: { entity?: string | undefined }) => api.get<AuditE
 export const listClosings = (contractId: number) => api.get<Closing[]>(`/contracts/${contractId}/closings`);
 export const closeMonth = (contractId: number, month: string) => api.post<Closing>(`/contracts/${contractId}/closings`, { month });
 export const reopenMonth = (closingId: number, reason: string) => api.post<Closing>(`/closings/${closingId}/reopen`, { reason });
+
+// Banheiros: transferência e responsáveis (proposta)
+export const transferBathrooms = (input: BathroomTransferInput) => api.post<Bathroom[]>("/bathrooms/transfer", input);
+export const getBathroomCleaners = (id: number) => api.get<Cleaner[]>(`/bathrooms/${id}/cleaners`);
+export const setBathroomCleaners = (id: number, user_ids: number[]) => api.put<Cleaner[]>(`/bathrooms/${id}/cleaners`, { user_ids });
+export const listUserBathrooms = (userId: number) => api.get<UserBathroom[]>(`/users/${userId}/bathrooms`);
+export const transferCleaner = (input: CleanerTransferInput) => api.post<{ moved: number }>("/cleaners/transfer", input);
+
+// Avaliações do cliente (QR público, sem login)
+export const getPublicQr = (token: string) => api.get<PublicQr>(`/public/q/${encodeURIComponent(token)}`);
+export const sendRating = (token: string, input: RatingInput) => api.post<{ id: number }>(`/public/q/${encodeURIComponent(token)}/ratings`, input);
+export const listRatings = (p?: { from?: ISODate | undefined; to?: ISODate | undefined; contract_id?: number | undefined; bathroom_id?: number | undefined }) =>
+  api.get<RatingList>(`/ratings${qs(p)}`);
