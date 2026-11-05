@@ -2,7 +2,7 @@
 import { api } from "./api";
 import type {
   Stats, StatsFilter, PendingTask, HistorySituation, CleaningHistory, AuditEntry, Closing,
-  Activation, AuditEvent, CancelEffect, ReviewFlag, ReviewList, Ticket, TicketFilters, TicketInput, TicketPriority, TicketSummary, Bathroom, Cleaning, CleaningForm, CleaningInput, MeToday, Task, BathroomDetail, BathroomInput, ChecklistItem, Company, CompanyDetail,
+  Activation, AuditEvent, CancelEffect, ReviewFlag, ReviewList, Ticket, TicketFilters, CleaningAdjustInput, TicketAdjustInput, TicketInput, TicketPriority, TicketSummary, Bathroom, Cleaning, CleaningForm, CleaningInput, MeToday, Task, BathroomDetail, BathroomInput, ChecklistItem, Company, CompanyDetail,
   CompanyInput, Contract, ContractDetail, ContractInput, FiscalLink, Health, ISODate, Label, Location,
   LoginInput, Member, BathroomTransferInput, Cleaner, CleanerTransferInput, UserBathroom, PublicQr, RatingInput, RatingList, Membership, QrLookup, StatusPeriod, Team, User, UserDetail, UserInput,
 } from "./types";
@@ -147,6 +147,8 @@ export function finishTicket(id: number, input: { photo?: Blob | null | undefine
   f.set("idempotency_key", input.idempotency_key);
   return api.post<Ticket>(`/tickets/${id}/done`, f);
 }
+export const adjustTicket = (id: number, input: TicketAdjustInput) => api.patch<Ticket>(`/tickets/${id}`, input);
+export const adjustCleaning = (id: number, input: CleaningAdjustInput) => api.patch<Cleaning>(`/cleanings/${id}`, input);
 export const cancelTicket = (id: number, reason: string) => api.post<Ticket>(`/tickets/${id}/cancel`, { reason });
 export const commentTicket = (id: number, text: string) => api.post<Ticket>(`/tickets/${id}/comments`, { text });
 export const setTicketPriority = (id: number, priority: TicketPriority) => api.post<Ticket>(`/tickets/${id}/priority`, { priority });
