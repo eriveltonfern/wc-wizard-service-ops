@@ -18,7 +18,6 @@ import { Route as AppConferenciaRouteImport } from './routes/_app.conferencia'
 import { Route as AppEtiquetasRouteImport } from './routes/_app.etiquetas'
 import { Route as AppHistoricoRouteImport } from './routes/_app.historico'
 import { Route as AppHojeRouteImport } from './routes/_app.hoje'
-import { Route as AppLerQrRouteImport } from './routes/_app.ler-qr'
 import { Route as AppPainelRouteImport } from './routes/_app.painel'
 import { Route as AppPendenciasRouteImport } from './routes/_app.pendencias'
 import { Route as AppRelatoriosRouteImport } from './routes/_app.relatorios'
@@ -81,11 +80,6 @@ const AppHistoricoRoute = AppHistoricoRouteImport.update({
 const AppHojeRoute = AppHojeRouteImport.update({
   id: '/hoje',
   path: '/hoje',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppLerQrRoute = AppLerQrRouteImport.update({
-  id: '/ler-qr',
-  path: '/ler-qr',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPainelRoute = AppPainelRouteImport.update({
@@ -193,7 +187,6 @@ export interface FileRoutesByFullPath {
   '/etiquetas': typeof AppEtiquetasRoute
   '/historico': typeof AppHistoricoRoute
   '/hoje': typeof AppHojeRoute
-  '/ler-qr': typeof AppLerQrRoute
   '/painel': typeof AppPainelRoute
   '/pendencias': typeof AppPendenciasRoute
   '/relatorios': typeof AppRelatoriosRoute
@@ -223,7 +216,6 @@ export interface FileRoutesByTo {
   '/etiquetas': typeof AppEtiquetasRoute
   '/historico': typeof AppHistoricoRoute
   '/hoje': typeof AppHojeRoute
-  '/ler-qr': typeof AppLerQrRoute
   '/painel': typeof AppPainelRoute
   '/pendencias': typeof AppPendenciasRoute
   '/relatorios': typeof AppRelatoriosRoute
@@ -255,7 +247,6 @@ export interface FileRoutesById {
   '/_app/etiquetas': typeof AppEtiquetasRoute
   '/_app/historico': typeof AppHistoricoRoute
   '/_app/hoje': typeof AppHojeRoute
-  '/_app/ler-qr': typeof AppLerQrRoute
   '/_app/painel': typeof AppPainelRoute
   '/_app/pendencias': typeof AppPendenciasRoute
   '/_app/relatorios': typeof AppRelatoriosRoute
@@ -287,7 +278,6 @@ export interface FileRouteTypes {
     | '/etiquetas'
     | '/historico'
     | '/hoje'
-    | '/ler-qr'
     | '/painel'
     | '/pendencias'
     | '/relatorios'
@@ -317,7 +307,6 @@ export interface FileRouteTypes {
     | '/etiquetas'
     | '/historico'
     | '/hoje'
-    | '/ler-qr'
     | '/painel'
     | '/pendencias'
     | '/relatorios'
@@ -348,7 +337,6 @@ export interface FileRouteTypes {
     | '/_app/etiquetas'
     | '/_app/historico'
     | '/_app/hoje'
-    | '/_app/ler-qr'
     | '/_app/painel'
     | '/_app/pendencias'
     | '/_app/relatorios'
@@ -440,13 +428,6 @@ declare module '@tanstack/react-router' {
       path: '/hoje'
       fullPath: '/hoje'
       preLoaderRoute: typeof AppHojeRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/ler-qr': {
-      id: '/_app/ler-qr'
-      path: '/ler-qr'
-      fullPath: '/ler-qr'
-      preLoaderRoute: typeof AppLerQrRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/painel': {
@@ -592,7 +573,6 @@ interface AppRouteChildren {
   AppEtiquetasRoute: typeof AppEtiquetasRoute
   AppHistoricoRoute: typeof AppHistoricoRoute
   AppHojeRoute: typeof AppHojeRoute
-  AppLerQrRoute: typeof AppLerQrRoute
   AppPainelRoute: typeof AppPainelRoute
   AppPendenciasRoute: typeof AppPendenciasRoute
   AppRelatoriosRoute: typeof AppRelatoriosRoute
@@ -620,7 +600,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppEtiquetasRoute: AppEtiquetasRoute,
   AppHistoricoRoute: AppHistoricoRoute,
   AppHojeRoute: AppHojeRoute,
-  AppLerQrRoute: AppLerQrRoute,
   AppPainelRoute: AppPainelRoute,
   AppPendenciasRoute: AppPendenciasRoute,
   AppRelatoriosRoute: AppRelatoriosRoute,

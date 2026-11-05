@@ -3,7 +3,7 @@ import { PageHelp, PageHeader } from "@/components/layout/PageHeader";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { QrSvg } from "@/components/QrSvg";
-import { Printer, Search } from "lucide-react";
+import { Printer, Search, Smile } from "lucide-react";
 import { listContracts, listLabels } from "@/lib/endpoints";
 import type { Label } from "@/lib/types";
 import { Button } from "@/components/ui/button";
