@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { ArrowDown, ArrowUp, Pencil, Plus, Trash2 } from "lucide-react";
 import { addChecklistItem, deleteChecklistItem, reorderChecklist, updateChecklistItem, updateContract } from "@/lib/endpoints";
-import type { ChecklistItem, ContractDetail, ContractRules, PhotoRule, Shift } from "@/lib/types";
-import { photoRuleLabel, shiftLabel } from "@/lib/format";
+import type { ChecklistItem, CleaningAccess, ContractDetail, ContractRules, PhotoRule, Shift } from "@/lib/types";
+import { cleaningAccessLabel, photoRuleLabel, shiftLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,6 +61,17 @@ export function RulesTab({ contract: c, ctx }: { contract: ContractDetail; ctx: 
               );
             })}
           </div>
+        </Field>
+        <Field label="Meta de cumprimento do mês (%)" id="monthly_target" error={e["monthly_target"]}>
+          <Input id="monthly_target" type="number" min={1} max={100} className="h-11 w-32" disabled={ro} value={r.monthly_target}
+            onChange={(ev) => setR({ ...r, monthly_target: Number(ev.target.value) })} />
+          <p className="mt-1 text-xs text-muted-foreground">Usada no Painel, nos Relatórios e no Fechamento do mês. Padrão: 95%.</p>
+        </Field>
+        <Field label="Quem pode limpar os banheiros deste contrato" id="cleaning_access" error={e["cleaning_access"]}>
+          <Options id="cleaning_access" value={r.cleaning_access} options={cleaningAccessLabel as Record<CleaningAccess, string>} disabled={ro} onChange={(v) => setR({ ...r, cleaning_access: v })} />
+          <p className="mt-1 text-xs text-muted-foreground">
+            {r.cleaning_access === "assigned" ? "Só as pessoas marcadas em cada banheiro (página do banheiro → \"Quem pode limpar\")." : "Qualquer pessoa ativa da equipe de limpeza registra limpeza em qualquer banheiro do contrato."}
+          </p>
         </Field>
         {save.error && Object.keys(e).length === 0 && <FormError error={save.error} />}
         {!ro && <PendingButton type="submit" pending={save.pending}>Salvar regras</PendingButton>}

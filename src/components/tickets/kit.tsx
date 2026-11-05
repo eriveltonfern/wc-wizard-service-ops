@@ -12,7 +12,7 @@ import { shrinkPhoto } from "@/lib/photo";
 import { fmtDate } from "@/lib/format";
 import type { Bathroom, Ticket, TicketCategory, TicketPriority, TicketStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { Pill } from "@/components/ui-kit";
+import { PhotoDeleted, Pill } from "@/components/ui-kit";
 import { Field, FormError, NativeSelect, PendingButton, ReasonDialog, useAction } from "@/components/contracts/kit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

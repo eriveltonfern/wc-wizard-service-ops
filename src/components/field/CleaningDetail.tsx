@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { approveCleaning, cancelCleaning, getCleaning } from "@/lib/endpoints";
 import { fmtDate } from "@/lib/format";
 import type { CancelEffect, Cleaning } from "@/lib/types";
-import { ErrorState, Pill, SkeletonBlock } from "@/components/ui-kit";
+import { ErrorState, PhotoDeleted, Pill, SkeletonBlock } from "@/components/ui-kit";
 import { fmtTime, shiftTaskLabel } from "@/components/field/kit";
 import { PendingButton, ReasonDialog, useAction } from "@/components/contracts/kit";
 import { fmtDateTime } from "@/components/tickets/kit";

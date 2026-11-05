@@ -5,7 +5,7 @@ import { ApiError } from "@/lib/api";
 import { getCleaning } from "@/lib/endpoints";
 import { fmtDate } from "@/lib/format";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { DataCard, ErrorState, Pill, SkeletonBlock } from "@/components/ui-kit";
+import { DataCard, ErrorState, PhotoDeleted, Pill, SkeletonBlock } from "@/components/ui-kit";
 import { CleaningPills, PreviewBanner, fmtTime, isoDay, shiftTaskLabel } from "@/components/field/kit";
 import { Button } from "@/components/ui/button";
 

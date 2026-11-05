@@ -30,7 +30,7 @@ export const statusLabel = (s: string) => ({ ...contractStatusLabel, inactive: "
 export const bathroomKindLabel: Record<string, string> = { masculino: "Masculino", feminino: "Feminino", unissex: "Unissex", pcd: "PCD" };
 export const teamKindLabel: Record<string, string> = { limpeza: "Limpeza", manutencao: "Manutenção" };
 export const shiftLabel: Record<string, string> = { manha: "Manhã", tarde: "Tarde", noite: "Noite" };
-export const photoRuleLabel: Record<string, string> = { required: "Obrigatória", optional: "Opcional", off: "Desligada" };
+export const photoRuleLabel: Record<string, string> = { required: "Obrigatória", optional: "Opcional" };
 export const missingLabel: Record<string, string> = {
   manager: "Definir o gestor",
   bathroom: "Cadastrar ao menos um banheiro ativo",
@@ -38,3 +38,4 @@ export const missingLabel: Record<string, string> = {
   fiscal: "Vincular um fiscal da empresa",
   company: "Empresa ativa",
 };
+export const cleaningAccessLabel: Record<string, string> = { all: "Qualquer funcionário da limpeza", assigned: "Pessoas escolhidas por banheiro" };
