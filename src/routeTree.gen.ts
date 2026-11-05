@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppAjudaRouteImport } from './routes/_app.ajuda'
+import { Route as AppAvaliacoesRouteImport } from './routes/_app.avaliacoes'
 import { Route as AppBuscarRouteImport } from './routes/_app.buscar'
 import { Route as AppConferenciaRouteImport } from './routes/_app.conferencia'
 import { Route as AppEtiquetasRouteImport } from './routes/_app.etiquetas'
@@ -55,6 +56,11 @@ const LoginRoute = LoginRouteImport.update({
 const AppAjudaRoute = AppAjudaRouteImport.update({
   id: '/ajuda',
   path: '/ajuda',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAvaliacoesRoute = AppAvaliacoesRouteImport.update({
+  id: '/avaliacoes',
+  path: '/avaliacoes',
   getParentRoute: () => AppRoute,
 } as any)
 const AppBuscarRoute = AppBuscarRouteImport.update({
@@ -182,6 +188,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/ajuda': typeof AppAjudaRoute
+  '/avaliacoes': typeof AppAvaliacoesRoute
   '/buscar': typeof AppBuscarRoute
   '/conferencia': typeof AppConferenciaRoute
   '/etiquetas': typeof AppEtiquetasRoute
@@ -211,6 +218,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/ajuda': typeof AppAjudaRoute
+  '/avaliacoes': typeof AppAvaliacoesRoute
   '/buscar': typeof AppBuscarRoute
   '/conferencia': typeof AppConferenciaRoute
   '/etiquetas': typeof AppEtiquetasRoute
@@ -242,6 +250,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/_app/ajuda': typeof AppAjudaRoute
+  '/_app/avaliacoes': typeof AppAvaliacoesRoute
   '/_app/buscar': typeof AppBuscarRoute
   '/_app/conferencia': typeof AppConferenciaRoute
   '/_app/etiquetas': typeof AppEtiquetasRoute
@@ -273,6 +282,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/ajuda'
+    | '/avaliacoes'
     | '/buscar'
     | '/conferencia'
     | '/etiquetas'
@@ -302,6 +312,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/ajuda'
+    | '/avaliacoes'
     | '/buscar'
     | '/conferencia'
     | '/etiquetas'
@@ -332,6 +343,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/login'
     | '/_app/ajuda'
+    | '/_app/avaliacoes'
     | '/_app/buscar'
     | '/_app/conferencia'
     | '/_app/etiquetas'
@@ -393,6 +405,13 @@ declare module '@tanstack/react-router' {
       path: '/ajuda'
       fullPath: '/ajuda'
       preLoaderRoute: typeof AppAjudaRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/avaliacoes': {
+      id: '/_app/avaliacoes'
+      path: '/avaliacoes'
+      fullPath: '/avaliacoes'
+      preLoaderRoute: typeof AppAvaliacoesRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/buscar': {
@@ -568,6 +587,7 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppAjudaRoute: typeof AppAjudaRoute
+  AppAvaliacoesRoute: typeof AppAvaliacoesRoute
   AppBuscarRoute: typeof AppBuscarRoute
   AppConferenciaRoute: typeof AppConferenciaRoute
   AppEtiquetasRoute: typeof AppEtiquetasRoute
@@ -595,6 +615,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppAjudaRoute: AppAjudaRoute,
+  AppAvaliacoesRoute: AppAvaliacoesRoute,
   AppBuscarRoute: AppBuscarRoute,
   AppConferenciaRoute: AppConferenciaRoute,
   AppEtiquetasRoute: AppEtiquetasRoute,
