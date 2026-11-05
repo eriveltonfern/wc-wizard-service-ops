@@ -294,7 +294,7 @@ function genTickets(d: MockDb, now: Date, r: () => number): PvTicket[] {
 }
 
 const PROBLEMS: RatingProblem[] = ["sujo", "sem_papel", "sem_sabonete", "mau_cheiro", "lixo_cheio", "vazamento", "outro"];
-const COMMENTS = ["Faltou papel na cabine do meio.", "Piso molhado perto da pia.", "Muito limpo, parabéns!", "Cheiro forte no fim da tarde.", "Torneira vazando.", "Lixeira transbordando."];
+const COMMENTS = ["Faltou papel na cabine do meio.", "Piso molhado perto da pia.", "Cheiro forte no fim da tarde.", "Torneira vazando.", "Lixeira transbordando."];
 /** ~200 avaliações do cliente espalhadas nos últimos 90 dias, nos banheiros de contratos ativos. */
 function genRatings(d: MockDb, now: Date, r: () => number): PvRating[] {
   const bs = d.bathrooms.filter((b) => b.status === "active" && d.contracts.find((c) => c.id === b.contract_id)?.status === "active");
@@ -309,7 +309,7 @@ function genRatings(d: MockDb, now: Date, r: () => number): PvRating[] {
     if (score <= 3 && !problems.length) problems.push(PROBLEMS[Math.floor(r() * 5)]!);
     const hoursAgo = i < 4 ? 2 + i * 4 : r() * HISTORY_DAYS * 24;
     out.push({ id: 0, bathroom_id: b.id, score: i < 4 ? 1 + (i % 2) : score, problems: i < 4 ? [i % 2 ? "vazamento" : "sujo"] : problems,
-      comment: r() < 0.3 || i < 4 ? COMMENTS[Math.floor(r() * COMMENTS.length)]! : null,
+      comment: r() < 0.3 || i < 4 ? (score >= 4 && i >= 4 ? "Muito limpo, parabéns!" : COMMENTS[Math.floor(r() * COMMENTS.length)]!) : null,
       created_at: new Date(now.getTime() - hoursAgo * 3600000).toISOString(), device_key: `ex-${i}` });
   }
   return out.sort((a, z) => a.created_at.localeCompare(z.created_at)).map((x, i) => ({ ...x, id: i + 1 }));
