@@ -176,3 +176,10 @@ Admin, gestor e fiscal (escopo de sempre). `rows` (até 100, mais recentes prime
 
 ### POST /companies/{id}/fiscals `{ user_id }` → 201 CompanyDetail
 Adiciona à empresa uma pessoa que já está cadastrada com o perfil fiscal (só diretoria). A pessoa passa a ser fiscal desta empresa; se era fiscal de outra, sai de lá e os vínculos dela em contratos da empresa anterior são encerrados na data de hoje (fica em `/audit`, action `fiscal.company_changed`). Erros: 422 `user_id` — "Este fiscal já é desta empresa.", "Esta pessoa não tem o perfil fiscal.", "Este fiscal está inativo. Reative-o antes."; 403 fora da diretoria.
+
+## Ajustar registros (gestor e diretoria)
+
+- `PATCH /cleanings/{id}` `{client_finished_at?, user_id?, status? (valid|cancelled), checklist?[{item_id, answer}], notes?, reason}` → Cleaning.
+  Só admin/gestor do contrato. `reason` obrigatório. Mês fechado → 409. Cada ajuste vai para `adjustments[]` (visível a todos) e para `/audit` (`cleaning.adjusted`). `GET /cleanings/{id}` devolve `can_adjust`.
+- `PATCH /tickets/{id}` `{category?, priority?, status?, description?, assignee_id?, opened_at?, done_at?, done_note?, reason}` → Ticket.
+  Só admin/gestor do contrato, qualquer situação. Gera evento `adjusted` na linha do tempo (texto: o que mudou + motivo) e `/audit` (`ticket.adjusted`). `can.adjust` no Ticket.
