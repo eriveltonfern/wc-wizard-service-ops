@@ -104,7 +104,7 @@ export function CleaningDetail({ id, onClose, readOnly }: { id: number; onClose:
       {c.notes && <p className="rounded-[10px] border bg-card px-4 py-3 text-sm text-ink">Observação: {c.notes}</p>}
       {c.review && <p className="text-sm text-muted-foreground">Conferida por <strong className="text-ink">{c.review.by.name}</strong> em {fmtDateTime(c.review.at)}.</p>}
       {c.adjustments?.map((a, i) => (
-        <p key={i} className="rounded-[10px] border border-warning/30 bg-warning-soft px-4 py-2.5 text-sm text-ink">
+        <p key={i} className="rounded-[10px] border border-pending/30 bg-pending-soft px-4 py-2.5 text-sm text-ink">
           <strong>Ajustada por {a.by.name}</strong> em {fmtDateTime(a.at)}: {a.changes}. <span className="text-muted-foreground">Motivo: {a.reason}</span>
         </p>
       ))}
