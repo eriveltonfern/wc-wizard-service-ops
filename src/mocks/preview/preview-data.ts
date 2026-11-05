@@ -12,11 +12,12 @@ export type PvCleaning = {
   status: "valid" | "cancelled"; cancel_reason: string | null; idempotency_key: string | null;
   reviewed_by: number | null; reviewed_at: string | null; review_outcome: "ok" | "cancelled" | null;
   photo_deleted_at?: string | null;
+  adjustments?: { by: number; at: string; reason: string; changes: string }[];
 };
 export type TicketCategory = "hidraulica" | "eletrica" | "estrutura" | "abastecimento" | "outros";
 export type TicketPriority = "baixa" | "normal" | "urgente";
 export type TicketStatus = "open" | "in_progress" | "done" | "cancelled";
-export type TicketEventKind = "opened" | "assigned" | "taken" | "started" | "done" | "cancelled" | "comment" | "priority";
+export type TicketEventKind = "opened" | "assigned" | "taken" | "started" | "done" | "cancelled" | "comment" | "priority" | "adjusted";
 export type PvTicket = {
   id: number; contract_id: number; bathroom_id: number; category: TicketCategory; priority: TicketPriority; status: TicketStatus;
   description: string; opened_by: number; opened_at: string; assignee_id: number | null; started_at: string | null;

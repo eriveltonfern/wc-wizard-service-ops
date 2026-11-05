@@ -131,6 +131,18 @@ export type Cleaning = {
   review?: { by: { id: number; name: string }; at: string; outcome: "ok" | "cancelled" } | undefined;
   repeated_with?: number | undefined;
   cancel_effect?: CancelEffect | undefined;
+  /** Ajustes feitos pelo gestor/diretoria (sempre visíveis). */
+  adjustments?: { by: { id: number; name: string }; at: string; reason: string; changes: string }[] | undefined;
+  can_adjust?: boolean | undefined;
+};
+export type CleaningAdjustInput = {
+  client_finished_at?: string | undefined; user_id?: number | undefined; status?: "valid" | "cancelled" | undefined;
+  checklist?: { item_id: number; answer: ChecklistAnswer }[] | undefined; notes?: string | undefined; reason: string;
+};
+export type TicketAdjustInput = {
+  category?: TicketCategory | undefined; priority?: TicketPriority | undefined; status?: TicketStatus | undefined;
+  description?: string | undefined; assignee_id?: number | null | undefined; opened_at?: string | undefined;
+  done_at?: string | undefined; done_note?: string | undefined; reason: string;
 };
 export type CleaningForm = {
   bathroom: { id: number; name: string; location?: string | undefined; status: string };
@@ -151,7 +163,7 @@ export type CleaningInput = {
 export type TicketCategory = "hidraulica" | "eletrica" | "estrutura" | "abastecimento" | "outros";
 export type TicketPriority = "baixa" | "normal" | "urgente";
 export type TicketStatus = "open" | "in_progress" | "done" | "cancelled";
-export type TicketEventKind = "opened" | "assigned" | "taken" | "started" | "done" | "cancelled" | "comment" | "priority";
+export type TicketEventKind = "opened" | "assigned" | "taken" | "started" | "done" | "cancelled" | "comment" | "priority" | "adjusted";
 export type TicketPerson = { id: number; name: string; role: Role };
 export type Ticket = {
   id: number; code: string;
@@ -164,7 +176,7 @@ export type Ticket = {
   photo_open_url?: string | undefined; photo_done_url?: string | undefined;
   photo_deleted_at?: string | undefined;
   events: { id: number; kind: TicketEventKind; actor: TicketPerson; at: string; text?: string | undefined }[];
-  can: { start: boolean; done: boolean; assign: boolean; cancel: boolean; priority: boolean; comment: boolean };
+  can: { start: boolean; done: boolean; assign: boolean; cancel: boolean; priority: boolean; comment: boolean; adjust?: boolean | undefined };
   assignable?: { id: number; name: string }[] | undefined;
 };
 export type TicketSummary = { open: number; urgent: number; in_progress: number; done_7d: number; avg_resolution_minutes: number | null };

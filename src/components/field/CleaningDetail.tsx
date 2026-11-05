@@ -1,7 +1,8 @@
 // Detalhe de uma limpeza (fotos, checklist, marcas). Usado na Conferência e no Histórico (só leitura).
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, PencilLine } from "lucide-react";
+import { AdjustCleaningDialog } from "./AdjustDialogs";
 import { toast } from "sonner";
 import { approveCleaning, cancelCleaning, getCleaning } from "@/lib/endpoints";
 import { fmtDate } from "@/lib/format";
@@ -47,6 +48,7 @@ export function CleaningDetail({ id, onClose, readOnly }: { id: number; onClose:
   const q = useQuery({ queryKey: ["review", "one", id], queryFn: () => getCleaning(id) });
   const other = useQuery({ queryKey: ["review", "one", q.data?.repeated_with], queryFn: () => getCleaning(q.data!.repeated_with!), enabled: !!q.data?.repeated_with, retry: false });
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [adjusting, setAdjusting] = useState(false);
   const approve = useAction(() => approveCleaning(id), { success: "Limpeza conferida.", onSuccess: onClose });
   const cancel = useAction((reason: string) => cancelCleaning(id, reason), {
     onSuccess: (r) => { toast.success(`Limpeza cancelada. ${effectText(r.effect, r.cleaning)}`); onClose(); },
@@ -101,6 +103,13 @@ export function CleaningDetail({ id, onClose, readOnly }: { id: number; onClose:
       </section>
       {c.notes && <p className="rounded-[10px] border bg-card px-4 py-3 text-sm text-ink">Observação: {c.notes}</p>}
       {c.review && <p className="text-sm text-muted-foreground">Conferida por <strong className="text-ink">{c.review.by.name}</strong> em {fmtDateTime(c.review.at)}.</p>}
+      {c.adjustments?.map((a, i) => (
+        <p key={i} className="rounded-[10px] border border-pending/30 bg-pending-soft px-4 py-2.5 text-sm text-ink">
+          <strong>Ajustada por {a.by.name}</strong> em {fmtDateTime(a.at)}: {a.changes}. <span className="text-muted-foreground">Motivo: {a.reason}</span>
+        </p>
+      ))}
+      {c.can_adjust && <Button variant="outline" className="h-12 w-full" onClick={() => setAdjusting(true)}><PencilLine className="h-4 w-4" />Ajustar registro</Button>}
+      {adjusting && <AdjustCleaningDialog c={c} onClose={() => { setAdjusting(false); void q.refetch(); }} />}
       {open && (
         <div className="grid gap-2 sm:grid-cols-2">
           <PendingButton pending={approve.pending} className="h-12" onClick={() => void approve.run()}><CheckCircle2 className="h-4 w-4" />Está certo</PendingButton>

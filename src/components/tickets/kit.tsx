@@ -4,7 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   Ban, Camera, CircleHelp, Droplets, Hammer, Loader2, MessageSquare, Package, Play, RotateCcw, Search, UserCheck, UserPlus, Wrench, Zap,
-  CheckCircle2, Flag, CirclePlus, type LucideIcon,
+  CheckCircle2, Flag, CirclePlus, PencilLine, type LucideIcon,
 } from "lucide-react";
 import { assignTicket, cancelTicket, commentTicket, createTicket, listBathrooms, setTicketPriority } from "@/lib/endpoints";
 import { dataUrlToBlob } from "@/lib/outbox";
@@ -17,6 +17,7 @@ import { Field, FormError, NativeSelect, PendingButton, ReasonDialog, useAction 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { AdjustTicketDialog } from "@/components/field/AdjustDialogs";
 
 export const CATEGORY: Record<TicketCategory, { label: string; icon: LucideIcon }> = {
   hidraulica: { label: "Hidráulica", icon: Droplets },
@@ -109,6 +110,7 @@ const EVENT_TEXT: Record<Ticket["events"][number]["kind"], { label: (t?: string)
   cancelled: { label: () => "cancelou o chamado", icon: Ban },
   comment: { label: () => "comentou", icon: MessageSquare },
   priority: { label: (t) => `mudou a prioridade para ${t ?? ""}`, icon: Flag },
+  adjusted: { label: () => "ajustou o registro", icon: PencilLine },
 };
 
 /** Detalhe: fotos, descrição, quem abriu, linha do tempo. */
@@ -150,7 +152,7 @@ export function TicketDetailView({ t, children }: { t: Ticket; children?: ReactN
                 <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-secondary text-muted-foreground"><m.icon className="h-4 w-4" /></span>
                 <div className="min-w-0">
                   <p><strong className="text-ink">{e.actor.name}</strong> <span className="text-muted-foreground">{m.label(e.text)}</span></p>
-                  {e.text && (e.kind === "comment" || e.kind === "done" || e.kind === "cancelled") && <p className="mt-0.5 rounded-md bg-secondary px-2 py-1 text-ink">{e.text}</p>}
+                  {e.text && (e.kind === "comment" || e.kind === "done" || e.kind === "cancelled" || e.kind === "adjusted") && <p className="mt-0.5 rounded-md bg-secondary px-2 py-1 text-ink">{e.text}</p>}
                   <p className="text-xs tabular-nums text-muted-foreground">{fmtDateTime(e.at)}</p>
                 </div>
               </li>
@@ -171,9 +173,12 @@ export function ManagerActions({ t }: { t: Ticket }) {
   const prio = useAction((p: TicketPriority) => setTicketPriority(t.id, p), { success: "Prioridade alterada." });
   const com = useAction((text: string) => commentTicket(t.id, text), { success: "Comentário adicionado.", onSuccess: () => setComment("") });
   const cancel = useAction((reason: string) => cancelTicket(t.id, reason), { success: "Chamado cancelado." });
-  if (!t.can.assign && !t.can.comment && !t.can.cancel && !t.can.priority) return null;
+  const [adjusting, setAdjusting] = useState(false);
+  if (!t.can.assign && !t.can.comment && !t.can.cancel && !t.can.priority && !t.can.adjust) return null;
   return (
     <section aria-label="Ações do gestor" className="space-y-4 rounded-[10px] border bg-card p-4">
+      {t.can.adjust && <Button variant="outline" className="min-h-11 w-full" onClick={() => setAdjusting(true)}><PencilLine className="h-4 w-4" />Ajustar registro</Button>}
+      {adjusting && <AdjustTicketDialog t={t} onClose={() => setAdjusting(false)} />}
       {t.can.assign && (
         <Field label="Responsável" id={`assign-${t.id}`} error={assign.fields["user_id"]}
           hint={t.assignable?.length ? undefined : "Este contrato não tem equipe de manutenção."}>
