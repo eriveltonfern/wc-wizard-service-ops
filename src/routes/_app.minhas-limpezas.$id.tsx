@@ -48,6 +48,8 @@ function CleaningDetailPage() {
                 <div><dt className="text-muted-foreground">Feita por</dt><dd className="font-bold text-ink">{c.user.name}</dd></div>
               </dl>
             </DataCard>
+            {c.photo_deleted_at && <PhotoDeleted />}
+            {c.photos_available_until && (c.photo_before_url || c.photo_after_url) && <p className="text-xs text-muted-foreground">Fotos disponíveis até {fmtDate(c.photos_available_until).slice(0, 5)}.</p>}
             {(c.photo_before_url || c.photo_after_url) && (
               <div className="grid grid-cols-2 gap-3">
                 {[["Antes", c.photo_before_url], ["Depois", c.photo_after_url]].map(([label, src]) => (

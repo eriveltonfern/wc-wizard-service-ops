@@ -1,7 +1,7 @@
 // Peças visuais do padrão de layout (docs/design/layout-padrao.md). Só tokens de cor.
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { AlertTriangle, Inbox, RefreshCw, type LucideIcon } from "lucide-react";
+import { AlertTriangle, ImageOff, Inbox, RefreshCw, type LucideIcon } from "lucide-react";
 import { statusLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -144,6 +144,16 @@ export function SkeletonBlock({ label = "Carregando…", rows = 4 }: { label?: s
           <div className="h-4 w-16 animate-pulse rounded-full bg-secondary" />
         </div>
       ))}
+    </div>
+  );
+}
+
+/** Quadro cinza no lugar de uma foto apagada pela regra dos 60 dias. */
+export function PhotoDeleted({ className }: { className?: string }) {
+  return (
+    <div className={cn("flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 rounded-[10px] border bg-neutral-soft p-4 text-center text-sm text-muted-foreground", className)}>
+      <ImageOff className="h-6 w-6" aria-hidden />
+      Foto apagada após 60 dias (regra do sistema)
     </div>
   );
 }
