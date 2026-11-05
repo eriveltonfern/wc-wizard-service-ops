@@ -94,13 +94,13 @@ export function cleanersOf(d: MockDb, contractId: number, date: string) {
 }
 /**
  * Quem pode limpar este banheiro (regra do contrato):
- * "all" = qualquer pessoa ativa com perfil limpeza; "assigned" = só as pessoas marcadas no banheiro.
+ * "all" = qualquer pessoa ativa da limpeza que esteja numa equipe de limpeza do contrato; "assigned" = só as pessoas marcadas no banheiro.
  */
 export function canClean(d: MockDb, userId: number, b: DbBathroom, c: DbContract) {
   const u = d.users.find((x) => x.id === userId);
   if (!u || u.role !== "limpeza" || u.status !== "active") return false;
   if (c.rules.cleaning_access === "assigned") return (d.bathroom_cleaners ?? []).some((x) => x.bathroom_id === b.id && x.user_id === userId);
-  return true;
+  return cleanersOf(d, c.id, opDate(new Date())).includes(userId);
 }
 /** Pessoas que limpam o banheiro nos dados de exemplo (equipe do contrato, filtrada pela regra de acesso). */
 function workersFor(d: MockDb, b: DbBathroom, c: DbContract, date: string) {

@@ -4,8 +4,9 @@ import { handleTicketsAndReview, suggestCategory } from "./preview-tickets";
 import { handleReports, isClosed } from "./preview-reports";
 import {
   type Answer, type PvCleaning, type RawTask, SHIFT_END_LABEL, SHIFT_ORDER, clearPreview, cleanersOf, dayClose, interdicted,
-  iso, loadPreview, loadedPreview, opDate, photoSvg, savePreview, shiftAt, shiftWindow, tasksFor,
+  iso, loadPreview, loadedPreview, opDate, photoSvg, savePreview, shiftAt, shiftWindow, tasksFor, canClean, photosUntil,
 } from "./preview-data";
+import { handleRatings } from "./preview-ratings";
 
 export type Body = Record<string, unknown>;
 export type Res = { status: number; body: unknown };
@@ -24,10 +25,12 @@ export function scope(d: MockDb, me: DbUser): Set<number> {
   const teams = d.members.filter((m) => m.user_id === me.id && isCur(m, day)).map((m) => m.team_id);
   return new Set(d.teams.filter((t) => teams.includes(t.id) && t.status === "active").map((t) => t.contract_id));
 }
-/** Contratos em que a pessoa é membro atual de uma equipe de LIMPEZA. */
+/** Contratos em que a pessoa pode limpar algum banheiro (equipe de limpeza ou responsável marcado). */
 export function cleaningContracts(d: MockDb, me: DbUser) {
   const day = opDate(new Date());
-  return new Set(d.contracts.filter((c) => cleanersOf(d, c.id, day).includes(me.id)).map((c) => c.id));
+  return new Set(d.contracts.filter((c) => c.rules.cleaning_access === "assigned"
+    ? (d.bathroom_cleaners ?? []).some((x) => x.user_id === me.id && d.bathrooms.find((b) => b.id === x.bathroom_id)?.contract_id === c.id)
+    : cleanersOf(d, c.id, day).includes(me.id)).map((c) => c.id));
 }
 
 // ---------- tarefas com status ----------
@@ -72,8 +75,10 @@ export function cleaningView(d: MockDb, c: PvCleaning) {
     link: c.task_id ? { kind: "task", task_id: c.task_id, shift: shift ?? undefined } : { kind: "extra" },
     registered_at: c.registered_at, client_finished_at: c.client_finished_at,
     marks, status: c.status, cancel_reason: c.cancel_reason ?? undefined,
-    photo_before_url: c.photo_before ? photoSvg("Foto antes") : undefined,
-    photo_after_url: c.photo_after ? photoSvg("Foto depois") : undefined,
+    photo_before_url: c.photo_before && !c.photo_deleted_at ? photoSvg("Foto antes") : undefined,
+    photo_after_url: c.photo_after && !c.photo_deleted_at ? photoSvg("Foto depois") : undefined,
+    photo_deleted_at: c.photo_deleted_at ?? undefined,
+    photos_available_until: c.photo_deleted_at ? undefined : photosUntil(c.registered_at),
     checklist: c.checklist, notes: c.notes ?? undefined,
     ticket_suggestions: c.checklist.filter((i) => i.open_ticket).map((i) => ({ item_id: i.item_id, label: i.label, category: suggestCategory(i.label), description: `Checklist: ${i.label} não OK` })),
     review: c.reviewed_by ? { by: { id: c.reviewed_by, name: d.users.find((x) => x.id === c.reviewed_by)?.name ?? "—" }, at: c.reviewed_at ?? "", outcome: c.review_outcome ?? "ok" } : undefined,
@@ -91,10 +96,12 @@ export const num = (v: unknown) => (v === undefined || v === null || v === "" ? 
 
 function bathroomForCleaning(d: MockDb, me: DbUser, id: number): Res | { b: MockDb["bathrooms"][number]; c: MockDb["contracts"][number] } {
   const b = d.bathrooms.find((x) => x.id === id);
-  if (!b || !scope(d, me).has(b.contract_id)) return err(404, "not_found", "Cadastro não encontrado.");
+  if (!b || !(scope(d, me).has(b.contract_id) || cleaningContracts(d, me).has(b.contract_id))) return err(404, "not_found", "Cadastro não encontrado.");
+  const c = d.contracts.find((x) => x.id === b.contract_id)!;
+  if (me.role === "limpeza" && c.rules.cleaning_access === "assigned" && !canClean(d, me.id, b, c))
+    return err(403, "forbidden", "Você não está entre os responsáveis por este banheiro.");
   if (me.role !== "limpeza" || !cleaningContracts(d, me).has(b.contract_id))
     return err(403, "forbidden", "Só quem está numa equipe de limpeza deste contrato pode registrar a limpeza.");
-  const c = d.contracts.find((x) => x.id === b.contract_id)!;
   if (b.status !== "active" || c.status !== "active") return err(409, "conflict", "Este banheiro não está ativo. Fale com o seu gestor.");
   return { b, c };
 }
@@ -107,7 +114,7 @@ export function handlePreview(method: string, path: string, query: URLSearchPara
     const p = pv();
     const date = opDate(now);
     const ids = me.role === "limpeza" ? cleaningContracts(d, me) : scope(d, me);
-    const tasks = tasksFor(d, date, ids).map((t) => taskView(d, t, p.cleanings, p.cancelled_tasks, now)).sort(sortTasks);
+    const tasks = tasksFor(d, date, ids).filter((t) => me.role !== "limpeza" || canClean(d, me.id, t.bathroom, t.contract)).map((t) => taskView(d, t, p.cleanings, p.cancelled_tasks, now)).sort(sortTasks);
     const counted = tasks.filter((t) => t.status !== "cancelled");
     return ok({
       date, now: now.toISOString(), first_name: me.name.split(" ")[0],
@@ -160,8 +167,8 @@ export function handlePreview(method: string, path: string, query: URLSearchPara
     if ("status" in r) return r;
     const { b, c } = r;
     const fields: Record<string, string> = {};
-    const before = c.rules.photo_before === "off" ? null : fingerprint(body["photo_before"]);
-    const after = c.rules.photo_after === "off" ? null : fingerprint(body["photo_after"]);
+    const before = fingerprint(body["photo_before"]);
+    const after = fingerprint(body["photo_after"]);
     if (c.rules.photo_before === "required" && !before) fields["photo_before"] = "Tire a foto antes da limpeza. Neste contrato ela é obrigatória.";
     if (c.rules.photo_after === "required" && !after) fields["photo_after"] = "Tire a foto depois da limpeza. Neste contrato ela é obrigatória.";
     const items = d.checklist.filter((i) => i.contract_id === c.id && i.active);
@@ -202,7 +209,7 @@ export function handlePreview(method: string, path: string, query: URLSearchPara
     p.cleanings.push(row);
     savePreview();
     const ids = cleaningContracts(d, me);
-    const today = tasksFor(d, opDate(now), ids).map((t) => taskView(d, t, p.cleanings, p.cancelled_tasks, now)).sort(sortTasks);
+    const today = tasksFor(d, opDate(now), ids).filter((t) => canClean(d, me.id, t.bathroom, t.contract)).map((t) => taskView(d, t, p.cleanings, p.cancelled_tasks, now)).sort(sortTasks);
     return ok({ cleaning: cleaningView(d, row), next: nextTask(today, now) }, 201);
   }
 
@@ -219,7 +226,7 @@ export function handlePreview(method: string, path: string, query: URLSearchPara
     if (!c || !visible) return err(404, "not_found", "Cadastro não encontrado.");
     return ok(cleaningView(d, c));
   }
-  return handleTicketsAndReview(method, path, query, body, me, d) ?? handleReports(method, path, query, body, me, d);
+  return handleTicketsAndReview(method, path, query, body, me, d) ?? handleReports(method, path, query, body, me, d) ?? handleRatings(method, path, query, me, d);
 }
 
 /** Outra limpeza com a mesma foto (para "Foto repetida"). */
