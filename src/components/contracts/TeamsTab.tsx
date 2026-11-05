@@ -111,7 +111,7 @@ function TeamCard({ team: t, teams, ctx, onEdit }: { team: Team; teams: Team[]; 
       )}
 
       <div className="mt-auto flex flex-wrap gap-2 pt-4">
-        {ctx.canManage && t.status === "active" && <Button variant="outline" className="min-h-11" onClick={() => setAdding(true)}><UserPlus className="h-4 w-4" />Adicionar pessoa</Button>}
+        {ctx.canManage && t.status === "active" && <Button variant="outline" className="min-h-11" onClick={() => setAdding(true)}><UserPlus className="h-4 w-4" />Adicionar pessoas</Button>}
         <Button variant="ghost" className="min-h-11" aria-expanded={showPast} onClick={() => setShowPast((s) => !s)}>{showPast ? "Esconder ex-membros" : "Ver ex-membros"}</Button>
       </div>
       {showPast && (
@@ -141,18 +141,40 @@ function TeamCard({ team: t, teams, ctx, onEdit }: { team: Team; teams: Team[]; 
 }
 
 function AddMemberDialog({ team, onClose }: { team: Team; onClose: () => void }) {
-  const [f, setF] = useState({ user_id: "", starts_on: todayIso() });
+  const [f, setF] = useState({ starts_on: todayIso() });
+  const [sel, setSel] = useState<Set<number>>(new Set());
   const people = useQuery({ queryKey: ["users", { role: team.kind, status: "active" }], queryFn: () => listUsers({ role: team.kind, status: "active" }) });
   const current = new Set(team.members.map((m) => m.user_id));
-  const add = useAction(() => addTeamMember(team.id, { user_id: Number(f.user_id) || (undefined as unknown as number), starts_on: f.starts_on }),
-    { success: "Pessoa adicionada à equipe.", onSuccess: onClose });
+  const avail = people.data?.filter((u) => !current.has(u.id)) ?? [];
+  const allOn = avail.length > 0 && avail.every((u) => sel.has(u.id));
+  const toggle = (id: number) => setSel((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  const add = useAction(async () => {
+    const ids = [...sel];
+    if (!ids.length) return addTeamMember(team.id, { user_id: undefined as unknown as number, starts_on: f.starts_on });
+    let last;
+    for (const id of ids) last = await addTeamMember(team.id, { user_id: id, starts_on: f.starts_on });
+    return last!;
+  }, { success: sel.size > 1 ? `${sel.size} pessoas adicionadas à equipe.` : "Pessoa adicionada à equipe.", onSuccess: onClose });
   return (
-    <FormDialog open onOpenChange={(o) => !o && onClose()} title={`Adicionar pessoa · ${team.name}`} submitLabel="Adicionar" pending={add.pending} onSubmit={() => void add.run()}>
-      <Field label="Pessoa" id="member_user" error={add.fields["user_id"]}>
-        <NativeSelect id="member_user" autoFocus value={f.user_id} onChange={(e) => setF({ ...f, user_id: e.target.value })}>
-          <option value="">{people.isLoading ? "Carregando…" : `Escolha uma pessoa de ${teamKindLabel[team.kind]?.toLowerCase()}`}</option>
-          {people.data?.filter((u) => !current.has(u.id)).map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
-        </NativeSelect>
+    <FormDialog open onOpenChange={(o) => !o && onClose()} title={`Adicionar pessoas · ${team.name}`} submitLabel={sel.size > 1 ? `Adicionar ${sel.size} pessoas` : "Adicionar"} pending={add.pending} onSubmit={() => void add.run()}>
+      <Field label={`Pessoas de ${teamKindLabel[team.kind]?.toLowerCase()}`} id="member_user" error={add.fields["user_id"]}>
+        {people.isLoading ? <p className="text-sm text-muted-foreground">Carregando…</p>
+          : avail.length === 0 ? <p className="text-sm text-muted-foreground">Todas as pessoas ativas já estão nesta equipe.</p>
+          : (
+            <div className="rounded-md border">
+              <label className="flex min-h-11 cursor-pointer items-center gap-3 border-b bg-muted/50 px-3 font-semibold">
+                <input type="checkbox" className="h-4 w-4" checked={allOn} onChange={() => setSel(allOn ? new Set() : new Set(avail.map((u) => u.id)))} />
+                Todos os funcionários ({avail.length})
+              </label>
+              <ul className="max-h-64 overflow-y-auto">
+                {avail.map((u) => (
+                  <li key={u.id}><label className="flex min-h-11 cursor-pointer items-center gap-3 px-3 hover:bg-muted/40">
+                    <input type="checkbox" className="h-4 w-4" checked={sel.has(u.id)} onChange={() => toggle(u.id)} />{u.name}
+                  </label></li>
+                ))}
+              </ul>
+            </div>
+          )}
       </Field>
       <Field label="Data de início" id="member_start" error={add.fields["starts_on"]}><DateInput id="member_start" value={f.starts_on} onChange={(v) => setF({ ...f, starts_on: v })} /></Field>
       {add.error && Object.keys(add.fields).length === 0 && <FormError error={add.error} />}
