@@ -34,12 +34,9 @@ export function FiscalPickerDialog({ open, onOpenChange, companyId, companyName,
             <Field label="Fiscal" id="fp_user" error={add.fields["user_id"]} hint="Só aparecem pessoas ativas com o perfil fiscal.">
               <NativeSelect id="fp_user" autoFocus disabled={loading} value={userId} onChange={(ev) => setUserId(ev.target.value)}>
                 <option value="">{loading ? "Carregando…" : "Escolha a pessoa"}</option>
-                {options.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.name} ({u.email}) — {u.company_id ? `fiscal de ${companyOf(u.company_id) ?? "outra empresa"}` : "sem empresa"}
-                  </option>
-                ))}
+                {options.map((u) => <option key={u.id} value={u.id}>{u.name} ({u.email})</option>)}
               </NativeSelect>
+              {chosen && <p className="text-sm text-muted-foreground">Hoje: {chosen.company_id ? `fiscal de ${companyOf(chosen.company_id) ?? "outra empresa"}` : "sem empresa"}</p>}
             </Field>
           )}
       {from && chosen && (
