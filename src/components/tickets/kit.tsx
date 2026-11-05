@@ -4,7 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   Ban, Camera, CircleHelp, Droplets, Hammer, Loader2, MessageSquare, Package, Play, RotateCcw, Search, UserCheck, UserPlus, Wrench, Zap,
-  CheckCircle2, Flag, CirclePlus, type LucideIcon,
+  CheckCircle2, Flag, CirclePlus, PencilLine, type LucideIcon,
 } from "lucide-react";
 import { assignTicket, cancelTicket, commentTicket, createTicket, listBathrooms, setTicketPriority } from "@/lib/endpoints";
 import { dataUrlToBlob } from "@/lib/outbox";
