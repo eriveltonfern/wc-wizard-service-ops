@@ -32,6 +32,8 @@ export const updateCompany = (id: number, input: Partial<CompanyInput>) => api.p
 export const deleteCompany = (id: number) => api.delete<void>(`/companies/${id}`);
 export const inactivateCompany = (id: number, input: Reason) => api.post<CompanyDetail>(`/companies/${id}/inactivate`, input);
 export const reactivateCompany = (id: number) => api.post<CompanyDetail>(`/companies/${id}/reactivate`);
+// Adiciona à empresa uma pessoa que já está cadastrada com o perfil fiscal.
+export const addCompanyFiscal = (id: number, input: { user_id: number }) => api.post<CompanyDetail>(`/companies/${id}/fiscals`, input);
 
 // Contratos
 export const listContracts = (params?: Params) => api.get<Contract[]>(`/contracts${qs(params)}`);

@@ -37,7 +37,7 @@ function CompaniesPage() {
 
   return (
     <div className="space-y-6">
-      <PageHelp>Empresas que contratam a WC Check. Clique numa empresa para ver os contratos, cadastrar fiscais, editar, inativar ou excluir. O selo vermelho "Sem fiscal" indica empresa cujos contratos ainda não podem ser ativados.</PageHelp>
+      <PageHelp>Empresas que contratam a WC Check. Clique numa empresa para ver os contratos, cadastrar ou adicionar fiscais, editar, inativar ou excluir. O selo vermelho "Sem fiscal" indica empresa cujos contratos ainda não podem ser ativados.</PageHelp>
       <PageHeader title="Empresas" subtitle="Empresas contratantes, com seus contratos e fiscais." actions={createBtn} />
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
