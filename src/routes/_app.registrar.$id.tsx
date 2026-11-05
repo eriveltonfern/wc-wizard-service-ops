@@ -5,7 +5,7 @@ import { AlertTriangle, ArrowLeft, Camera, Wrench, Check, CloudOff, Loader2, Rot
 import { ApiError } from "@/lib/api";
 import { shrinkPhoto } from "@/lib/photo";
 import { createCleaning, getCleaningForm } from "@/lib/endpoints";
-import { enqueueCleaning, isOffline, toInput, type QueuedCleaning } from "@/lib/outbox";
+import { STORAGE_ERROR, enqueueCleaning, isOffline, toInput, type QueuedCleaning } from "@/lib/outbox";
 import type { ChecklistAnswer, Cleaning, CleaningForm, PhotoRule, Task } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { PageHelp } from "@/components/layout/PageHeader";
@@ -83,7 +83,12 @@ function Wizard({ form }: { form: CleaningForm }) {
       notes: notes.trim() || undefined,
       client_finished_at: new Date().toISOString(), idempotency_key: key.current,
     };
-    if (isOffline()) { enqueueCleaning(item); setDone({ kind: "queued" }); return; }
+    // Só mostra "Guardada no celular" se gravou de verdade no aparelho.
+    const queue = async () => {
+      try { await enqueueCleaning(item); setDone({ kind: "queued" }); }
+      catch { setError(STORAGE_ERROR); }
+    };
+    if (isOffline()) { await queue(); return; }
     setSending(true);
     try {
       const r = await createCleaning(toInput(item, false));
@@ -97,8 +102,7 @@ function Wizard({ form }: { form: CleaningForm }) {
         if (target && steps.includes(target)) setStep(steps.indexOf(target));
         setError(msg);
       } else {
-        enqueueCleaning(item); // sem conexão com o servidor: guarda no celular
-        setDone({ kind: "queued" });
+        await queue(); // sem conexão com o servidor: guarda no celular
       }
     } finally {
       setSending(false);
