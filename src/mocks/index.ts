@@ -9,6 +9,7 @@ import {
 } from "./data";
 import { handlePreview, resetPreviewDb } from "./preview/preview-handlers";
 import { handlePublic } from "./preview/preview-ratings";
+import { canClean } from "./preview/preview-data";
 
 const DB_KEY = "wccheck.mockdb";
 type MockResponse = { status: number; body: unknown };
@@ -555,6 +556,7 @@ on("GET", "/bathrooms", ({ d, me, query }) => {
   const cid = query.get("contract_id"); const q = norm(query.get("q") ?? "").trim(); const status = query.get("status");
   const all = d.bathrooms.filter((b) => {
     if (!ids.has(b.contract_id)) return false;
+    if (me.role === "limpeza" && !canClean(d, me.id, b, d.contracts.find((c) => c.id === b.contract_id)!)) return false;
     if (cid && b.contract_id !== Number(cid)) return false;
     if (status && b.status !== status) return false;
     if (q) {
