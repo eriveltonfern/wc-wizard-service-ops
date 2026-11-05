@@ -50,12 +50,12 @@ export type NavGroup = { label: string; items: NavItem[] };
 /** Menu agrupado por perfil (DIA A DIA, GESTÃO, AJUSTES). Também define o acesso às rotas. */
 export const navGroupsByRole: Record<Role, NavGroup[]> = {
   admin: [
-    { label: "Dia a dia", items: [I.painel, I.pendencias, I.historico, I.chamados, I.conferencia] },
+    { label: "Dia a dia", items: [I.painel, I.pendencias, I.historico, I.chamados] },
     { label: "Gestão", items: [I.contratos, I.banheiros, I.empresas, I.pessoas, I.etiquetas, I.relatorios] },
     { label: "Ajustes", items: [I.ajuda] },
   ],
   gestor: [
-    { label: "Dia a dia", items: [I.painel, I.pendencias, I.historico, I.chamados, I.conferencia] },
+    { label: "Dia a dia", items: [I.painel, I.pendencias, I.historico, I.chamados] },
     { label: "Gestão", items: [I.contratos, I.banheiros, I.pessoas, I.etiquetas, I.relatorios] },
     { label: "Ajustes", items: [I.ajuda] },
   ],
