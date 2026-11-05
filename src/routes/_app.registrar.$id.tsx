@@ -240,7 +240,8 @@ function PhotoStep({ label, rule, value, onChange, onNext, onSkip }: {
   return (
     <div className="space-y-3">
       <p className="text-sm text-muted-foreground">
-        Tire uma foto do banheiro {label} da limpeza. {rule === "required" ? "Neste contrato a foto é obrigatória." : "Neste contrato a foto é opcional."}
+        {rule === "required" && <span className="mr-2 inline-flex items-center rounded-full bg-danger-soft px-2 py-0.5 text-xs font-semibold text-danger">• Obrigatória</span>}
+        {rule === "required" ? `Tire a foto ${label} da limpeza para poder concluir.` : `Tire a foto ${label} da limpeza, se quiser.`}
       </p>
       <input ref={input} type="file" accept="image/*" capture="environment" className="sr-only" aria-label={`Foto ${label}`}
         onChange={(e) => void pick(e.target.files?.[0])} />
@@ -259,7 +260,7 @@ function PhotoStep({ label, rule, value, onChange, onNext, onSkip }: {
             {busy ? <Loader2 className="h-10 w-10 animate-spin" /> : <Camera className="h-10 w-10" />}
             <span className="text-base font-bold">Tirar foto {label}</span>
           </button>
-          {rule === "optional" && <Button variant="outline" className="h-12 w-full" onClick={onSkip}>Pular</Button>}
+          {rule === "optional" && <Button variant="outline" className="h-12 w-full" onClick={onSkip}>Pular foto</Button>}
         </>
       )}
     </div>
