@@ -35,6 +35,7 @@ function CompanyPage() {
   const [inactivating, setInactivating] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [newFiscal, setNewFiscal] = useState(false);
+  const [picker, setPicker] = useState(false);
   const [temp, setTemp] = useState<{ user: User; password: string } | null>(null);
   const inact = useAction((reason: string) => inactivateCompany(Number(id), { reason }), { success: "Empresa inativada." });
   const react = useAction(() => reactivateCompany(Number(id)), { success: "Empresa reativada." });
@@ -55,7 +56,10 @@ function CompanyPage() {
       {c.fiscals_count === 0 && (
         <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-[10px] border border-danger/30 bg-danger-soft px-4 py-3">
           <p className="flex items-center gap-2 text-sm font-semibold text-danger"><AlertTriangle className="h-5 w-5 shrink-0" />Esta empresa ainda não tem fiscal. Os contratos dela não podem ser ativados.</p>
-          <Button className="min-h-11" onClick={() => setNewFiscal(true)}><UserPlus className="h-4 w-4" />Cadastrar fiscal</Button>
+          <div className="flex flex-wrap gap-2">
+            <Button className="min-h-11" onClick={() => setNewFiscal(true)}><UserPlus className="h-4 w-4" />Cadastrar fiscal</Button>
+            <Button variant="outline" className="min-h-11" onClick={() => setPicker(true)}><UserCheck className="h-4 w-4" />Adicionar já cadastrado</Button>
+          </div>
         </div>
       )}
       <header className="rounded-[10px] border bg-card p-5">
@@ -94,7 +98,10 @@ function CompanyPage() {
       <section className="rounded-[10px] border bg-card p-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-lg font-semibold text-foreground">Fiscais</h2>
-          <Button variant="outline" className="min-h-11" onClick={() => setNewFiscal(true)}><UserPlus className="h-4 w-4" />Novo fiscal</Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" className="min-h-11" onClick={() => setPicker(true)}><UserCheck className="h-4 w-4" />Adicionar já cadastrado</Button>
+            <Button variant="outline" className="min-h-11" onClick={() => setNewFiscal(true)}><UserPlus className="h-4 w-4" />Novo fiscal</Button>
+          </div>
         </div>
         {c.fiscals.length === 0 ? <div className="mt-3"><EmptyBlock title="Nenhum fiscal desta empresa." /></div> : (
           <ul className="mt-2 divide-y">
@@ -113,6 +120,7 @@ function CompanyPage() {
       <CompanyForm open={editing} onOpenChange={setEditing} company={c} />
       <UserForm open={newFiscal} onOpenChange={setNewFiscal} roles={["fiscal"]} preset={{ role: "fiscal", company_id: c.id, company_name: c.name }}
         onCreated={(user, password) => setTemp({ user, password })} />
+      <FiscalPickerDialog open={picker} onOpenChange={setPicker} companyId={c.id} companyName={c.name} />
       <TempPasswordDialog data={temp} onClose={() => setTemp(null)} />
       <ReasonDialog open={inactivating} onOpenChange={setInactivating} title="Inativar empresa" submitLabel="Inativar" destructive
         description="Os contratos ativos desta empresa serão suspensos." error={inact.error} onConfirm={(r) => inact.run(r)} />
