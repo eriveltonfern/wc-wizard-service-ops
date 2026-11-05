@@ -63,7 +63,7 @@ function RatingsPage() {
   const dias = search.dias ?? 30;
   const to = new Date(); const from = new Date(); from.setDate(from.getDate() - (dias - 1));
   const contracts = useQuery({ queryKey: ["contracts", "list"], queryFn: () => listContracts() });
-  const baths = useQuery({ queryKey: ["bathrooms", "ratings", search.contrato], queryFn: () => listBathrooms({ contract_id: search.contrato }) });
+  const baths = useQuery({ queryKey: ["bathrooms", "ratings", search.contrato], queryFn: () => listBathrooms(search.contrato ? { contract_id: search.contrato } : {}) });
   const q = useQuery({
     queryKey: ["ratings", dias, search.contrato, search.banheiro],
     queryFn: () => listRatings({ from: iso(from), to: iso(to), contract_id: search.contrato, bathroom_id: search.banheiro }),
