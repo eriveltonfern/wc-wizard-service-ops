@@ -14,7 +14,7 @@ export type Totals = {
 const zero = (): Totals => ({ expected: 0, done: 0, not_done: 0, pending: 0, late_pending: 0, cancelled: 0, extras: 0, on_time: 0, late_done: 0, compliance: null });
 const finish = (t: Totals) => ({ ...t, compliance: t.expected ? t.done / t.expected : null });
 
-export type StatsFilter = { from: string; to: string; contractIds: Set<number>; bathroomId?: number | null };
+export type StatsFilter = { from: string; to: string; contractIds: Set<number>; bathroomId?: number | null; userId?: number | null };
 export const cleaningDate = (c: PvCleaning) => opDate(new Date(c.client_finished_at));
 /** Os dados de exemplo cobrem os últimos 30 dias. */
 export const dataStart = (now: Date) => addDays(opDate(now), -30);
