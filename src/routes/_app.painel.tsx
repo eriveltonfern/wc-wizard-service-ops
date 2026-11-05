@@ -9,7 +9,7 @@ import { PageHeader, PageHelp } from "@/components/layout/PageHeader";
 import { AttentionList, AttentionRow, DataCard, ErrorState, KpiCard, KpiGrid, Pill, SkeletonBlock } from "@/components/ui-kit";
 import { PreviewBanner } from "@/components/field/kit";
 import { GoalPills, complianceTone, metGoal, pct } from "@/components/reports/kit";
-import { todayIso } from "@/lib/format";
+import { RATING_PROBLEM_LABEL, todayIso } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/painel")({
@@ -38,7 +38,7 @@ function PainelPage() {
   const { data: me } = useSuspenseQuery(meQuery);
   const isAdmin = me.role === "admin";
   const readOnly = me.role === "fiscal";
-  const [cat, setCat] = useState<"" | "chamados" | "empresas" | "banheiros" | "contratos">("");
+  const [cat, setCat] = useState<"" | "chamados" | "avaliacoes" | "empresas" | "banheiros" | "contratos">("");
   const [period, setPeriod] = useState<"hoje" | "mes">("mes");
   const today = todayIso();
   const filter = period === "hoje" ? { from: today, to: today } : { month: today.slice(0, 7) };
@@ -50,6 +50,9 @@ function PainelPage() {
   const active = useQuery({ queryKey: ["bathrooms", "active-count"], queryFn: () => listBathrooms({ status: "active" }) });
   const urgent = useQuery({ queryKey: ["tickets", "urgent"], queryFn: () => listTickets({ status: "active", priority: "urgente" }) });
   const urgentRows = urgent.data ?? [];
+  const yesterday = new Date(Date.now() - 86400000);
+  const ratings = useQuery({ queryKey: ["ratings", "negative-24h", today], queryFn: () => listRatings({ from: `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, "0")}-${String(yesterday.getDate()).padStart(2, "0")}`, to: today }) });
+  const badRatings = (ratings.data?.rows ?? []).filter((r) => r.score <= 2 && Date.now() - new Date(r.created_at).getTime() < 86400000);
   const all = contracts.data ?? [];
   const drafts = readOnly ? [] : all.filter((c) => c.status === "draft");
   const suspended = readOnly ? [] : all.filter((c) => c.status === "suspended");
@@ -62,13 +65,17 @@ function PainelPage() {
   const below = (stats.data?.by_bathroom ?? []).filter((b) => b.expected > 0 && !metGoal(b.compliance, b.target));
   const num = (loading: boolean, error: boolean, v: ReactNode) => (loading ? "…" : error ? "—" : v ?? "—");
   const LIMIT = 8;
-  type Cat = "chamados" | "empresas" | "banheiros" | "contratos";
+  type Cat = "chamados" | "avaliacoes" | "empresas" | "banheiros" | "contratos";
   type Row = { key: string; cat: Cat; node: ReactNode };
   const rows: Row[] = [
     ...urgentRows.map((tk) => ({ key: `tk-${tk.id}`, cat: "chamados" as Cat, node: (
       <AttentionRow key={`tk-${tk.id}`} to="/chamados" search={{ chamado: tk.id }} name={`Chamado urgente · ${tk.bathroom.name}`}
         detail={`${tk.description} · ${tk.company.name} · ${tk.contract.code}`}
         pills={<><Pill tone="danger">Urgente</Pill><Pill tone={tk.status === "open" ? "info" : "warning"}>{tk.status === "open" ? "Aberto" : "Em andamento"}</Pill></>} />) })),
+    ...badRatings.map((r) => ({ key: `r-${r.id}`, cat: "avaliacoes" as Cat, node: (
+      <AttentionRow key={`r-${r.id}`} to="/avaliacoes" search={{ dias: 7, banheiro: r.bathroom.id }} name={`Avaliação ruim · ${r.bathroom.name}`}
+        detail={`${r.problems.map((p) => RATING_PROBLEM_LABEL[p]).join(", ") || "Sem problema marcado"}${r.comment ? ` · “${r.comment}”` : ""} · ${r.company.name}`}
+        pills={<Pill tone="danger">Nota {r.score}</Pill>} />) })),
     ...noFiscal.map((co) => ({ key: `co-${co.id}`, cat: "empresas" as Cat, node: (
       <AttentionRow key={`co-${co.id}`} to="/empresas/$id" params={{ id: String(co.id) }} name={co.name}
         detail={`Empresa · ${co.contracts_count} contrato${co.contracts_count === 1 ? "" : "s"}`} pills={<Pill tone="danger">Sem fiscal</Pill>} />) })),
@@ -82,7 +89,7 @@ function PainelPage() {
     ...suspended.map((c) => ({ key: `s-${c.id}`, cat: "contratos" as Cat, node: (
       <AttentionRow key={c.id} to="/contratos/$id" params={{ id: String(c.id) }} name={c.name} detail={`${c.code} · ${c.company.name}`} pills={<Pill tone="warning">Suspenso</Pill>} />) })),
   ];
-  const cats = ([["chamados", "Chamados urgentes"], ["empresas", "Empresas"], ["banheiros", "Banheiros"], ["contratos", "Contratos"]] as const)
+  const cats = ([["chamados", "Chamados urgentes"], ["avaliacoes", "Avaliações ruins"], ["empresas", "Empresas"], ["banheiros", "Banheiros"], ["contratos", "Contratos"]] as const)
     .map(([k, label]) => ({ k, label, n: rows.filter((r) => r.cat === k).length })).filter((c) => c.n > 0);
   const shown = cat ? rows.filter((r) => r.cat === cat) : rows;
   const periodLabel = period === "hoje" ? "de hoje" : "do mês";
@@ -93,7 +100,7 @@ function PainelPage() {
       <PageHelp>
         {readOnly ? "Os números mostram o cumprimento dos contratos que você acompanha. É só para leitura." : "Os números do topo mostram o cumprimento das limpezas."}{" "}
         Cumprimento = limpezas feitas ÷ limpezas previstas. Limpezas extras aparecem à parte e não entram no percentual. Use "Hoje" ou "Este mês" para trocar o período.
-        Em "Precisa de atenção" ficam os chamados urgentes, as empresas sem fiscal, os banheiros abaixo da meta do contrato e os contratos parados.
+        Em "Precisa de atenção" ficam os chamados urgentes, as avaliações com nota 1–2 das últimas 24 horas, as empresas sem fiscal, os banheiros abaixo da meta do contrato e os contratos parados.
       </PageHelp>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <PageHeader title={readOnly ? "Painel do contrato" : "Painel"} subtitle="O que precisa da sua atenção agora." />
