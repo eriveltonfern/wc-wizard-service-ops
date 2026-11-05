@@ -71,6 +71,7 @@ function ticketView(d: MockDb, me: DbUser, t: PvTicket, withAssignable = false) 
       start: tech && t.status === "open",
       done: tech && t.status === "in_progress" && t.assignee_id === me.id,
       assign: manage, cancel: manage, priority: manage,
+      adjust: isManager(me) && scope(d, me).has(t.contract_id),
       comment: me.role !== "fiscal" && active(t) && (isManager(me) ? manage : true),
     },
     ...(withAssignable && manage ? { assignable: maintMembers(d, t.contract_id).map((id) => ({ id, name: d.users.find((u) => u.id === id)?.name ?? "—" })) } : {}),
@@ -157,6 +158,46 @@ export function handleTicketsAndReview(method: string, path: string, query: URLS
     if (!t || !visible(d, me, t)) return err(404, "not_found", "Cadastro não encontrado.");
     const action = tm[2];
     if (method === "GET" && !action) return ok(ticketView(d, me, t, true));
+    if (method === "PATCH" && !action) {
+      if (!isManager(me) || !scope(d, me).has(t.contract_id)) return err(403, "forbidden", "Só o gestor ou a diretoria podem ajustar.");
+      const reason = str(body["reason"]);
+      const fields: Record<string, string> = {};
+      if (!reason) fields["reason"] = "Informe o motivo do ajuste.";
+      const cat = str(body["category"]) as TicketCategory; const pr = str(body["priority"]) as TicketPriority;
+      const st = str(body["status"]) as PvTicket["status"];
+      if (cat && !CATEGORIES.includes(cat)) fields["category"] = "Escolha o tipo.";
+      if (pr && !PRIORITIES.includes(pr)) fields["priority"] = "Escolha a prioridade.";
+      if (st && !["open", "in_progress", "done", "cancelled"].includes(st)) fields["status"] = "Escolha a situação.";
+      if (body["description"] !== undefined && !str(body["description"])) fields["description"] = "Descreva o problema.";
+      const aid = body["assignee_id"] === undefined ? undefined : body["assignee_id"] === null ? null : Number(body["assignee_id"]);
+      if (aid != null && !d.users.some((u) => u.id === aid && u.role === "manutencao")) fields["assignee_id"] = "Escolha alguém da manutenção.";
+      for (const k of ["opened_at", "done_at"] as const) {
+        const v = str(body[k]);
+        if (v && (isNaN(new Date(v).getTime()) || new Date(v).getTime() > Date.now())) fields[k] = "Data e hora inválidas.";
+      }
+      if (Object.keys(fields).length) return err(422, "validation_failed", "Confira os campos destacados.", fields);
+      const ch: string[] = [];
+      if (cat && cat !== t.category) { t.category = cat; ch.push("tipo"); }
+      if (pr && pr !== t.priority) { t.priority = pr; ch.push(`prioridade ${PRIORITY_LABEL[pr].toLowerCase()}`); }
+      if (body["description"] !== undefined && str(body["description"]) !== t.description) { t.description = str(body["description"]); ch.push("descrição"); }
+      if (aid !== undefined && aid !== t.assignee_id) { t.assignee_id = aid; ch.push(`responsável: ${aid === null ? "ninguém" : d.users.find((u) => u.id === aid)?.name}`); }
+      if (str(body["opened_at"]) && new Date(str(body["opened_at"])).toISOString() !== t.opened_at) { t.opened_at = new Date(str(body["opened_at"])).toISOString(); ch.push("data de abertura"); }
+      if (st && st !== t.status) {
+        t.status = st; ch.push(`situação: ${{ open: "aberto", in_progress: "em andamento", done: "concluído", cancelled: "cancelado" }[st]}`);
+        if (st === "done") t.done_at ??= new Date().toISOString();
+        if (st === "in_progress") t.started_at ??= new Date().toISOString();
+        if (st === "cancelled") t.cancel_reason = reason;
+        if (st === "open" || st === "in_progress") { t.done_at = null; t.cancel_reason = null; }
+      }
+      if (str(body["done_at"]) && t.status === "done" && new Date(str(body["done_at"])).toISOString() !== t.done_at) { t.done_at = new Date(str(body["done_at"])).toISOString(); ch.push("data de conclusão"); }
+      if (body["done_note"] !== undefined && (str(body["done_note"]) || null) !== t.done_note) { t.done_note = str(body["done_note"]) || null; ch.push("nota do reparo"); }
+      if (!ch.length) return err(422, "validation_failed", "Nada foi alterado.", {});
+      event(t, "adjusted", me.id, `${ch.join(", ")} · Motivo: ${reason}`);
+      d.audit.push({ id: d.audit.reduce((m, a) => Math.max(m, a.id), 0) + 1, action: "ticket.adjusted", entity: "ticket", entity_id: t.id,
+        before: null, after: { changes: ch.join(", ") }, reason, created_at: new Date().toISOString(), actor_id: me.id });
+      savePreview();
+      return ok(ticketView(d, me, t, true));
+    }
     if (method !== "POST" || !action) return null;
     const v = ticketView(d, me, t);
     const closed = () => err(409, "conflict", "Este chamado já foi encerrado.");

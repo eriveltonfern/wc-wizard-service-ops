@@ -84,6 +84,7 @@ export function cleaningView(d: MockDb, c: PvCleaning) {
     review: c.reviewed_by ? { by: { id: c.reviewed_by, name: d.users.find((x) => x.id === c.reviewed_by)?.name ?? "—" }, at: c.reviewed_at ?? "", outcome: c.review_outcome ?? "ok" } : undefined,
     repeated_with: c.repeated_photo ? pvRepeatedWith(c) : undefined,
     cancel_effect: c.status === "valid" ? cancelEffect(c) : undefined,
+    adjustments: (c.adjustments ?? []).map((a) => ({ by: { id: a.by, name: d.users.find((u) => u.id === a.by)?.name ?? "—" }, at: a.at, reason: a.reason, changes: a.changes })),
   };
 }
 
@@ -224,7 +225,47 @@ export function handlePreview(method: string, path: string, query: URLSearchPara
     const c = pv().cleanings.find((x) => x.id === Number(one[1]));
     const visible = c && (me.role === "limpeza" ? c.user_id === me.id || cleaningContracts(d, me).has(c.contract_id) : scope(d, me).has(c.contract_id));
     if (!c || !visible) return err(404, "not_found", "Cadastro não encontrado.");
-    return ok(cleaningView(d, c));
+    return ok({ ...cleaningView(d, c), can_adjust: (me.role === "admin" || me.role === "gestor") && scope(d, me).has(c.contract_id) });
+  }
+  if (method === "PATCH" && one) {
+    const p = pv();
+    const c = p.cleanings.find((x) => x.id === Number(one[1]));
+    if (!c || !scope(d, me).has(c.contract_id)) return err(404, "not_found", "Cadastro não encontrado.");
+    if (me.role !== "admin" && me.role !== "gestor") return err(403, "forbidden", "Só o gestor ou a diretoria podem ajustar.");
+    if (isClosed(p, c.contract_id, opDate(new Date(c.client_finished_at)))) return err(409, "conflict", "O mês desta limpeza já foi fechado. Reabra o fechamento para ajustar.");
+    const s = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+    const reason = s(body["reason"]);
+    const fields: Record<string, string> = {};
+    if (!reason) fields["reason"] = "Informe o motivo do ajuste.";
+    const changes: string[] = [];
+    const when = s(body["client_finished_at"]);
+    if (when && isNaN(new Date(when).getTime())) fields["client_finished_at"] = "Data e hora inválidas.";
+    else if (when && new Date(when).getTime() > Date.now()) fields["client_finished_at"] = "A data não pode ser no futuro.";
+    const uid = body["user_id"] === undefined ? null : Number(body["user_id"]);
+    if (uid !== null && !d.users.some((u) => u.id === uid && u.role === "limpeza")) fields["user_id"] = "Escolha uma pessoa da limpeza.";
+    const st = s(body["status"]);
+    if (st && st !== "valid" && st !== "cancelled") fields["status"] = "Escolha a situação.";
+    if (Object.keys(fields).length) return err(422, "validation_failed", "Confira os campos destacados.", fields);
+    const before = { client_finished_at: c.client_finished_at, user_id: c.user_id, status: c.status, notes: c.notes };
+    if (when && new Date(when).toISOString() !== c.client_finished_at) { c.client_finished_at = new Date(when).toISOString(); changes.push("data e hora"); }
+    if (uid !== null && uid !== c.user_id) { c.user_id = uid; changes.push(`quem fez: ${d.users.find((u) => u.id === uid)?.name}`); }
+    if (st && st !== c.status) { c.status = st as PvCleaning["status"]; c.cancel_reason = st === "cancelled" ? reason : null; changes.push(st === "cancelled" ? "marcada como não válida" : "marcada como feita"); }
+    if (Array.isArray(body["checklist"])) {
+      let n = 0;
+      for (const a of body["checklist"] as { item_id: number; answer: Answer }[]) {
+        const i = c.checklist.find((x) => x.item_id === a.item_id);
+        if (i && ["ok", "not_ok", "na"].includes(a.answer) && i.answer !== a.answer) { i.answer = a.answer; n++; }
+      }
+      if (n) changes.push(`checklist (${n} ${n === 1 ? "item" : "itens"})`);
+    }
+    if (typeof body["notes"] === "string" && (s(body["notes"]) || null) !== c.notes) { c.notes = s(body["notes"]) || null; changes.push("observação"); }
+    if (!changes.length) return err(422, "validation_failed", "Nada foi alterado.", {});
+    const at = new Date().toISOString();
+    (c.adjustments ??= []).push({ by: me.id, at, reason, changes: changes.join(", ") });
+    d.audit.push({ id: d.audit.reduce((m, a) => Math.max(m, a.id), 0) + 1, action: "cleaning.adjusted", entity: "cleaning", entity_id: c.id,
+      before: before as Body, after: { client_finished_at: c.client_finished_at, user_id: c.user_id, status: c.status, notes: c.notes } as Body, reason, created_at: at, actor_id: me.id });
+    savePreview();
+    return ok({ ...cleaningView(d, c), can_adjust: true });
   }
   return handleTicketsAndReview(method, path, query, body, me, d) ?? handleReports(method, path, query, body, me, d) ?? handleRatings(method, path, query, me, d);
 }
