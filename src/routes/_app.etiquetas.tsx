@@ -150,7 +150,7 @@ function LabelCard({ label, size, code }: { label: Label; size: Size; code: stri
       <QrSvg value={label.url} label={`QR de ${label.name}`} style={{ width: st.qr, height: st.qr }} />
       <p className={cn("font-bold leading-tight", st.name)}>{label.name}</p>
       {label.location && <p className={size === "grande" ? "text-2xl" : "text-base"}>{label.location}</p>}
-      <p className={size === "grande" ? "text-xl" : "text-sm"}>Escaneie para registrar a limpeza</p>
+      <p className={cn("flex items-center gap-1.5 font-semibold", size === "grande" ? "text-xl" : "text-sm")}><Smile className={size === "grande" ? "h-6 w-6" : "h-4 w-4"} aria-hidden />Avalie este banheiro</p>
       <p className="text-[9px] tracking-wide">{code} · {label.url.replace(/^https?:\/\//, "")}</p>
     </article>
   );
