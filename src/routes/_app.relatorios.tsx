@@ -199,7 +199,7 @@ function SortTable({ title, rows, searchable, historySearch }: { title: string; 
           </div>
         )}
         <button type="button" aria-pressed={onlyBelow} onClick={() => setOnlyBelow(!onlyBelow)}
-          className={cn("min-h-9 rounded-full border px-3 text-sm font-semibold", onlyBelow ? "border-warning bg-warning-soft text-warning" : "text-muted-foreground hover:bg-secondary")}>
+          className={cn("min-h-9 rounded-full border px-3 text-sm font-semibold", onlyBelow ? "border-pending bg-pending-soft text-pending" : "text-muted-foreground hover:bg-secondary")}>
           Só abaixo da meta ({below})
         </button>
       </div>
