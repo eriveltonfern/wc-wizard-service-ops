@@ -1,9 +1,9 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { History } from "lucide-react";
-import { listAudit, listBathrooms, listCleaningHistory, listContracts, listUsers } from "@/lib/endpoints";
-import { fmtDate, todayIso } from "@/lib/format";
-import type { HistorySituation, StatsFilter } from "@/lib/types";
+import { BarChart3, History, X } from "lucide-react";
+import { listAudit, listCleaningHistory } from "@/lib/endpoints";
+import { fmtDate } from "@/lib/format";
+import type { HistorySituation } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { PageHeader, PageHelp } from "@/components/layout/PageHeader";
 import { DataCard, EmptyState, ErrorState, KpiCard, KpiGrid, Pill, SkeletonBlock } from "@/components/ui-kit";
@@ -12,27 +12,21 @@ import { CleaningDetail, MarkPills } from "@/components/field/CleaningDetail";
 import { NativeSelect } from "@/components/contracts/kit";
 import { fmtDateTime } from "@/components/tickets/kit";
 import { pct } from "@/components/reports/kit";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { FilterBar, type FilterSearch, filterKeys, parseFilters, toStatsFilter } from "@/components/reports/filters";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 
-type Period = "hoje" | "7d" | "mes" | "custom";
-type Search = {
-  aba?: "alteracoes" | undefined; periodo?: Period | undefined; de?: string | undefined; ate?: string | undefined;
-  contrato?: number | undefined; banheiro?: number | undefined; pessoa?: number | undefined; situacao?: HistorySituation | undefined;
-  tipo?: string | undefined; limpeza?: number | undefined;
+type Search = FilterSearch & {
+  aba?: "alteracoes" | undefined; situacao?: HistorySituation | undefined; tipo?: string | undefined; limpeza?: number | undefined;
 };
 const SITUATIONS: [HistorySituation, string][] = [["on_time", "No prazo"], ["late", "Atrasada"], ["extra", "Extra"], ["cancelled", "Cancelada"]];
 const TYPES: [string, string][] = [["contract", "Contrato"], ["bathroom", "Banheiro"], ["team", "Equipe"], ["user", "Pessoa"], ["company", "Empresa"]];
-const dateRe = /^\d{4}-\d{2}-\d{2}$/;
 
 export const Route = createFileRoute("/_app/historico")({
   validateSearch: (s: Record<string, unknown>): Search => {
-    const out: Search = {};
+    const out: Search = parseFilters(s);
     if (s["aba"] === "alteracoes") out.aba = "alteracoes";
-    if (["hoje", "7d", "mes", "custom"].includes(s["periodo"] as string)) out.periodo = s["periodo"] as Period;
-    if (dateRe.test(String(s["de"] ?? ""))) out.de = String(s["de"]);
-    if (dateRe.test(String(s["ate"] ?? ""))) out.ate = String(s["ate"]);
-    for (const k of ["contrato", "banheiro", "pessoa", "limpeza"] as const) { const v = Number(s[k]); if (v > 0) out[k] = v; }
+    const l = Number(s["limpeza"]); if (l > 0) out.limpeza = l;
     if (SITUATIONS.some(([k]) => k === s["situacao"])) out.situacao = s["situacao"] as HistorySituation;
     if (TYPES.some(([k]) => k === s["tipo"])) out.tipo = s["tipo"] as string;
     return out;
@@ -49,17 +43,6 @@ export const Route = createFileRoute("/_app/historico")({
   }),
   component: HistoricoPage,
 });
-
-function periodFilter(s: Search): StatsFilter {
-  const today = todayIso();
-  const minus = (n: number) => { const d = new Date(); d.setDate(d.getDate() - n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
-  switch (s.periodo ?? "7d") {
-    case "hoje": return { from: today, to: today };
-    case "mes": return { month: today.slice(0, 7) };
-    case "custom": return { from: s.de ?? minus(6), to: s.ate ?? today };
-    default: return { from: minus(6), to: today };
-  }
-}
 
 function Tabs({ value, onChange }: { value: string; onChange: (v: "alteracoes" | undefined) => void }) {
   return (
@@ -80,10 +63,17 @@ function HistoricoPage() {
     <div className="space-y-6">
       <PreviewBanner />
       <PageHelp>
-        Em "Limpezas" você vê o que foi feito no período escolhido, com os mesmos números do Painel e dos Relatórios. Clique numa limpeza para ver fotos,
-        e checklist. Em "Alterações" aparece quem mudou o quê nos cadastros (contratos, banheiros, equipes, pessoas e empresas).
+        Em "Limpezas", escolha o período e combine empresa, contrato, banheiro, funcionário e situação — os filtros ficam no endereço da página.
+        Os números são os mesmos do Painel e dos Relatórios; "Ver relatório" abre a análise com os mesmos filtros. Clique numa limpeza para ver fotos e checklist. Em "Alterações" aparece quem mudou o quê nos cadastros (contratos, banheiros, equipes, pessoas e empresas).
       </PageHelp>
-      <PageHeader title="Histórico" subtitle="Limpezas feitas e alterações nos cadastros." />
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <PageHeader title="Histórico" subtitle="Limpezas feitas e alterações nos cadastros." />
+        {search.aba !== "alteracoes" && (
+          <Button asChild variant="outline" className="min-h-10">
+            <Link to="/relatorios" search={filterKeys(search)}><BarChart3 className="h-4 w-4" />Ver relatório</Link>
+          </Button>
+        )}
+      </div>
       <Tabs value={search.aba ?? ""} onChange={(aba) => set({ aba })} />
       {search.aba === "alteracoes" ? <AuditTab tipo={search.tipo} onTipo={(tipo) => set({ tipo })} /> : <CleaningsTab search={search} set={set} />}
     </div>
@@ -91,12 +81,9 @@ function HistoricoPage() {
 }
 
 function CleaningsTab({ search, set }: { search: Search; set: (p: Partial<Search>) => void }) {
-  const f = periodFilter(search);
-  const params = { ...f, contract_id: search.contrato, bathroom_id: search.banheiro, user_id: search.pessoa, situation: search.situacao };
+  const f = toStatsFilter(search, "7d");
+  const params = { ...f, situation: search.situacao };
   const q = useQuery({ queryKey: ["history", params], queryFn: () => listCleaningHistory(params) });
-  const contracts = useQuery({ queryKey: ["contracts", { status: "" }], queryFn: () => listContracts() });
-  const baths = useQuery({ queryKey: ["bathrooms", { contract_id: search.contrato }], queryFn: () => listBathrooms(search.contrato ? { contract_id: search.contrato } : {}) });
-  const people = useQuery({ queryKey: ["users", "limpeza"], queryFn: () => listUsers({ role: "limpeza" }), retry: false });
   const t = q.data?.totals;
   const n = (v: React.ReactNode) => (q.isPending ? "…" : q.isError ? "—" : v);
   const days = new Map<string, NonNullable<typeof q.data>["rows"]>();
@@ -104,42 +91,25 @@ function CleaningsTab({ search, set }: { search: Search; set: (p: Partial<Search
 
   return (
     <>
+      <FilterBar search={search} onChange={set} fallback="7d" onClearExtra={() => set({ situacao: undefined })}
+        extra={
+          <NativeSelect aria-label="Situação" value={search.situacao ?? ""} onChange={(e) => set({ situacao: (e.target.value || undefined) as HistorySituation | undefined })}>
+            <option value="">Todas as situações</option>
+            {SITUATIONS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+          </NativeSelect>
+        }
+        extraChips={search.situacao && (
+          <button type="button" onClick={() => set({ situacao: undefined })} className="inline-flex min-h-8 items-center gap-1.5 rounded-full bg-info-soft px-3 text-xs font-semibold text-info hover:opacity-80">
+            {SITUATIONS.find(([k]) => k === search.situacao)?.[1]}<X className="h-3.5 w-3.5" />
+          </button>
+        )} />
+      {(search.pessoa || search.situacao) && <p className="text-xs text-muted-foreground">Os números do topo seguem período, empresa, contrato e banheiro; funcionário e situação filtram a lista.</p>}
       <KpiGrid>
         <KpiCard label="Realizadas" tone="info" value={n(t?.done)} caption={t ? `de ${t.expected} previstas · ${t.extras} extra${t.extras === 1 ? "" : "s"}` : " "} />
         <KpiCard label="% no prazo" tone="success" value={n(t && t.done ? pct(t.on_time / t.done) : "—")} caption="feitas dentro do turno" />
         <KpiCard label="Atrasadas" tone="warning" value={n(t?.late_done)} caption="feitas depois do turno" />
         <KpiCard label="Não feitas" tone="danger" value={n(t?.not_done)} caption="o dia passou sem limpeza" />
       </KpiGrid>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        <NativeSelect aria-label="Período" value={search.periodo ?? "7d"} onChange={(e) => set({ periodo: e.target.value as Period })}>
-          <option value="hoje">Hoje</option><option value="7d">7 dias</option><option value="mes">Este mês</option><option value="custom">Personalizado</option>
-        </NativeSelect>
-        <NativeSelect aria-label="Contrato" value={search.contrato ?? ""} onChange={(e) => set({ contrato: e.target.value ? Number(e.target.value) : undefined, banheiro: undefined })}>
-          <option value="">Todos os contratos</option>
-          {(contracts.data ?? []).map((c) => <option key={c.id} value={c.id}>{c.code} – {c.name}</option>)}
-        </NativeSelect>
-        <NativeSelect aria-label="Banheiro" value={search.banheiro ?? ""} onChange={(e) => set({ banheiro: e.target.value ? Number(e.target.value) : undefined })}>
-          <option value="">Todos os banheiros</option>
-          {(baths.data?.rows ?? []).map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-        </NativeSelect>
-        <NativeSelect aria-label="Pessoa" value={search.pessoa ?? ""} onChange={(e) => set({ pessoa: e.target.value ? Number(e.target.value) : undefined })}>
-          <option value="">Todas as pessoas</option>
-          {(people.data ?? []).map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
-        </NativeSelect>
-        <NativeSelect aria-label="Situação" value={search.situacao ?? ""} onChange={(e) => set({ situacao: (e.target.value || undefined) as HistorySituation | undefined })}>
-          <option value="">Todas as situações</option>
-          {SITUATIONS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
-        </NativeSelect>
-      </div>
-      {search.periodo === "custom" && (
-        <div className="flex flex-wrap items-center gap-2 text-sm">
-          <label htmlFor="de" className="text-muted-foreground">De</label>
-          <Input id="de" type="date" className="w-auto" value={f.from ?? ""} onChange={(e) => set({ de: e.target.value || undefined })} />
-          <label htmlFor="ate" className="text-muted-foreground">até</label>
-          <Input id="ate" type="date" className="w-auto" value={f.to ?? ""} onChange={(e) => set({ ate: e.target.value || undefined })} />
-          <span className="text-xs text-muted-foreground">Os dados de exemplo cobrem os últimos 30 dias.</span>
-        </div>
-      )}
       {q.isPending ? <SkeletonBlock rows={6} /> : q.isError ? <ErrorState message={q.error.message || "Não foi possível carregar o histórico."} onRetry={() => void q.refetch()} />
         : q.data.rows.length === 0 ? <EmptyState icon={History} title="Nenhuma limpeza neste filtro." description="Troque o período ou os filtros." />
         : (
