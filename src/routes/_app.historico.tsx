@@ -2,7 +2,7 @@ import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { BarChart3, History, X } from "lucide-react";
 import { listAudit, listCleaningHistory } from "@/lib/endpoints";
-import { fmtDate } from "@/lib/format";
+import { fmtDate, realizedSummary } from "@/lib/format";
 import type { HistorySituation } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { PageHeader, PageHelp } from "@/components/layout/PageHeader";
@@ -85,6 +85,7 @@ function CleaningsTab({ search, set }: { search: Search; set: (p: Partial<Search
   const params = { ...f, situation: search.situacao };
   const q = useQuery({ queryKey: ["history", params], queryFn: () => listCleaningHistory(params) });
   const t = q.data?.totals;
+  const realized = t ? realizedSummary(t) : undefined;
   const n = (v: React.ReactNode) => (q.isPending ? "…" : q.isError ? "—" : v);
   const days = new Map<string, NonNullable<typeof q.data>["rows"]>();
   for (const c of q.data?.rows ?? []) { const k = isoDay(c.client_finished_at); days.set(k, [...(days.get(k) ?? []), c]); }
@@ -105,7 +106,7 @@ function CleaningsTab({ search, set }: { search: Search; set: (p: Partial<Search
         )} />
       {(search.pessoa || search.situacao) && <p className="text-xs text-muted-foreground">Os números do topo seguem período, empresa, contrato e banheiro; funcionário e situação filtram a lista.</p>}
       <KpiGrid>
-        <KpiCard label="Realizadas" tone="info" value={n(t?.done)} caption={t ? `de ${t.expected} previstas · ${t.extras} extra${t.extras === 1 ? "" : "s"}` : " "} />
+        <KpiCard label="Realizadas" tone="info" value={n(realized?.value)} caption={realized?.caption ?? " "} />
         <KpiCard label="% no prazo" tone="success" value={n(t && t.done ? pct(t.on_time / t.done) : "—")} caption="feitas dentro do turno" />
         <KpiCard label="Atrasadas" tone="warning" value={n(t?.late_done)} caption="feitas depois do turno" />
         <KpiCard label="Não feitas" tone="danger" value={n(t?.not_done)} caption="o dia passou sem limpeza" />

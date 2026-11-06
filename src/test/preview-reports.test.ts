@@ -1,5 +1,17 @@
 import { expect, it } from "vitest";
 import { handleMock, resetMockDb } from "@/mocks";
+import { realizedSummary } from "@/lib/format";
+
+it("Realizadas inclui uma prevista e uma extra, sem alterar os totais previstos", () => {
+  const t = Object.freeze({ done: 1, extras: 1, expected: 1 });
+  expect(realizedSummary(t).value).toBe(2);
+  expect(t.done).toBe(1);
+  expect(t.expected).toBe(1);
+});
+
+it("Realizadas sem extras mantém apenas as previstas feitas", () => {
+  expect(realizedSummary({ done: 1, extras: 0, expected: 1 }).value).toBe(1);
+});
 
 const r = (m: string, p: string, b: unknown = null, id = 1) => handleMock(m, p, b, `mock-token-${id}`) as any;
 const ADMIN = 1, GESTOR = 2, FISCAL = 3;
