@@ -47,7 +47,7 @@ function BathroomPage() {
     return <div className="space-y-4">{back}<ErrorBlock message={nf ? "Banheiro não encontrado." : "Não foi possível carregar o banheiro."} onRetry={nf ? undefined : () => void q.refetch()} /></div>;
   }
   const b = q.data;
-  const url = `https://wccheck.com.br/q/${b.qr_token}`;
+  const url = `${window.location.origin}/q/${b.qr_token}`;
   const close = () => setDlg(null);
 
   return (
