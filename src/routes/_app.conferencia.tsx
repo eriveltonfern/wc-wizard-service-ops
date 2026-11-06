@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 
 const FLAGS: { key: ReviewFlag; label: string }[] = [
-  { key: "repeated_photo", label: "Foto repetida" }, { key: "offline", label: "Enviado sem internet" }, { key: "out_of_shift", label: "Fora do turno" },
+  { key: "offline", label: "Enviado sem internet" }, { key: "out_of_shift", label: "Fora do turno" },
 ];
 type Search = { aba?: "conferidas" | undefined; marca?: ReviewFlag | undefined; contrato?: number | undefined; limpeza?: number | undefined };
 
@@ -33,9 +33,9 @@ export const Route = createFileRoute("/_app/conferencia")({
   head: () => ({
     meta: [
       { title: "Conferência · WCCheck 2.0" },
-      { name: "description", content: "Limpezas com foto repetida, enviadas sem internet ou fora do turno para conferir." },
+      { name: "description", content: "Limpezas enviadas sem internet ou fora do turno para conferir." },
       { property: "og:title", content: "Conferência · WCCheck 2.0" },
-      { property: "og:description", content: "Limpezas com foto repetida, enviadas sem internet ou fora do turno para conferir." },
+      { property: "og:description", content: "Limpezas enviadas sem internet ou fora do turno para conferir." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -58,13 +58,12 @@ function ReviewPage() {
     <div className="space-y-6">
       <PreviewBanner />
       <PageHelp>
-        Aqui aparecem as limpezas que o sistema marcou para você olhar: foto repetida, enviada sem internet ou feita fora do turno. Abra uma limpeza,
+        Aqui aparecem as limpezas que o sistema marcou para você olhar: enviada sem internet ou feita fora do turno. Abra uma limpeza,
         confira as fotos e escolha "Está certo" ou "Cancelar limpeza". Na aba "Conferidas" fica o histórico de quem conferiu.
       </PageHelp>
       <PageHeader title="Conferência" subtitle="Limpezas com marca para conferir." />
       <KpiGrid>
         <KpiCard label="Para conferir" tone="info" value={n(counts?.total)} caption="limpezas com marca" />
-        <KpiCard label="Foto repetida" tone="danger" value={n(counts?.repeated_photo)} caption="mesma foto de outra limpeza" />
         <KpiCard label="Enviado sem internet" tone="warning" value={n(counts?.offline)} caption="chegaram depois" />
         <KpiCard label="Fora do turno" tone="warning" value={n(counts?.out_of_shift)} caption="feitas após o turno" />
       </KpiGrid>
