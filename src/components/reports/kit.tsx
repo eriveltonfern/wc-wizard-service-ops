@@ -35,7 +35,7 @@ export function ComplianceKpis({ t }: { t: StatTotals }) {
   const realized = realizedSummary(t);
   return (
     <KpiGrid>
-      <KpiCard label="Cumprimento" tone={complianceTone(t.compliance, t.target)} value={pct(t.compliance)} caption={`realizadas ÷ previstas · meta ${pct(t.target)}`} />
+      <KpiCard label="Cumprimento" tone={complianceTone(t.compliance, t.target)} value={pct(t.compliance)} caption={`previstas feitas ÷ previstas · meta ${pct(t.target)}`} />
       <KpiCard label="Realizadas" tone="info" value={realized.value} caption={realized.caption} />
       <KpiCard label="Não feitas" tone={t.not_done ? "danger" : "success"} value={t.not_done} caption="o dia passou sem limpeza" />
       <KpiCard label="Extras" tone="neutral" value={t.extras} caption="não entram no %" />
