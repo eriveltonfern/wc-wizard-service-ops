@@ -1,38 +1,38 @@
-Gerado em: 06/11/2026 16:52 UTC
+Gerado em: 06/11/2026 16:56 UTC
 Comando: BUILD_TARGET=hostinger VITE_USE_MOCKS=false VITE_API_URL=/api VITE_MODULES=avaliacoes,limpeza,conferencia,chamados,numeros,historico,relatorios,fechamento npx vite build
-Zip: 482120 bytes, 85 arquivos
+Zip: 482113 bytes, 85 arquivos
 
 Arquivos (bytes):
 38	assets/_app.aguardando-DJ7LAi8J.js
-2229	assets/_app.ajuda-Cqvc-KZN.js
-7406	assets/_app.avaliacoes-CSXRTya2.js
-6327	assets/_app.banheiros._id-DLLxXDOM.js
-9418	assets/_app.banheiros.index-Bfkm7szJ.js
+2229	assets/_app.ajuda-c5GNGyWS.js
+7406	assets/_app.avaliacoes-Dz5HJJMy.js
+6330	assets/_app.banheiros._id-tennXMGn.js
+9418	assets/_app.banheiros.index-C7AuM6TA.js
 2390	assets/_app.buscar-wwmZhSLp.js
-1169	assets/_app.chamados.concluidos-LGapeGqA.js
-5890	assets/_app.chamados._id-mnEccWV9.js
-7978	assets/_app.chamados.index-CIZIDU1D.js
-4890	assets/_app.conferencia-33MkIArK.js
-34459	assets/_app.contratos._id-DA52ypkt.js
-3839	assets/_app.contratos.index-odvX90IO.js
-7968	assets/_app.empresas._id-7NMyUYIa.js
-3094	assets/_app.empresas.index-D8TkHirz.js
-6737	assets/_app.etiquetas-BdgZW1XF.js
-8084	assets/_app.historico-DG-LCuY-.js
-4840	assets/_app.hoje-DHbOZ_6x.js
-11743	assets/_app-KRuk_Gjw.js
-3731	assets/_app.minhas-limpezas._id-BNn6JSSo.js
-4998	assets/_app.minhas-limpezas.index-B1j-Egh6.js
-13991	assets/_app.painel-CcyBzS1B.js
-5154	assets/_app.pendencias-CW8zzWR0.js
-9912	assets/_app.pessoas._id-D_bF9a-A.js
-4232	assets/_app.pessoas.index-C31Mg9Ok.js
-13224	assets/_app.registrar._id-Dl9_Fw3N.js
-3028	assets/_app.relatar._id-w0RWr_vS.js
-380601	assets/_app.relatorios-NqtLQStj.js
+11743	assets/_app-C4VElj4W.js
+1169	assets/_app.chamados.concluidos-DdeddqAB.js
+5890	assets/_app.chamados._id-ypITup5q.js
+7978	assets/_app.chamados.index-DYNBdmIc.js
+4890	assets/_app.conferencia-BZi4AQvH.js
+34459	assets/_app.contratos._id-DgPJ42uD.js
+3839	assets/_app.contratos.index-BWiEvXqa.js
+7968	assets/_app.empresas._id-R5l4AlMe.js
+3094	assets/_app.empresas.index-CTUPdBkW.js
+6737	assets/_app.etiquetas-CLn1Zl5o.js
+8084	assets/_app.historico-n8N4vzcy.js
+4840	assets/_app.hoje-C0m-c0_W.js
+3731	assets/_app.minhas-limpezas._id-CCpJ4H8g.js
+4998	assets/_app.minhas-limpezas.index-yKWhvtxY.js
+13991	assets/_app.painel-D2CNJUlw.js
+5154	assets/_app.pendencias-l5_0uGCG.js
+9912	assets/_app.pessoas._id-lJWoZ1AY.js
+4232	assets/_app.pessoas.index-CQipQJk0.js
+13224	assets/_app.registrar._id-BT4AHLJF.js
+3028	assets/_app.relatar._id-Ct4kzpbC.js
+380601	assets/_app.relatorios-jpeexL6Z.js
 156	assets/arrow-left-BMC9ZtEJ.js
 265	assets/arrow-up-OkgZ2RxX.js
-78108	assets/BathroomsTab-3EhGKA0Z.js
+78108	assets/BathroomsTab-Dzj51ChN.js
 63204	assets/button-Docag1ij.js
 4961	assets/checkbox-CummfSzl.js
 115	assets/check-BvM8uKU2.js
@@ -40,10 +40,10 @@ Arquivos (bytes):
 169	assets/circle-check-BdXftamQ.js
 239	assets/circle-question-mark-DuFjDfsH.js
 5907	assets/CleaningDetail-C9nA21O6.js
-5755	assets/CompanyForm-BKtzCMqX.js
+5755	assets/CompanyForm-DgX84N6B.js
 3541	assets/ContractForm-bY3Bu-Df.js
 7157	assets/filters-DukoQWMd.js
-323809	assets/index-Dbxz6Otw.js
+323809	assets/index-D0FOO0rs.js
 586	assets/input-CzBRz9LZ.js
 5032	assets/kit-Bi-gkq-n.js
 24149	assets/kit-BLuEcBag.js
@@ -52,9 +52,9 @@ Arquivos (bytes):
 4646	assets/label-lvzhSaAD.js
 4008	assets/lazyRouteComponent-C-XQTeDc.js
 135	assets/loader-circle-BuY4WK7l.js
-3769	assets/login-DGeHpJVq.js
+3769	assets/login-CgQKVQNA.js
 555	assets/Logo-D73hdJRm.js
-8260	assets/manage-Dr5otMYV.js
+8260	assets/manage-VNn7VF1X.js
 250	assets/map-pin-Bn1CJdgB.js
 4436	assets/Match-BKtXWFhp.js
 92940	assets/mocks-CDclVS2L.js
@@ -66,7 +66,7 @@ Arquivos (bytes):
 144	assets/plus-CuvWe_g1.js
 310	assets/printer-BQHNCGDE.js
 23886	assets/QrSvg-BZOTyMg2.js
-8530	assets/q._token-B01QK4OP.js
+8530	assets/q._token-De8_Irij.js
 38	assets/routes-DJ7LAi8J.js
 165	assets/search-CbbC3FMP.js
 2113	assets/sheet-BxepWYT3.js
@@ -80,7 +80,7 @@ Arquivos (bytes):
 570	assets/useMatch-CRRPABU9.js
 189	assets/useNavigate-EPEvhZ0z.js
 95	assets/useQuery-DJAEXyeP.js
-4142	assets/UserForm-CeC9ImmN.js
+4142	assets/UserForm-Ca1jFoM2.js
 491	assets/user-plus-DhvliOe4.js
 168	assets/useSuspenseQuery-BlHnRI2Q.js
 294	assets/wrench-CV102O2O.js
