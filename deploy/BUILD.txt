@@ -1,92 +1,90 @@
-Data: 06/11/2026 14:30 UTC
+Data: 06/11/2026 15:20 UTC
 Comando: BUILD_TARGET=hostinger VITE_USE_MOCKS=false VITE_API_URL=/api VITE_MODULES=avaliacoes,limpeza,conferencia,chamados npx vite build
-Zip: conteúdo de dist/client (86 arquivos, 1478642 bytes) → deploy/web.zip.b64 (base64)
-Para extrair: base64 -d web.zip.b64 > web.zip
+Pacote: web.zip (481147 bytes) — base64 -d web.zip.b64 > web.zip
 
 Arquivos:
-      1099  .htaccess
-     20373  favicon.ico
-       160  robots.txt
-         0  assets/
-    323872  assets/index-Dlmm0Wjz.js
-     77733  assets/BathroomsTab-C7HGxlmk.js
-      6879  assets/CleaningDetail-BxCkRq7u.js
-      5755  assets/CompanyForm-19dyktfY.js
-      3541  assets/ContractForm-Ysr1tUez.js
-       555  assets/Logo-O66eU1dM.js
-      4436  assets/Match-Y2j45dvu.js
-      1742  assets/PageHeader-rcIKeAhA.js
-     23886  assets/QrSvg-qZBMKAmg.js
-      4147  assets/UserForm-BHWARXEN.js
-     11733  assets/_app-CY5YU3mm.js
-        38  assets/_app.aguardando-DJ7LAi8J.js
-      2229  assets/_app.ajuda-Ci11377i.js
-      7406  assets/_app.avaliacoes-CI7plD0n.js
-      6327  assets/_app.banheiros._id-moAgOaBb.js
-      9418  assets/_app.banheiros.index-B1d_UwG_.js
-      2390  assets/_app.buscar-py7hxcTc.js
-      5884  assets/_app.chamados._id-CRLt1e28.js
-      1169  assets/_app.chamados.concluidos-f6dWgWHv.js
-      7978  assets/_app.chamados.index-C153MaWv.js
-      5021  assets/_app.conferencia-BTK5lzPq.js
-     34113  assets/_app.contratos._id-D0cn8TBH.js
-      3839  assets/_app.contratos.index-BPr7WYeu.js
-      7599  assets/_app.empresas._id-D_sH0k7k.js
-      3094  assets/_app.empresas.index-yzrGxA5Q.js
-      6737  assets/_app.etiquetas-BqiGtjjr.js
-      8122  assets/_app.historico-DGkQtUlh.js
-      4840  assets/_app.hoje-DgmeXw-5.js
-      3731  assets/_app.minhas-limpezas._id-BxKNwv0Q.js
-      4998  assets/_app.minhas-limpezas.index-BZUWkHDD.js
-     12953  assets/_app.painel-Beze_OE9.js
-      5154  assets/_app.pendencias-HUi29dGS.js
-      9912  assets/_app.pessoas._id-BRI5ILr7.js
-      4232  assets/_app.pessoas.index-CSTEFJbC.js
-     13224  assets/_app.registrar._id-C5E72ouP.js
-      3028  assets/_app.relatar._id-B1ZJa4Y1.js
-    380606  assets/_app.relatorios-DqG9_f24.js
-       156  assets/arrow-left-BF39T_sI.js
-       265  assets/arrow-up-B33LHYdU.js
-     62928  assets/button-vC9odno2.js
-       115  assets/check-DG2wStGl.js
-      4966  assets/checkbox-B7VOOx9v.js
-       121  assets/chevron-right-_Z6rEdah.js
-       169  assets/circle-check-DSsLsU3T.js
-       239  assets/circle-question-mark-Bbtkdm6v.js
-      7157  assets/filters-rEYagk7P.js
-       586  assets/input-DWiQsOcc.js
-     73858  assets/kit-Cm4RAk4J.js
-      4980  assets/kit-DZKzkisy.js
-      2836  assets/kit-DjWeEgME.js
-     24152  assets/kit-uckJ-fb8.js
-      4646  assets/label-BDMUhJLm.js
-      4008  assets/lazyRouteComponent-Bf7lxCbv.js
-       135  assets/loader-circle-B8SvlF6t.js
-      3769  assets/login-CjdNVbcq.js
-      8260  assets/manage-CSXKvzlK.js
-       250  assets/map-pin-CAjpAWhY.js
-     91348  assets/mocks-D09sFUlu.js
-      1120  assets/modules-k1I4h8IR.js
-      3594  assets/outbox-CLYop0KJ.js
-       267  assets/pencil-CdlDuFfk.js
-       917  assets/photo-Dz2Yam4m.js
-       144  assets/plus-C1lFfrKe.js
-       310  assets/printer-BaCQwsOg.js
-      8530  assets/q._token-ClRuE3vg.js
-        38  assets/routes-DJ7LAi8J.js
-       165  assets/search-C1A_NT2L.js
-      2113  assets/sheet-D40aFXfd.js
-       284  assets/smile-CMYRPfmA.js
-       484  assets/textarea-B5i2sgjn.js
-      1332  assets/toilet-CEoIkiw1.js
-       319  assets/trash-2-DXr1Rr3j.js
-     32201  assets/ui-kit-ChQGbrb5.js
-       215  assets/use-debounced-Pwm9VVA1.js
-       570  assets/useMatch-69tqo8SW.js
-       189  assets/useNavigate-Bw03aApT.js
-        95  assets/useQuery-Ktl1MHKB.js
-       168  assets/useSuspenseQuery-VAncXAEc.js
-       491  assets/user-plus-Ui_xeZkk.js
-       294  assets/wrench-DaUtg-CQ.js
-     85807  assets/styles-CLL7qquk.css
-      4098  index.html
+assets/_app.aguardando-DJ7LAi8J.js 38
+assets/_app.ajuda-D-N2EMK0.js 2229
+assets/_app.avaliacoes-C11Ys1vF.js 7406
+assets/_app.banheiros._id-l7aor7Vx.js 6327
+assets/_app.banheiros.index-D4ToZ_cY.js 9418
+assets/_app.buscar-BlgRe2Ky.js 2390
+assets/_app.chamados.concluidos-DMYVH-4Q.js 1169
+assets/_app.chamados._id-CX3j3Zr5.js 5884
+assets/_app.chamados.index-Ce0ALQeC.js 7978
+assets/_app.conferencia-DnSzF9UL.js 5021
+assets/_app.contratos._id-Ck4E9u_C.js 34113
+assets/_app.contratos.index-Ckf2_1jK.js 3839
+assets/_app.empresas._id-SmcMz7Rv.js 7599
+assets/_app.empresas.index-CPHR5ly4.js 3094
+assets/_app.etiquetas-cnA5-l2k.js 6737
+assets/_app.historico-C3WOufPb.js 8122
+assets/_app.hoje-Doa-AW9t.js 4840
+assets/_app.minhas-limpezas._id-D-TOUcKg.js 3731
+assets/_app.minhas-limpezas.index-oRS8tLiT.js 4998
+assets/_app.painel-D8l5AW8b.js 13992
+assets/_app.pendencias-D6Cc7Wr1.js 5154
+assets/_app.pessoas._id-BA2VOSRS.js 9912
+assets/_app.pessoas.index-BXjdUOtS.js 4232
+assets/_app.registrar._id-DJcKrvXZ.js 13224
+assets/_app.relatar._id-BL8ydJUX.js 3028
+assets/_app.relatorios-DpurXMjb.js 380606
+assets/_app-zjjBd27v.js 11733
+assets/arrow-left-BF39T_sI.js 156
+assets/arrow-up-B33LHYdU.js 265
+assets/BathroomsTab-DYUiq6q0.js 77733
+assets/button-vC9odno2.js 62928
+assets/checkbox-DEfKZGy9.js 4966
+assets/check-DG2wStGl.js 115
+assets/chevron-right-_Z6rEdah.js 121
+assets/circle-check-DSsLsU3T.js 169
+assets/circle-question-mark-Bbtkdm6v.js 239
+assets/CleaningDetail-Bg1mx1ic.js 6879
+assets/CompanyForm-8aNpRvr7.js 5755
+assets/ContractForm-9Xxue_SS.js 3541
+assets/filters-C1s8rshb.js 7157
+assets/index-BjdJ-dd9.js 323878
+assets/input-DWiQsOcc.js 586
+assets/kit-9zR5e7U_.js 73858
+assets/kit-C1RurO3O.js 24152
+assets/kit-DjlSDReG.js 4980
+assets/kit-DJPMQ1EP.js 2836
+assets/label-BDMUhJLm.js 4646
+assets/lazyRouteComponent-Bf7lxCbv.js 4008
+assets/loader-circle-B8SvlF6t.js 135
+assets/login-CrrSgaB-.js 3769
+assets/Logo-O66eU1dM.js 555
+assets/manage-Bf5Qb0J2.js 8260
+assets/map-pin-CAjpAWhY.js 250
+assets/Match-Y2j45dvu.js 4436
+assets/mocks-D09sFUlu.js 91348
+assets/modules-k1I4h8IR.js 1120
+assets/outbox-CLYop0KJ.js 3594
+assets/PageHeader-rcIKeAhA.js 1742
+assets/pencil-CdlDuFfk.js 267
+assets/photo-Dz2Yam4m.js 917
+assets/plus-C1lFfrKe.js 144
+assets/printer-BaCQwsOg.js 310
+assets/QrSvg-qZBMKAmg.js 23886
+assets/q._token-rsMOnjo2.js 8530
+assets/routes-DJ7LAi8J.js 38
+assets/search-C1A_NT2L.js 165
+assets/sheet-BA1xx2LK.js 2113
+assets/smile-CMYRPfmA.js 284
+assets/styles-CLL7qquk.css 85807
+assets/textarea-B5i2sgjn.js 484
+assets/toilet-CEoIkiw1.js 1332
+assets/trash-2-DXr1Rr3j.js 319
+assets/ui-kit-3p2pF7Nj.js 32433
+assets/use-debounced-Pwm9VVA1.js 215
+assets/useMatch-69tqo8SW.js 570
+assets/useNavigate-Bw03aApT.js 189
+assets/useQuery-1sk_YGVg.js 95
+assets/UserForm-DPbTXrZI.js 4147
+assets/user-plus-Ui_xeZkk.js 491
+assets/useSuspenseQuery-B8gO-QF0.js 168
+assets/wrench-DaUtg-CQ.js 294
+favicon.ico 20373
+.htaccess 1099
+index.html 4098
+robots.txt 160
