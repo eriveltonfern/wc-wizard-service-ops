@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { CloudOff, ListChecks, Wrench } from "lucide-react";
 import { listMyCleanings, listTickets } from "@/lib/endpoints";
+import { isModuleOn } from "@/lib/modules";
 import { cn } from "@/lib/utils";
 import { TicketStatusPill, CATEGORY, fmtAgo } from "@/components/tickets/kit";
 import { isQueuedCleaning, useOutbox } from "@/lib/outbox";
@@ -42,13 +43,13 @@ function MyCleaningsPage() {
       <PreviewBanner />
       <PageHelp>Aqui ficam as limpezas que você registrou nos últimos dias e os chamados que você abriu. Toque numa limpeza para ver os detalhes.</PageHelp>
       <PageHeader title="Minhas limpezas" subtitle="Suas últimas limpezas e seus chamados." />
-      <div role="tablist" aria-label="Ver" className="grid grid-cols-2 gap-1 rounded-lg bg-secondary p-1">
+      {isModuleOn("chamados") && <div role="tablist" aria-label="Ver" className="grid grid-cols-2 gap-1 rounded-lg bg-secondary p-1">
         {([[undefined, "Limpezas"], ["chamados", "Meus chamados"]] as const).map(([k, label]) => (
           <button key={label} role="tab" aria-selected={aba === k} onClick={() => void navigate({ search: k ? { aba: k } : {} })}
             className={cn("min-h-11 rounded-md text-sm font-semibold", aba === k ? "bg-card text-ink shadow-sm" : "text-muted-foreground")}>{label}</button>
         ))}
-      </div>
-      {aba === "chamados" ? <MyTickets /> : <MyCleanings />}
+      </div>}
+      {aba === "chamados" && isModuleOn("chamados") ? <MyTickets /> : <MyCleanings />}
     </div>
   );
 }
