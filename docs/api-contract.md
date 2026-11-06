@@ -94,3 +94,13 @@ AuditEvent = {id: integer, action: string, entity: string, entity_id: integer, b
 - `rules.monthly_target`: meta de cumprimento do mês em % (1–100, padrão 95). Toda tela usa a meta do contrato.
 - `rules.cleaning_access`: `all` (qualquer pessoa da limpeza da equipe do contrato) ou `assigned` (só as pessoas marcadas em cada banheiro).
 - Novas rotas: POST /bathrooms/transfer, GET/PUT /bathrooms/{id}/cleaners, GET /users/{id}/bathrooms, POST /cleaners/transfer, GET /public/q/{token}, POST /public/q/{token}/ratings, GET /ratings.
+
+## Excluir com todo o histórico (só admin)
+
+| Método | Rota | Corpo | Resposta |
+|---|---|---|---|
+| POST | /companies/{id}/purge | `{ confirm }` = nome da empresa | `{ deleted: {...} }` — apaga contratos, banheiros, limpezas, fotos, chamados, avaliações, tarefas e fechamentos; fiscais da empresa ficam inativos |
+| POST | /contracts/{id}/purge | `{ confirm }` = código do contrato | `{ deleted: {...} }` |
+| POST | /bathrooms/{id}/purge | `{ confirm }` = nome do banheiro | `{ deleted: {...} }` |
+
+`confirm` é comparado sem diferença de maiúsculas; se não conferir: 422 com `fields.confirm`. Pessoas não são apagadas. Outros perfis: 403.

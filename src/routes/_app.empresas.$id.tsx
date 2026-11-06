@@ -34,6 +34,7 @@ function CompanyPage() {
   const [editing, setEditing] = useState(false);
   const [inactivating, setInactivating] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [purging, setPurging] = useState(false);
   const [newFiscal, setNewFiscal] = useState(false);
   const [picker, setPicker] = useState(false);
   const [temp, setTemp] = useState<{ user: User; password: string } | null>(null);
