@@ -5,8 +5,8 @@ import type { MockDb, DbBathroom, DbContract } from "../data";
 export type Answer = "ok" | "not_ok" | "na";
 export type PvCleaning = {
   id: number; bathroom_id: number; contract_id: number; user_id: number; task_id: string | null;
-  registered_at: string; client_finished_at: string; offline: boolean; out_of_shift: boolean; repeated_photo: boolean;
-  photo_before: string | null; photo_after: string | null; // impressão digital da foto (para "Foto repetida")
+  registered_at: string; client_finished_at: string; offline: boolean; out_of_shift: boolean;
+  photo_before: string | null; photo_after: string | null;
   checklist: { item_id: number; label: string; answer: Answer; open_ticket: boolean }[];
   notes: string | null;
   status: "valid" | "cancelled"; cancel_reason: string | null; idempotency_key: string | null;
@@ -38,7 +38,7 @@ export const HISTORY_DAYS = 90;
 export const PHOTO_DAYS = 60;
 
 const KEY = "wccheck.previewdb";
-const VERSION = 4;
+const VERSION = 5;
 let pdb: PreviewDb | null = null;
 
 // ---------- datas e turnos (hora oficial = relógio deste "servidor") ----------
@@ -146,17 +146,14 @@ export function generate(d: MockDb, now = new Date()): PreviewDb {
   let fp = 0;
   const add = (t: { bathroom: DbBathroom; contract: DbContract }, user: number, when: Date, task: string | null, outOfShift: boolean) => {
     const offline = r() < 0.04;
-    const same = cleanings.filter((x) => x.contract_id === t.contract.id && x.photo_before);
-    const repeated = r() < 0.025 && same.length > 0;
-    const prev = repeated ? same[Math.floor(r() * same.length)]! : null;
-    const before = t.contract.rules.photo_before === "optional" && r() < 0.15 ? null : prev?.photo_before ?? `ex-${++fp}`;
+    const before = t.contract.rules.photo_before === "optional" && r() < 0.15 ? null : `ex-${++fp}`;
     const after = t.contract.rules.photo_after === "optional" && r() < 0.15 ? null : `ex-${++fp}`;
     const cancelledByManager = r() < 0.015;
     const client = offline ? new Date(when.getTime() - (40 + Math.floor(r() * 140)) * 60000) : new Date(when.getTime() - Math.floor(r() * 50) * 1000);
     cleanings.push({
       id: cleanings.length + 1, bathroom_id: t.bathroom.id, contract_id: t.contract.id, user_id: user,
       task_id: cancelledByManager ? null : task, registered_at: when.toISOString(), client_finished_at: client.toISOString(),
-      offline, out_of_shift: outOfShift, repeated_photo: repeated,
+      offline, out_of_shift: outOfShift,
       photo_before: before, photo_after: after,
       checklist: checklistOf(t.contract.id).map((i) => ({ item_id: i.id, label: i.label, answer: r() < 0.05 ? "not_ok" : r() < 0.03 ? "na" : "ok", open_ticket: false })),
       notes: r() < 0.08 ? "Faltou papel toalha no dispenser." : null,
@@ -203,7 +200,7 @@ export function generate(d: MockDb, now = new Date()): PreviewDb {
 
 /** Deixa ~8 limpezas com marca para conferir (espalhadas por contrato e marca); as demais já foram conferidas pelo gestor. */
 function markReviews(d: MockDb, cleanings: PvCleaning[]) {
-  const flagOf = (c: PvCleaning) => (c.repeated_photo ? "r" : c.offline ? "o" : c.out_of_shift ? "s" : null);
+  const flagOf = (c: PvCleaning) => (c.offline ? "o" : c.out_of_shift ? "s" : null);
   const marked = cleanings.filter((c) => c.status === "valid" && flagOf(c)).reverse();
   const buckets = new Map<string, PvCleaning[]>();
   for (const c of marked) { const k = `${c.contract_id}-${flagOf(c)}`; buckets.set(k, [...(buckets.get(k) ?? []), c]); }

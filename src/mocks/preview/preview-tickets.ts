@@ -260,16 +260,15 @@ export function handleTicketsAndReview(method: string, path: string, query: URLS
     const reviewed = query.get("reviewed") === "1";
     const since = addDays(opDate(new Date()), -30);
     const base = pv().cleanings.filter((c) => ids.has(c.contract_id) && (cid === null || c.contract_id === cid)
-      && (c.repeated_photo || c.offline || c.out_of_shift));
+      && (c.offline || c.out_of_shift));
     const pending = base.filter((c) => c.status === "valid" && !c.reviewed_by);
-    const has = (c: (typeof base)[number]) => !flag || (flag === "repeated_photo" ? c.repeated_photo : flag === "offline" ? c.offline : flag === "out_of_shift" ? c.out_of_shift : true);
+    const has = (c: (typeof base)[number]) => !flag || (flag === "offline" ? c.offline : flag === "out_of_shift" ? c.out_of_shift : true);
     const rows = (reviewed ? base.filter((c) => c.reviewed_by && (c.reviewed_at ?? "") >= since) : pending).filter(has)
       .sort((a, b) => (reviewed ? (b.reviewed_at ?? "").localeCompare(a.reviewed_at ?? "") : b.registered_at.localeCompare(a.registered_at)));
     return ok({
       rows: rows.slice(0, 100).map((c) => cleaningView(d, c)),
       counts: {
         total: pending.length,
-        repeated_photo: pending.filter((c) => c.repeated_photo).length,
         offline: pending.filter((c) => c.offline).length,
         out_of_shift: pending.filter((c) => c.out_of_shift).length,
       },
