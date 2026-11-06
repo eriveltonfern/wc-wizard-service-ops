@@ -5,5 +5,5 @@
 
 # Legenda de cumprimento
 - [x] Trocar a legenda por “previstas feitas ÷ previstas · meta X”, sem mudar cálculos.
-- [ ] Verificar tipos.
-- [ ] Gerar e conferir pacote Hostinger com todos os módulos.
+- [x] Verificar tipos.
+- [x] Gerar e conferir pacote Hostinger com todos os módulos.
