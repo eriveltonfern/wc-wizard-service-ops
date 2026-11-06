@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Check, Pencil, Trash2, UserPlus, X } from "lucide-react";
 import {
   activateContract, addContractFiscal, deleteContract, endContract, endContractFiscal, listUsers, reactivateContract, suspendContract,
+  purgeContract,
 } from "@/lib/endpoints";
 import type { ActivationMissing, ContractDetail, FiscalLink, User } from "@/lib/types";
 import { TempPasswordDialog, UserForm } from "@/components/people/UserForm";
@@ -11,7 +12,7 @@ import { fmtPeriod, missingLabel, todayIso } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { ContractForm } from "./ContractForm";
 import type { ContractCtx, ContractTab } from "./ctx";
-import { ConfirmDialog, DateInput, EmptyBlock, Field, FormDialog, FormError, HistoryNotice, NativeSelect, PendingButton, ReasonDialog, useAction } from "./kit";
+import { ConfirmDialog, DateInput, EmptyBlock, Field, FormDialog, FormError, HistoryNotice, NativeSelect, PurgeDialog, PendingButton, ReasonDialog, useAction } from "./kit";
 
 const ALL_MISSING: ActivationMissing[] = ["manager", "bathroom", "cleaning_team", "fiscal", "company"];
 const missingTab: Partial<Record<ActivationMissing, ContractTab>> = { bathroom: "banheiros", cleaning_team: "equipes" };
@@ -21,6 +22,7 @@ export function OverviewTab({ contract: c, ctx }: { contract: ContractDetail; ct
   const [editing, setEditing] = useState(false);
   const [reasonFor, setReasonFor] = useState<null | "suspend" | "reactivate" | "end">(null);
   const [deleting, setDeleting] = useState(false);
+  const [purging, setPurging] = useState(false);
   const [fiscalReq, setFiscalReq] = useState(0);
 
   const activate = useAction(() => activateContract(c.id, { reason: "" }), { success: "Contrato ativado." });
@@ -100,9 +102,12 @@ export function OverviewTab({ contract: c, ctx }: { contract: ContractDetail; ct
           <HistoryNotice>
             {c.status === "active" && <Button type="button" variant="outline" className="min-h-11" onClick={() => { setDeleting(false); setReasonFor("suspend"); }}>Suspender</Button>}
             {c.status !== "ended" && <Button type="button" variant="outline" className="min-h-11" onClick={() => { setDeleting(false); setReasonFor("end"); }}>Encerrar</Button>}
+            {ctx.isAdmin && <Button type="button" variant="destructive" className="min-h-11" onClick={() => { setDeleting(false); setPurging(true); }}>Excluir com todo o histórico</Button>}
           </HistoryNotice>
         )}
       </ConfirmDialog>
+      <PurgeDialog open={purging} onOpenChange={setPurging} name={`o contrato ${c.code} ${c.name}`} confirmText={c.code}
+        onPurge={(x) => purgeContract(c.id, x)} onDone={() => void navigate({ to: "/contratos" })} />
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { PageHelp } from "@/components/layout/PageHeader";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { AlertTriangle, ArrowLeft, Pencil, Trash2, UserCheck, UserPlus } from "lucide-react";
-import { deleteCompany, getCompany, inactivateCompany, reactivateCompany } from "@/lib/endpoints";
+import { deleteCompany, purgeCompany, getCompany, inactivateCompany, reactivateCompany } from "@/lib/endpoints";
 import { ApiError } from "@/lib/api";
 import { fmtPeriod } from "@/lib/format";
 import type { User } from "@/lib/types";
@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { CompanyForm } from "@/components/people/CompanyForm";
 import { FiscalPickerDialog } from "@/components/people/FiscalPickerDialog";
 import { TempPasswordDialog, UserForm } from "@/components/people/UserForm";
-import { ConfirmDialog, EmptyBlock, ErrorBlock, FormError, HistoryNotice, LoadingBlock, PendingButton, ReasonDialog, StatusBadge, useAction } from "@/components/contracts/kit";
+import { ConfirmDialog, EmptyBlock, ErrorBlock, FormError, HistoryNotice, LoadingBlock, PurgeDialog, PendingButton, ReasonDialog, StatusBadge, useAction } from "@/components/contracts/kit";
 
 export const Route = createFileRoute("/_app/empresas/$id")({
   head: () => ({
@@ -131,9 +131,12 @@ function CompanyPage() {
             {c.status === "active"
               ? <Button type="button" variant="outline" className="min-h-11" onClick={() => { setDeleting(false); inact.reset(); setInactivating(true); }}>Inativar</Button>
               : <span className="text-muted-foreground">A empresa já está inativa.</span>}
+            <Button type="button" variant="destructive" className="min-h-11" onClick={() => { setDeleting(false); setPurging(true); }}>Excluir com todo o histórico</Button>
           </HistoryNotice>
         )}
       </ConfirmDialog>
+      <PurgeDialog open={purging} onOpenChange={setPurging} name={c.name} confirmText={c.name} extra="Os fiscais desta empresa ficam inativos."
+        onPurge={(x) => purgeCompany(c.id, x)} onDone={() => void navigate({ to: "/empresas" })} />
     </div>
   );
 }

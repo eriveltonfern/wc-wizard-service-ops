@@ -5,7 +5,9 @@ import { MapPin, MoreVertical, Plus, Search, Trash2 } from "lucide-react";
 import {
   createBathroom, createLocation, createStatusPeriod, deleteBathroom, deleteLocation, deleteStatusPeriod, getBathroom,
   inactivateBathroom, listBathrooms, listLocations, reactivateBathroom, regenerateBathroomQr, updateBathroom, updateLocation,
+  purgeBathroom,
 } from "@/lib/endpoints";
+import { meQuery } from "@/lib/auth";
 import type { Bathroom, ContractDetail, Location } from "@/lib/types";
 import { bathroomKindLabel, fmtPeriod, hasOwnPlan, planLabel, todayIso } from "@/lib/format";
 import { useDebounced } from "@/hooks/use-debounced";
@@ -20,6 +22,7 @@ import { TransferDialog } from "@/components/bathrooms/manage";
 import {
   ConfirmDialog, DateInput, EmptyBlock, ErrorBlock, Field, FormDialog, FormError, HistoryNotice, LoadingBlock, NativeSelect,
   PendingButton, StatusBadge, WeekdayChips, useAction,
+  PurgeDialog,
 } from "./kit";
 
 type Dlg = { kind: "form"; b?: Bathroom } | { kind: "qr" | "periods" | "delete" | "transfer"; b: Bathroom } | { kind: "locations" } | null;
@@ -194,6 +197,9 @@ export function RegenerateQr({ b, onClose }: { b: Bathroom; onClose: () => void 
 export function DeleteBathroom({ b, onClose, onDeleted }: { b: Bathroom; onClose: () => void; onDeleted?: () => void }) {
   const del = useAction(() => deleteBathroom(b.id), { success: "Banheiro excluído.", onSuccess: () => { onClose(); onDeleted?.(); } });
   const inact = useAction(() => inactivateBathroom(b.id), { success: "Banheiro inativado.", onSuccess: onClose });
+  const me = useQuery(meQuery).data;
+  const [purging, setPurging] = useState(false);
+  if (purging) return <PurgeDialog open onOpenChange={(o) => { if (!o) onClose(); }} name={b.name} confirmText={b.name} onPurge={(c) => purgeBathroom(b.id, c)} onDone={() => onDeleted?.()} />;
   return (
     <ConfirmDialog open onOpenChange={(o) => !o && onClose()} title="Excluir banheiro" description={`Excluir "${b.name}"? Esta ação não pode ser desfeita.`}
       submitLabel="Excluir" pending={del.pending} error={del.error} onConfirm={() => void del.run()}>
@@ -202,6 +208,7 @@ export function DeleteBathroom({ b, onClose, onDeleted }: { b: Bathroom; onClose
           {b.status === "active"
             ? <PendingButton type="button" variant="outline" pending={inact.pending} onClick={() => void inact.run()}>Inativar</PendingButton>
             : <span className="text-muted-foreground">O banheiro já está inativo.</span>}
+          {me?.role === "admin" && <Button type="button" variant="destructive" className="min-h-11" onClick={() => { setPurging(true); }}>Excluir com todo o histórico</Button>}
         </HistoryNotice>
       )}
     </ConfirmDialog>
