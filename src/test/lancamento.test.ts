@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 import { handleMock, resetMockDb } from "@/mocks";
-import { MODULES, parseModules, pathEnabled } from "@/lib/modules";
+import { MODULES, moduleForPath, parseModules, pathEnabled } from "@/lib/modules";
 
 const r = (m: string, p: string, b: unknown, id = 1) => handleMock(m, p, b, `mock-token-${id}`) as any;
 const today = new Date().toISOString().slice(0, 10);
@@ -38,4 +38,12 @@ it("adiciona várias pessoas numa chamada só e recusa tudo se alguém não pude
   // o formato antigo continua valendo
   const single = r("POST", `/teams/${team.id}/members`, { user_id: free[0], starts_on: today });
   expect(single.status).toBe(422);
+});
+
+it("/relatar é do módulo chamados e fica desligado na etapa 2", () => {
+  const mods = parseModules("avaliacoes,limpeza,conferencia", false);
+  const on = (m: (typeof MODULES)[number]) => mods.has(m);
+  expect(moduleForPath("/relatar/1")).toBe("chamados");
+  expect(pathEnabled("/relatar/1", on)).toBe(false);
+  expect(pathEnabled("/hoje", on)).toBe(true);
 });
