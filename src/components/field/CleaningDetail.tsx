@@ -16,7 +16,6 @@ import { Button } from "@/components/ui/button";
 export function MarkPills({ c }: { c: Cleaning }) {
   return (
     <>
-      {c.marks.includes("repeated_photo") && <Pill tone="danger">Foto repetida</Pill>}
       {c.marks.includes("offline") && <Pill tone="warning">Enviado sem internet</Pill>}
       {c.marks.includes("out_of_shift") && <Pill tone="warning">Fora do turno</Pill>}
     </>
@@ -46,7 +45,6 @@ function Photo({ src, label }: { src?: string | undefined; label: string }) {
 
 export function CleaningDetail({ id, onClose, readOnly }: { id: number; onClose: () => void; readOnly?: boolean }) {
   const q = useQuery({ queryKey: ["review", "one", id], queryFn: () => getCleaning(id) });
-  const other = useQuery({ queryKey: ["review", "one", q.data?.repeated_with], queryFn: () => getCleaning(q.data!.repeated_with!), enabled: !!q.data?.repeated_with, retry: false });
   const [cancelOpen, setCancelOpen] = useState(false);
   const [adjusting, setAdjusting] = useState(false);
   const approve = useAction(() => approveCleaning(id), { success: "Limpeza conferida.", onSuccess: onClose });
@@ -78,17 +76,6 @@ export function CleaningDetail({ id, onClose, readOnly }: { id: number; onClose:
           </div>
           {c.photos_available_until && <p className="text-xs text-muted-foreground">Fotos disponíveis até {fmtDate(c.photos_available_until).slice(0, 5)}.</p>}
         </div>
-      )}
-      {c.repeated_with && (
-        <section className="space-y-2 rounded-[10px] border border-danger/30 bg-danger-soft p-3">
-          <p className="text-sm font-bold text-danger">Mesma foto de outra limpeza</p>
-          {other.isPending ? <SkeletonBlock rows={2} /> : other.data ? (
-            <div className="grid grid-cols-2 gap-3">
-              <Photo src={c.photo_before_url ?? c.photo_after_url} label={`Esta · ${dayOf(c.registered_at)} ${fmtTime(c.registered_at)}`} />
-              <Photo src={other.data.photo_before_url ?? other.data.photo_after_url} label={`${other.data.bathroom.name} · ${other.data.user.name} · ${dayOf(other.data.registered_at)} ${fmtTime(other.data.registered_at)}`} />
-            </div>
-          ) : <p className="text-sm text-muted-foreground">Não foi possível abrir a outra limpeza.</p>}
-        </section>
       )}
       <section className="rounded-[10px] border bg-card">
         <h3 className="border-b px-4 py-3 text-base font-bold text-ink">Checklist</h3>

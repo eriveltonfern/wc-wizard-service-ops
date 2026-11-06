@@ -7,7 +7,7 @@ Rotas que a API PHP ainda **não** tem. Hoje são simuladas com dados de exemplo
 - Tarefas do dia saem do plano efetivo do banheiro (`cleanings_per_day`, `weekdays`), distribuídas pelos turnos do contrato em ordem (manhã, tarde, noite). Banheiro interditado no dia → tarefa `cancelled`.
 - A tarefa é do banheiro: qualquer membro atual de uma equipe de **limpeza** do contrato pode fazê-la.
 - Status: `pending`, `done`, `not_done` (o dia operacional fechou às 05:59 do dia seguinte), `cancelled`. `late = true` quando ainda `pending` mas o turno já acabou (pode ser feita até o fim do dia).
-- Marcas (`marks`) que vão para a Conferência: `repeated_photo`, `offline` (mostra as duas horas), `out_of_shift`.
+- Marcas (`marks`) que vão para a Conferência: `offline` (mostra as duas horas), `out_of_shift`.
 
 ## Schemas
 ```
@@ -46,7 +46,6 @@ CleaningForm { bathroom: {id,name,location?,status}, contract: {id,code,name},
 - Usa `client_finished_at` se for plausível (não no futuro e há menos de 24 h); senão a hora do servidor.
 - Liga à tarefa `pending` do banheiro no turno daquela hora; se não houver, à mais antiga atrasada (`out_of_shift`). Tarefas de turnos futuros não são consumidas. Sem tarefa → `link.kind = "extra"`.
 - `offline` quando `queued = "1"` ou quando a diferença entre servidor e `client_finished_at` passa de 5 min.
-- `repeated_photo` quando a foto é igual a uma já enviada (no protótipo: mesmo tipo e tamanho de arquivo).
 - `open_ticket` só guarda a intenção de abrir chamado (chamados virão na Parte 2).
 
 ---
@@ -62,7 +61,7 @@ CleaningForm { bathroom: {id,name,location?,status}, contract: {id,code,name},
 - Escopo: admin/gestor/fiscal = contratos do perfil; manutenção = contratos em que é membro atual de equipe de manutenção; limpeza = só os chamados que abriu.
 - `can` diz quais botões o servidor aceita para quem pediu (a interface só mostra).
 - Sugestão do checklist: na limpeza, item `not_ok` com `open_ticket = true` gera `ticket_suggestions` com a categoria sugerida pelo texto do item (papel/sabonete → abastecimento; pia/vaso → hidráulica; lâmpada/tomada → elétrica; porta/piso → estrutura; senão outros) e a descrição "Checklist: <item> não OK".
-- Conferência: limpezas `valid` com marca `repeated_photo`, `offline` ou `out_of_shift` e ainda não conferidas. "Está certo" grava quem conferiu. Cancelar exige motivo; a tarefa volta a `pending` se o dia operacional ainda está aberto, senão passa a `not_done`; limpeza extra não muda tarefa.
+- Conferência: limpezas `valid` com marca `offline` ou `out_of_shift` e ainda não conferidas. "Está certo" grava quem conferiu. Cancelar exige motivo; a tarefa volta a `pending` se o dia operacional ainda está aberto, senão passa a `not_done`; limpeza extra não muda tarefa.
 
 ## Schemas
 ```
@@ -75,7 +74,7 @@ Ticket { id, code: "CH-0001", contract: {id,code,name}, company: {id,name}, bath
          assignable?: [{id,name}] }   // só em GET /tickets/{id}, para quem pode atribuir
 TicketSummary { open, urgent, in_progress, done_7d, avg_resolution_minutes: int|null }
 Cleaning (acréscimos) { ticket_suggestions?: [{item_id,label,category,description}],
-         review?: { by: {id,name}, at, outcome: "ok"|"cancelled" }, repeated_with?: int (id da outra limpeza com a mesma foto),
+         review?: { by: {id,name}, at, outcome: "ok"|"cancelled" },
          cancel_effect?: { kind: "pending"|"not_done", task_date } | { kind: "extra" } }
 ```
 
@@ -93,7 +92,7 @@ Cleaning (acréscimos) { ticket_suggestions?: [{item_id,label,category,descripti
 | POST | /tickets/{id}/cancel | gestor, admin | `{ reason }` | `Ticket`. 422 `reason` "Informe o motivo."; 409 "Este chamado já foi encerrado." |
 | POST | /tickets/{id}/comments | todos do escopo menos fiscal, com chamado ativo | `{ text }` | `Ticket`. 422 `text` "Escreva o comentário." |
 | POST | /tickets/{id}/priority | gestor, admin | `{ priority }` | `Ticket` (evento `priority`). *Rota extra para "Mudar prioridade".* |
-| GET | /review?flag=&contract_id=&reviewed= | gestor, admin | — | `{ rows: Cleaning[], counts: { total, repeated_photo, offline, out_of_shift } }`. `counts` = pendentes (respeita contrato, não a marca). `reviewed=1` = conferidas nos últimos 30 dias |
+| GET | /review?flag=&contract_id=&reviewed= | gestor, admin | — | `{ rows: Cleaning[], counts: { total, offline, out_of_shift } }`. `counts` = pendentes (respeita contrato, não a marca). `reviewed=1` = conferidas nos últimos 30 dias |
 | POST | /cleanings/{id}/review | gestor, admin | — | `Cleaning` com `review`. 409 se já conferida ou cancelada |
 | POST | /cleanings/{id}/cancel | gestor, admin | `{ reason }` | `{ cleaning, effect: cancel_effect }`. 422 `reason` "Informe o motivo."; 409 se já cancelada |
 

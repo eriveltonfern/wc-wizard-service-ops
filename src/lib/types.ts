@@ -113,7 +113,7 @@ export type MeToday = {
   next: Task | null; tasks: Task[];
 };
 export type ChecklistAnswer = "ok" | "not_ok" | "na";
-export type CleaningMark = "repeated_photo" | "offline" | "out_of_shift";
+export type CleaningMark = "offline" | "out_of_shift";
 export type Cleaning = {
   id: number;
   bathroom: { id: number; name: string }; location?: string | undefined;
@@ -129,7 +129,6 @@ export type Cleaning = {
   notes?: string | undefined;
   ticket_suggestions?: { item_id: number; label: string; category: TicketCategory; description: string }[] | undefined;
   review?: { by: { id: number; name: string }; at: string; outcome: "ok" | "cancelled" } | undefined;
-  repeated_with?: number | undefined;
   cancel_effect?: CancelEffect | undefined;
   /** Ajustes feitos pelo gestor/diretoria (sempre visíveis). */
   adjustments?: { by: { id: number; name: string }; at: string; reason: string; changes: string }[] | undefined;
@@ -188,8 +187,8 @@ export type TicketInput = {
   bathroom_id: number; category: TicketCategory; priority?: TicketPriority | undefined; description: string;
   photo?: Blob | null | undefined; cleaning_id?: number | undefined; idempotency_key: string;
 };
-export type ReviewFlag = "repeated_photo" | "offline" | "out_of_shift";
-export type ReviewList = { rows: Cleaning[]; counts: { total: number; repeated_photo: number; offline: number; out_of_shift: number } };
+export type ReviewFlag = "offline" | "out_of_shift";
+export type ReviewList = { rows: Cleaning[]; counts: { total: number; offline: number; out_of_shift: number } };
 export type CancelEffect = { kind: "pending" | "not_done"; task_date: ISODate } | { kind: "extra" };
 
 // ---------- Protótipo Partes 3/4: cálculo único, pendências, histórico, relatórios, fechamento ----------

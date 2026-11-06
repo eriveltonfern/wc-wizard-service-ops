@@ -73,6 +73,10 @@ export const createBathroom = (contractId: number, input: BathroomInput) => api.
 export const getBathroom = (id: number) => api.get<BathroomDetail>(`/bathrooms/${id}`);
 export const updateBathroom = (id: number, input: Partial<BathroomInput>) => api.patch<BathroomDetail>(`/bathrooms/${id}`, input);
 export const deleteBathroom = (id: number) => api.delete<void>(`/bathrooms/${id}`);
+export type PurgeResult = { deleted: Record<string, number> };
+export const purgeCompany = (id: number, confirm: string) => api.post<PurgeResult>(`/companies/${id}/purge`, { confirm });
+export const purgeContract = (id: number, confirm: string) => api.post<PurgeResult>(`/contracts/${id}/purge`, { confirm });
+export const purgeBathroom = (id: number, confirm: string) => api.post<PurgeResult>(`/bathrooms/${id}/purge`, { confirm });
 export const inactivateBathroom = (id: number) => api.post<BathroomDetail>(`/bathrooms/${id}/inactivate`);
 export const reactivateBathroom = (id: number) => api.post<BathroomDetail>(`/bathrooms/${id}/reactivate`);
 export const regenerateBathroomQr = (id: number) => api.post<BathroomDetail>(`/bathrooms/${id}/regenerate-qr`);

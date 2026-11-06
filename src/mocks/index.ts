@@ -9,7 +9,7 @@ import {
 } from "./data";
 import { handlePreview, resetPreviewDb } from "./preview/preview-handlers";
 import { handlePublic } from "./preview/preview-ratings";
-import { canClean } from "./preview/preview-data";
+import { canClean, loadPreview, savePreview } from "./preview/preview-data";
 
 const DB_KEY = "wccheck.mockdb";
 type MockResponse = { status: number; body: unknown };
@@ -325,6 +325,46 @@ on("DELETE", "/companies/{id}", ({ d, me, p }) => {
   d.companies = d.companies.filter((x) => x.id !== c.id);
   return noContent();
 });
+// ---------- excluir com todo o histórico (só diretoria) ----------
+function purgeConfirm(body: Record<string, unknown>, expected: string) {
+  const c = typeof body["confirm"] === "string" ? body["confirm"].trim().toLocaleLowerCase("pt-BR") : "";
+  if (c !== expected.trim().toLocaleLowerCase("pt-BR")) throw new HttpError(422, "validation_failed", "Confira os campos destacados.", { confirm: `Digite ${expected} para confirmar.` });
+}
+function purgeData(d: MockDb, contractIds: Set<number>, bathroomIds: Set<number>) {
+  const p = loadPreview(d);
+  const byB = (x: { bathroom_id: number }) => bathroomIds.has(x.bathroom_id);
+  const deleted: Record<string, number> = {
+    cleanings: p.cleanings.filter(byB).length, tickets: p.tickets.filter(byB).length, ratings: p.ratings.filter(byB).length,
+    closings: p.closings.filter((x) => contractIds.has(x.contract_id)).length, bathrooms: bathroomIds.size, contracts: contractIds.size,
+  };
+  p.cleanings = p.cleanings.filter((x) => !byB(x)); p.tickets = p.tickets.filter((x) => !byB(x)); p.ratings = p.ratings.filter((x) => !byB(x));
+  p.closings = p.closings.filter((x) => !contractIds.has(x.contract_id));
+  p.cancelled_tasks = p.cancelled_tasks.filter((t) => !bathroomIds.has(Number(t.split("-")[0])));
+  savePreview();
+  d.status_periods = d.status_periods.filter((x) => !bathroomIds.has(x.bathroom_id));
+  d.bathroom_cleaners = d.bathroom_cleaners.filter((x) => !bathroomIds.has(x.bathroom_id));
+  d.bathrooms = d.bathrooms.filter((x) => !bathroomIds.has(x.id));
+  const teamIds = new Set(d.teams.filter((t) => contractIds.has(t.contract_id)).map((t) => t.id));
+  d.members = d.members.filter((m) => !teamIds.has(m.team_id));
+  d.teams = d.teams.filter((t) => !teamIds.has(t.id));
+  d.locations = d.locations.filter((x) => !contractIds.has(x.contract_id));
+  d.checklist = d.checklist.filter((x) => !contractIds.has(x.contract_id));
+  d.fiscal_links = d.fiscal_links.filter((x) => !contractIds.has(x.contract_id));
+  d.contracts = d.contracts.filter((x) => !contractIds.has(x.id));
+  return deleted;
+}
+on("POST", "/companies/{id}/purge", ({ d, me, p, body }) => {
+  requireAdmin(me);
+  const c = find(d.companies, p[0]!);
+  purgeConfirm(body, c.name);
+  const cids = new Set(d.contracts.filter((x) => x.company_id === c.id).map((x) => x.id));
+  const deleted = purgeData(d, cids, new Set(d.bathrooms.filter((b) => cids.has(b.contract_id)).map((b) => b.id)));
+  const fiscals = d.users.filter((u) => u.company_id === c.id);
+  for (const u of fiscals) { u.status = "inactive"; u.company_id = null; }
+  d.companies = d.companies.filter((x) => x.id !== c.id);
+  audit(d, me, "company.purged", "company", c.id, { name: c.name }, null);
+  return ok({ deleted: { ...deleted, companies: 1, fiscals_inactivated: fiscals.length } });
+});
 on("POST", "/companies/{id}/inactivate", ({ d, me, p, body }) => {
   requireAdmin(me);
   const c = find(d.companies, p[0]!);
@@ -419,6 +459,14 @@ on("PATCH", "/contracts/{id}", ({ d, me, p, body }) => {
   Object.assign(c, contractInput(d, body, c));
   audit(d, me, "contract.updated", "contract", c.id, before, contract(d, c));
   return ok(contractDetail(d, c));
+});
+on("POST", "/contracts/{id}/purge", ({ d, me, p, body }) => {
+  requireAdmin(me);
+  const c = getContractFor(d, me, p[0]!);
+  purgeConfirm(body, c.code);
+  const deleted = purgeData(d, new Set([c.id]), new Set(d.bathrooms.filter((b) => b.contract_id === c.id).map((b) => b.id)));
+  audit(d, me, "contract.purged", "contract", c.id, { code: c.code }, null);
+  return ok({ deleted });
 });
 on("DELETE", "/contracts/{id}", ({ d, me, p }) => {
   requireAdmin(me);
@@ -608,6 +656,14 @@ on("PATCH", "/bathrooms/{id}", (c) => {
   Object.assign(b, bathroomInput(c.d, b.contract_id, c.body, b));
   audit(c.d, c.me, "bathroom.updated", "bathroom", b.id, before, bathroom(c.d, b));
   return ok(bathroomDetail(c.d, b));
+});
+on("POST", "/bathrooms/{id}/purge", (c) => {
+  requireAdmin(c.me);
+  const b = bathroomFor(c, true);
+  purgeConfirm(c.body, b.name);
+  const deleted = purgeData(c.d, new Set(), new Set([b.id]));
+  audit(c.d, c.me, "bathroom.purged", "bathroom", b.id, { name: b.name }, null);
+  return ok({ deleted });
 });
 on("DELETE", "/bathrooms/{id}", (c) => {
   const b = bathroomFor(c, true);

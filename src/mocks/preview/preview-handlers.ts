@@ -63,7 +63,6 @@ export function cleaningView(d: MockDb, c: PvCleaning) {
   const u = d.users.find((x) => x.id === c.user_id);
   const shift = c.task_id ? (tasksFor(d, c.task_id.split("-").slice(1, 4).join("-")).find((t) => t.id === c.task_id)?.shift ?? null) : null;
   const marks: string[] = [];
-  if (c.repeated_photo) marks.push("repeated_photo");
   if (c.offline) marks.push("offline");
   if (c.out_of_shift) marks.push("out_of_shift");
   return {
@@ -82,7 +81,6 @@ export function cleaningView(d: MockDb, c: PvCleaning) {
     checklist: c.checklist, notes: c.notes ?? undefined,
     ticket_suggestions: c.checklist.filter((i) => i.open_ticket).map((i) => ({ item_id: i.item_id, label: i.label, category: suggestCategory(i.label), description: `Checklist: ${i.label} não OK` })),
     review: c.reviewed_by ? { by: { id: c.reviewed_by, name: d.users.find((x) => x.id === c.reviewed_by)?.name ?? "—" }, at: c.reviewed_at ?? "", outcome: c.review_outcome ?? "ok" } : undefined,
-    repeated_with: c.repeated_photo ? pvRepeatedWith(c) : undefined,
     cancel_effect: c.status === "valid" ? cancelEffect(c) : undefined,
     adjustments: (c.adjustments ?? []).map((a) => ({ by: { id: a.by, name: d.users.find((u) => u.id === a.by)?.name ?? "—" }, at: a.at, reason: a.reason, changes: a.changes })),
   };
@@ -193,12 +191,10 @@ export function handlePreview(method: string, path: string, query: URLSearchPara
       .map((t) => taskView(d, t, p.cleanings, p.cancelled_tasks, client))
       .filter((t) => t.status === "pending" && (t.shift === shiftNow || t.late)).sort(sortTasks);
     const task = pending.find((t) => t.shift === shiftNow) ?? pending[0] ?? null;
-    const prints = p.cleanings.flatMap((x) => [x.photo_before, x.photo_after]).filter(Boolean);
-    const repeated = (before !== null && prints.includes(before)) || (after !== null && prints.includes(after)) || (before !== null && before === after);
     const row: PvCleaning = {
       id: p.cleanings.reduce((m, x) => Math.max(m, x.id), 0) + 1, bathroom_id: b.id, contract_id: c.id, user_id: me.id,
       task_id: task?.id ?? null, registered_at: now.toISOString(), client_finished_at: client.toISOString(),
-      offline, out_of_shift: !!task && task.shift !== shiftNow, repeated_photo: repeated,
+      offline, out_of_shift: !!task && task.shift !== shiftNow,
       photo_before: before, photo_after: after,
       checklist: items.sort((a, z) => a.position - z.position).map((i) => {
         const a = answers.find((x) => x.item_id === i.id)!;
@@ -270,13 +266,6 @@ export function handlePreview(method: string, path: string, query: URLSearchPara
   return handleTicketsAndReview(method, path, query, body, me, d) ?? handleReports(method, path, query, body, me, d) ?? handleRatings(method, path, query, me, d);
 }
 
-/** Outra limpeza com a mesma foto (para "Foto repetida"). */
-function pvRepeatedWith(c: PvCleaning) {
-  const p = loadedPreview();
-  if (!p) return undefined;
-  const prints = [c.photo_before, c.photo_after].filter(Boolean);
-  return p.cleanings.find((x) => x.id !== c.id && [x.photo_before, x.photo_after].some((f) => f && prints.includes(f)))?.id;
-}
 /** O que acontece com a tarefa se a limpeza for cancelada. */
 function cancelEffect(c: PvCleaning) {
   if (!c.task_id) return { kind: "extra" as const };

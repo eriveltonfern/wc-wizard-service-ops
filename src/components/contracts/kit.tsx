@@ -98,14 +98,14 @@ export function PendingButton({ pending, children, ...props }: React.ComponentPr
 }
 
 /** Diálogo simples com formulário. */
-export function FormDialog({ open, onOpenChange, title, description, children, onSubmit, submitLabel, pending, destructive, cancelLabel = "Cancelar" }: {
+export function FormDialog({ open, onOpenChange, title, description, children, onSubmit, submitLabel, pending, destructive, cancelLabel = "Cancelar", submitDisabled }: {
   open: boolean; onOpenChange: (o: boolean) => void; title: string; description?: string | undefined; children?: ReactNode;
-  onSubmit: () => void; submitLabel: string; pending?: boolean | undefined; destructive?: boolean | undefined; cancelLabel?: string | undefined;
+  onSubmit: () => void; submitLabel: string; pending?: boolean | undefined; destructive?: boolean | undefined; cancelLabel?: string | undefined; submitDisabled?: boolean | undefined;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-lg">
-        <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} className="space-y-4">
+        <form onSubmit={(e) => { e.preventDefault(); if (!submitDisabled) onSubmit(); }} className="space-y-4">
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
             {description && <DialogDescription>{description}</DialogDescription>}
@@ -113,7 +113,7 @@ export function FormDialog({ open, onOpenChange, title, description, children, o
           {children}
           <DialogFooter className="gap-2">
             <Button type="button" variant="outline" className="min-h-11" onClick={() => onOpenChange(false)}>{cancelLabel}</Button>
-            <PendingButton type="submit" pending={pending} variant={destructive ? "destructive" : "default"}>{submitLabel}</PendingButton>
+            <PendingButton type="submit" pending={pending} disabled={submitDisabled} variant={destructive ? "destructive" : "default"}>{submitLabel}</PendingButton>
           </DialogFooter>
         </form>
       </DialogContent>
@@ -150,6 +150,29 @@ export function ConfirmDialog({ open, onOpenChange, title, description, submitLa
       pending={pending} destructive onSubmit={onConfirm}>
       {error && error.code !== "has_history" && <FormError error={error} />}
       {children}
+    </FormDialog>
+  );
+}
+
+/** Diretoria: excluir para sempre, com tudo ligado ao cadastro. O texto digitado precisa conferir com `confirmText`. */
+export function PurgeDialog({ open, onOpenChange, name, confirmText, extra, onPurge, onDone }: {
+  open: boolean; onOpenChange: (o: boolean) => void; name: string; confirmText: string; extra?: string | undefined;
+  onPurge: (confirm: string) => Promise<unknown>; onDone: () => void;
+}) {
+  const [typed, setTyped] = useState("");
+  const a = useAction((c: string) => onPurge(c), { success: "Excluído com todo o histórico.", onSuccess: () => { onOpenChange(false); onDone(); } });
+  const matches = typed.trim().toLocaleLowerCase("pt-BR") === confirmText.trim().toLocaleLowerCase("pt-BR");
+  return (
+    <FormDialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) { setTyped(""); a.reset(); } }} title="Excluir para sempre?"
+      submitLabel="Excluir para sempre" destructive pending={a.pending} submitDisabled={!matches} onSubmit={() => void a.run(typed)}>
+      <p className="text-sm text-foreground">
+        Isto apaga <strong>{name}</strong> e tudo ligado a ele: limpezas, fotos, chamados, avaliações, tarefas e fechamentos. Não tem como desfazer. As pessoas continuam cadastradas.
+        {extra ? ` ${extra}` : ""}
+      </p>
+      <Field label={`Digite ${confirmText} para confirmar`} id="purge-confirm" error={a.error?.fields?.["confirm"]}>
+        <Input id="purge-confirm" autoComplete="off" value={typed} onChange={(e) => setTyped(e.target.value)} />
+      </Field>
+      {a.error && !a.error.fields?.["confirm"] && <FormError error={a.error} />}
     </FormDialog>
   );
 }
