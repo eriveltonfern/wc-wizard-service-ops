@@ -1,4 +1,15 @@
-import type { Bathroom, ContractStatus } from "./types";
+import type { Bathroom, ContractStatus, StatTotals } from "./types";
+
+/** Total exibido inclui extras; não altera os indicadores de cumprimento enviados pela API. */
+export function realizedSummary(t: Pick<StatTotals, "done" | "extras" | "expected">) {
+  const planned = (n: number) => `${n} ${n === 1 ? "prevista" : "previstas"}`;
+  return {
+    value: t.done + t.extras,
+    caption: t.extras > 0
+      ? `${planned(t.done)} + ${t.extras} ${t.extras === 1 ? "extra" : "extras"} · meta: ${planned(t.expected)}`
+      : `de ${t.expected} previstas`,
+  };
+}
 
 export const fmtDate = (iso?: string | null) => {
   if (!iso) return "";

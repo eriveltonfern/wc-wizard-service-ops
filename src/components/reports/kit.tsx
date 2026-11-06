@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Lock, Printer } from "lucide-react";
 import { closeMonth, listClosings, reopenMonth } from "@/lib/endpoints";
 import type { Closing, StatTotals } from "@/lib/types";
+import { realizedSummary } from "@/lib/format";
 import { DataCard, ErrorState, KpiCard, KpiGrid, Pill, SkeletonBlock, type Tone } from "@/components/ui-kit";
 import { ConfirmDialog, ReasonDialog, useAction } from "@/components/contracts/kit";
 import { fmtDateTime } from "@/components/tickets/kit";
@@ -31,10 +32,11 @@ export function GoalPills({ t }: { t: StatTotals }) {
 
 /** Os 4 números do cumprimento (Relatórios e Fechamento). */
 export function ComplianceKpis({ t }: { t: StatTotals }) {
+  const realized = realizedSummary(t);
   return (
     <KpiGrid>
       <KpiCard label="Cumprimento" tone={complianceTone(t.compliance, t.target)} value={pct(t.compliance)} caption={`realizadas ÷ previstas · meta ${pct(t.target)}`} />
-      <KpiCard label="Realizadas × previstas" tone="info" value={`${t.done} / ${t.expected}`} caption={`${t.pending} ainda pendente${t.pending === 1 ? "" : "s"}`} />
+      <KpiCard label="Realizadas" tone="info" value={realized.value} caption={realized.caption} />
       <KpiCard label="Não feitas" tone={t.not_done ? "danger" : "success"} value={t.not_done} caption="o dia passou sem limpeza" />
       <KpiCard label="Extras" tone="neutral" value={t.extras} caption="não entram no %" />
     </KpiGrid>
@@ -61,6 +63,7 @@ function ClosingCard({ c, onChange }: { c: Closing; onChange: () => void }) {
   const close = useAction(() => closeMonth(c.contract_id, c.month), { success: "Mês fechado.", onSuccess: () => { setCloseOpen(false); onChange(); } });
   const reopen = useAction((reason: string) => reopenMonth(c.id!, reason), { success: "Mês reaberto.", onSuccess: () => { setReopenOpen(false); onChange(); } });
   const t = c.totals;
+  const realized = realizedSummary(t);
   return (
     <DataCard
       title={monthLabel(c.month).replace(/^./, (x) => x.toUpperCase())}
@@ -74,8 +77,8 @@ function ClosingCard({ c, onChange }: { c: Closing; onChange: () => void }) {
         </div>
       }>
       <dl className="grid grid-cols-2 gap-4 p-4 text-sm sm:grid-cols-5">
-        {[["Cumprimento", pct(t.compliance)], ["Previstas", t.expected], ["Realizadas", t.done], ["Não feitas", t.not_done], ["Extras (fora do %)", t.extras]].map(([k, v]) => (
-          <div key={k as string}><dt className="text-xs font-semibold uppercase text-muted-foreground">{k}</dt><dd className="text-xl font-extrabold tabular-nums text-ink">{v}</dd></div>
+        {[["Cumprimento", pct(t.compliance)], ["Previstas", t.expected], ["Realizadas", realized.value], ["Não feitas", t.not_done], ["Extras (fora do %)", t.extras]].map(([k, v]) => (
+          <div key={k as string}><dt className="text-xs font-semibold uppercase text-muted-foreground">{k}</dt><dd className="text-xl font-extrabold tabular-nums text-ink">{v}</dd>{k === "Realizadas" && <p className="text-xs text-muted-foreground">{realized.caption}</p>}</div>
         ))}
       </dl>
       {!c.ended && c.status === "open" && <p className="border-t px-4 py-2 text-xs text-muted-foreground">O mês ainda não terminou. Os números mudam até o último dia.</p>}
