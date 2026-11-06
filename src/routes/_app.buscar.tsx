@@ -6,6 +6,7 @@ import { listBathrooms } from "@/lib/endpoints";
 import { useDebounced } from "@/hooks/use-debounced";
 import { PageHeader, PageHelp } from "@/components/layout/PageHeader";
 import { EmptyState, ErrorState, SkeletonBlock } from "@/components/ui-kit";
+import { isModuleOn } from "@/lib/modules";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -51,9 +52,11 @@ function SearchPage() {
                   <Button asChild className="h-12 w-full">
                     <Link to="/registrar/$id" params={{ id: String(b.id) }}>Registrar limpeza</Link>
                   </Button>
-                  <Button asChild variant="outline" className="h-12 w-full">
-                    <Link to="/relatar/$id" params={{ id: String(b.id) }}>Relatar problema</Link>
-                  </Button>
+                  {isModuleOn("chamados") && (
+                    <Button asChild variant="outline" className="h-12 w-full">
+                      <Link to="/relatar/$id" params={{ id: String(b.id) }}>Relatar problema</Link>
+                    </Button>
+                  )}
                 </div>
               </li>
             ))}

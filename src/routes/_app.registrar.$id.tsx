@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { isModuleOn } from "@/lib/modules";
 import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, ArrowLeft, Camera, Wrench, Check, CloudOff, Loader2, RotateCcw } from "lucide-react";
@@ -131,7 +132,7 @@ function Wizard({ form }: { form: CleaningForm }) {
         </div>
         {c.link.kind === "extra" && <p className="text-xs text-muted-foreground">Não havia limpeza pendente para este banheiro agora. Ela fica registrada à parte e não entra no percentual.</p>}
         <div className="grid w-full gap-2">
-          {(c.ticket_suggestions?.length ?? 0) > 0 && (
+          {isModuleOn("chamados") && (c.ticket_suggestions?.length ?? 0) > 0 && (
             <Button variant="destructive" className="h-12 w-full" onClick={() => navigate({ to: "/relatar/$id", params: { id: String(c.bathroom.id) }, search: { limpeza: c.id, n: 0 } })}>
               <Wrench className="h-4 w-4" />Abrir chamado ({c.ticket_suggestions!.length})
             </Button>
@@ -161,9 +162,9 @@ function Wizard({ form }: { form: CleaningForm }) {
           <p className="truncate text-sm font-bold text-ink">{form.bathroom.name}</p>
           <p className="truncate text-xs text-muted-foreground">{form.bathroom.location ?? "Sem local"} · {form.contract.code}</p>
         </div>
-        <Button asChild variant="outline" className="h-12 px-3">
+        {isModuleOn("chamados") && <Button asChild variant="outline" className="h-12 px-3">
           <Link to="/relatar/$id" params={{ id: String(form.bathroom.id) }}><AlertTriangle className="h-4 w-4" />Relatar problema</Link>
-        </Button>
+        </Button>}
       </div>
       <div>
         <div className="flex justify-between text-xs font-semibold text-muted-foreground"><span>Passo {step + 1} de {steps.length}</span><span>{titles[current]}</span></div>
@@ -299,7 +300,7 @@ function ChecklistStep({ items, answers, onChange, onNext, setError }: {
                 </button>
               ))}
             </div>
-            {a?.answer === "not_ok" && (
+            {a?.answer === "not_ok" && isModuleOn("chamados") && (
               <div className="mt-3 rounded-lg bg-danger-soft p-3">
                 <p className="text-sm font-semibold text-danger">Abrir chamado para este problema?</p>
                 <div className="mt-2 grid grid-cols-2 gap-2">

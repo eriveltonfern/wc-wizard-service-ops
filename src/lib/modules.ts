@@ -17,8 +17,8 @@ export const isModuleOn = (m: ModuleKey) => enabledModules.has(m);
 /** Rotas de cada módulo (prefixos). Rotas fora desta lista são de cadastros. */
 const routeModules: [string, ModuleKey][] = [
   ["/avaliacoes", "avaliacoes"],
-  ["/hoje", "limpeza"], ["/buscar", "limpeza"], ["/minhas-limpezas", "limpeza"], ["/registrar", "limpeza"], ["/relatar", "limpeza"], ["/pendencias", "limpeza"],
-  ["/chamados", "chamados"],
+  ["/hoje", "limpeza"], ["/buscar", "limpeza"], ["/minhas-limpezas", "limpeza"], ["/registrar", "limpeza"], ["/pendencias", "limpeza"],
+  ["/chamados", "chamados"], ["/relatar", "chamados"],
   ["/conferencia", "conferencia"],
   ["/historico", "historico"],
   ["/relatorios", "relatorios"],
