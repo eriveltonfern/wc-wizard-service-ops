@@ -75,8 +75,8 @@ export function AttentionList({ title, count, children, footer, empty }: {
   );
 }
 
-export function AttentionRow({ name, detail, progress, pills, to, params, search }: {
-  name: ReactNode; detail?: ReactNode; progress?: { value: number; tone?: Tone }; pills?: ReactNode; to?: string; params?: Record<string, string>; search?: Record<string, unknown>;
+export function AttentionRow({ name, detail, progress, pills, to, params, search, onClick }: {
+  name: ReactNode; detail?: ReactNode; progress?: { value: number; tone?: Tone }; pills?: ReactNode; to?: string; params?: Record<string, string>; search?: Record<string, unknown>; onClick?: () => void;
 }) {
   const inner = (
     <div className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center">
@@ -93,7 +93,8 @@ export function AttentionRow({ name, detail, progress, pills, to, params, search
   );
   return (
     <li>
-      {to ? <Link to={to} params={params as never} search={search as never} className="block min-h-12 hover:bg-secondary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring">{inner}</Link> : inner}
+      {to ? <Link to={to} params={params as never} search={search as never} className="block min-h-12 hover:bg-secondary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring">{inner}</Link>
+        : onClick ? <button type="button" onClick={onClick} className="block min-h-12 w-full text-left hover:bg-secondary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring">{inner}</button> : inner}
     </li>
   );
 }

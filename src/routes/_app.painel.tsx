@@ -12,7 +12,10 @@ import { GoalPills, complianceTone, metGoal, pct } from "@/components/reports/ki
 import { RATING_PROBLEM_LABEL, todayIso } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { isModuleOn } from "@/lib/modules";
-import { listTeams } from "@/lib/endpoints";
+import { listTeams, listReview } from "@/lib/endpoints";
+import { CleaningDetail, MarkPills, timeLine } from "@/components/field/CleaningDetail";
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/_app/painel")({
   head: () => ({
@@ -40,7 +43,7 @@ function PainelPage() {
   const { data: me } = useSuspenseQuery(meQuery);
   const isAdmin = me.role === "admin";
   const readOnly = me.role === "fiscal";
-  const [cat, setCat] = useState<"" | "chamados" | "avaliacoes" | "empresas" | "banheiros" | "contratos">("");
+  const [cat, setCat] = useState<"" | "chamados" | "conferir" | "avaliacoes" | "empresas" | "banheiros" | "contratos">("");
   const [period, setPeriod] = useState<"hoje" | "mes">("mes");
   const today = todayIso();
   const filter = period === "hoje" ? { from: today, to: today } : { month: today.slice(0, 7) };
@@ -54,6 +57,10 @@ function PainelPage() {
   const active = useQuery({ queryKey: ["bathrooms", "active-count"], queryFn: () => listBathrooms({ status: "active" }) });
   const urgent = useQuery({ queryKey: ["tickets", "urgent"], queryFn: () => listTickets({ status: "active", priority: "urgente" }), enabled: isModuleOn("chamados") });
   const urgentRows = urgent.data ?? [];
+  const qc = useQueryClient();
+  const [openCleaning, setOpenCleaning] = useState<number | null>(null);
+  const review = useQuery({ queryKey: ["review", "painel"], queryFn: () => listReview(), enabled: !readOnly && isModuleOn("conferencia") });
+  const reviewRows = (review.data?.rows ?? []).filter((c) => !c.review);
   const yesterday = new Date(Date.now() - 86400000);
   const ratings = useQuery({ queryKey: ["ratings", "negative-24h", today], queryFn: () => listRatings({ from: `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, "0")}-${String(yesterday.getDate()).padStart(2, "0")}`, to: today }), enabled: isModuleOn("avaliacoes") });
   const badRatings = (ratings.data?.rows ?? []).filter((r) => r.score <= 2 && Date.now() - new Date(r.created_at).getTime() < 86400000);
@@ -76,13 +83,16 @@ function PainelPage() {
   const below = (stats.data?.by_bathroom ?? []).filter((b) => b.expected > 0 && !metGoal(b.compliance, b.target));
   const num = (loading: boolean, error: boolean, v: ReactNode) => (loading ? "…" : error ? "—" : v ?? "—");
   const LIMIT = 8;
-  type Cat = "chamados" | "avaliacoes" | "empresas" | "banheiros" | "contratos";
+  type Cat = "chamados" | "conferir" | "avaliacoes" | "empresas" | "banheiros" | "contratos";
   type Row = { key: string; cat: Cat; node: ReactNode };
   const rows: Row[] = [
     ...urgentRows.map((tk) => ({ key: `tk-${tk.id}`, cat: "chamados" as Cat, node: (
       <AttentionRow key={`tk-${tk.id}`} to="/chamados" search={{ chamado: tk.id }} name={`Chamado urgente · ${tk.bathroom.name}`}
         detail={`${tk.description} · ${tk.company.name} · ${tk.contract.code}`}
         pills={<><Pill tone="danger">Urgente</Pill><Pill tone={tk.status === "open" ? "info" : "warning"}>{tk.status === "open" ? "Aberto" : "Em andamento"}</Pill></>} />) })),
+    ...reviewRows.map((c) => ({ key: `rv-${c.id}`, cat: "conferir" as Cat, node: (
+      <AttentionRow key={`rv-${c.id}`} onClick={() => setOpenCleaning(c.id)} name={`Conferir limpeza · ${c.bathroom.name} · ${all.find((k) => k.id === c.contract.id)?.company.name ?? c.contract.code}`}
+        detail={`${timeLine(c)} · ${c.user.name}`} pills={<MarkPills c={c} />} />) })),
     ...badRatings.map((r) => ({ key: `r-${r.id}`, cat: "avaliacoes" as Cat, node: (
       <AttentionRow key={`r-${r.id}`} to="/avaliacoes" search={{ dias: 7, banheiro: r.bathroom.id }} name={`Avaliação ruim · ${r.bathroom.name}`}
         detail={`${r.problems.map((p) => RATING_PROBLEM_LABEL[p]).join(", ") || "Sem problema marcado"}${r.comment ? ` · “${r.comment}”` : ""} · ${r.company.name}`}
@@ -100,7 +110,7 @@ function PainelPage() {
     ...suspended.map((c) => ({ key: `s-${c.id}`, cat: "contratos" as Cat, node: (
       <AttentionRow key={c.id} to="/contratos/$id" params={{ id: String(c.id) }} name={c.name} detail={`${c.code} · ${c.company.name}`} pills={<Pill tone="warning">Suspenso</Pill>} />) })),
   ];
-  const cats = ([["chamados", "Chamados urgentes"], ["avaliacoes", "Avaliações ruins"], ["empresas", "Empresas"], ["banheiros", "Banheiros"], ["contratos", "Contratos"]] as const)
+  const cats = ([["chamados", "Chamados urgentes"], ["conferir", "Conferir"], ["avaliacoes", "Avaliações ruins"], ["empresas", "Empresas"], ["banheiros", "Banheiros"], ["contratos", "Contratos"]] as const)
     .map(([k, label]) => ({ k, label, n: rows.filter((r) => r.cat === k).length })).filter((c) => c.n > 0);
   const shown = cat ? rows.filter((r) => r.cat === cat) : rows;
   const periodLabel = period === "hoje" ? "de hoje" : "do mês";
@@ -108,10 +118,17 @@ function PainelPage() {
   return (
     <div className="space-y-6">
       <PreviewBanner />
+      <Sheet open={openCleaning !== null} onOpenChange={(o) => { if (!o) setOpenCleaning(null); }}>
+        <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-xl">
+          <SheetTitle className="sr-only">Conferir limpeza</SheetTitle>
+          <SheetDescription className="sr-only">Fotos, checklist e ações.</SheetDescription>
+          {openCleaning !== null && <CleaningDetail id={openCleaning} onClose={() => { setOpenCleaning(null); void qc.invalidateQueries({ queryKey: ["review"] }); }} />}
+        </SheetContent>
+      </Sheet>
       <PageHelp>
         {readOnly ? "Os números mostram o cumprimento dos contratos que você acompanha. É só para leitura." : "Os números do topo mostram o cumprimento das limpezas."}{" "}
         Cumprimento = limpezas feitas ÷ limpezas previstas. Limpezas extras aparecem à parte e não entram no percentual. Use "Hoje" ou "Este mês" para trocar o período.
-        Em "Precisa de atenção" ficam os chamados urgentes, as avaliações com nota 1–2 das últimas 24 horas, as empresas sem fiscal, os banheiros abaixo da meta do contrato e os contratos parados.
+        Em "Precisa de atenção" ficam os chamados urgentes, as limpezas marcadas para conferir, as avaliações com nota 1–2 das últimas 24 horas, as empresas sem fiscal, os banheiros abaixo da meta do contrato e os contratos parados.
       </PageHelp>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <PageHeader title={readOnly ? "Painel do contrato" : "Painel"} subtitle="O que precisa da sua atenção agora." />
