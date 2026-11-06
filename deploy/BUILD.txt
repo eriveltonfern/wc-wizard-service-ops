@@ -1,6 +1,6 @@
 Data: 06/11/2026 15:31 UTC
 Comando: BUILD_TARGET=hostinger VITE_USE_MOCKS=false VITE_API_URL=/api VITE_MODULES=avaliacoes,limpeza,conferencia,chamados,numeros,historico,relatorios,fechamento npx vite build
-Pacote: web.zip (480454 bytes) — base64 -d web.zip.b64 > web.zip
+Pacote: web.zip (481218 bytes) — base64 -d web.zip.b64 > web.zip
 
 Arquivos:
 assets/ 0
@@ -86,5 +86,6 @@ assets/user-plus-B-GlTO2E.js 491
 assets/useSuspenseQuery-BUL5_gj8.js 168
 assets/wrench-B67X-Xbg.js 294
 favicon.ico 20373
+.htaccess 1099
 index.html 4098
 robots.txt 160
